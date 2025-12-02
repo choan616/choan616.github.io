@@ -1,0 +1,170 @@
+.calendar-wrapper {
+  padding: 20px;
+  background: white;
+  border-radius: 12px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+/* DayPicker 한국어 스타일 커스터마이징 */
+.rdp {
+  --rdp-accent-color: #3b82f6;
+  --rdp-background-color: #eff6ff;
+  margin: 0;
+}
+
+.rdp-month {
+  width: 100%;
+}
+
+.rdp-caption {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: 0 0 20px 0;
+}
+
+.rdp-caption_label {
+  font-size: 18px;
+  font-weight: 600;
+  color: #1f2937;
+}
+
+.rdp-nav {
+  display: flex;
+  gap: 8px;
+}
+
+.rdp-nav_button {
+  width: 32px;
+  height: 32px;
+  border-radius: 6px;
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+
+.rdp-nav_button:hover {
+  background: #f3f4f6;
+}
+
+.rdp-head_cell {
+  color: #6b7280;
+  font-weight: 500;
+  font-size: 14px;
+  text-transform: uppercase;
+}
+
+.rdp-cell {
+  padding: 2px;
+}
+
+.rdp-day {
+  width: 40px;
+  height: 40px;
+  border-radius: 8px;
+  font-size: 14px;
+  transition: all 0.2s;
+  position: relative;
+}
+
+.rdp-day:hover:not(.rdp-day_disabled) {
+  background: #f3f4f6;
+}
+
+.rdp-day_selected {
+  background: var(--rdp-accent-color);
+  color: white;
+  font-weight: 600;
+}
+
+.rdp-day_today {
+  font-weight: 700;
+  color: var(--rdp-accent-color);
+}
+
+/* 일기가 있는 날짜 표시 */
+.day-has-entry {
+  font-weight: 600;
+  color: #059669;
+}
+
+.day-has-entry::after {
+  content: '';
+  position: absolute;
+  bottom: 4px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 4px;
+  height: 4px;
+  background: #059669;
+  border-radius: 50%;
+}
+
+.rdp-day_selected.day-has-entry::after {
+  background: white;
+}
+
+.rdp-day_outside {
+  color: #d1d5db;
+}
+
+.rdp-day_disabled {
+  color: #d1d5db;
+  cursor: not-allowed;
+}
+
+@media (max-width: 640px) {
+  .calendar-wrapper {
+    padding: 16px 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 100%;
+    box-sizing: border-box;
+  }
+
+  .rdp {
+    --rdp-cell-size: 38px;
+    margin: 0 auto;
+    width: 100%;
+    max-width: 320px;
+  }
+
+  .rdp-day {
+    width: 38px;
+    height: 38px;
+    font-size: 13px;
+  }
+
+  .rdp-head_cell {
+    font-size: 12px;
+    width: 38px;
+  }
+
+  .rdp-caption_label {
+    font-size: 16px;
+  }
+
+  .rdp-nav_button {
+    width: 28px;
+    height: 28px;
+  }
+}
+
+@media (max-width: 360px) {
+  .rdp {
+    --rdp-cell-size: 28px;
+  }
+
+  .rdp-day {
+    width: 28px;
+    height: 28px;
+    font-size: 11px;
+  }
+
+  .rdp-head_cell {
+    font-size: 11px;
+    width: 28px;
+  }
+}
