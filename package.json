@@ -1,9 +1,9 @@
 {
   "name": "diary2",
-  "private": true,
+  "private": false,
   "version": "0.0.0",
   "type": "module",
-  "homepage": "https://choan616.github.io/",
+  "homepage": "https://github.com/choan616/choan616.github.io",
   "scripts": {
     "dev": "vite",
     "build": "vite build",
