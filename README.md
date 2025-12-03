@@ -66,34 +66,57 @@ npm run preview
 
 ---
 
-## ⚙️ Google Drive 설정 (선택사항)
+## ⚙️ 환경 설정
 
-백업/복원 기능을 사용하려면 Google Drive API 설정이 필요합니다.
+### Google Drive API 설정 (백업/복원 기능 사용 시 필수)
 
-### 1단계: Google Cloud Console 설정
+백업/복원 기능을 사용하려면 Google Drive API 자격증명이 필요합니다.
+
+#### 1단계: 환경 변수 파일 생성
+
+```bash
+# .env.example을 복사하여 .env 파일 생성
+cp .env.example .env
+```
+
+#### 2단계: Google Cloud Console 설정
 
 1. [Google Cloud Console](https://console.cloud.google.com) 접속
 2. 새 프로젝트 생성
 3. **API 및 서비스** → **라이브러리** 
-4. **Google Drive API** 검색 및 사용 설정
+4. **Google Drive API** 검색 및 활성화
 5. **사용자 인증 정보** → **사용자 인증 정보 만들기**
-6. **OAuth 2.0 클라이언트 ID** 선택
-7. 애플리케이션 유형: **웹 애플리케이션**
-8. **승인된 JavaScript 원본** 추가:
+
+#### 3단계: OAuth 2.0 클라이언트 ID 생성
+
+1. **OAuth 2.0 클라이언트 ID** 선택
+2. 애플리케이션 유형: **웹 애플리케이션**
+3. **승인된 JavaScript 원본** 추가:
    - `http://localhost:5173`
    - `http://localhost:4173`
-   - (프로덕션 도메인)
+   - 프로덕션 도메인 (배포 시)
+4. 생성된 **클라이언트 ID** 복사
 
-### 2단계: API 키 설정
+#### 4단계: API 키 생성
 
-`src/services/googleDrive.js` 파일을 열고 다음 값을 교체:
+1. **사용자 인증 정보** → **API 키** 생성
+2. (선택) **API 키 제한**:
+   - API 제한: Google Drive API만 선택
+   - 애플리케이션 제한: HTTP 리퍼러 설정
+3. 생성된 **API 키** 복사
 
-```javascript
-const CLIENT_ID = 'YOUR_GOOGLE_CLIENT_ID.apps.googleusercontent.com';
-const API_KEY = 'YOUR_GOOGLE_API_KEY';
+#### 5단계: .env 파일에 자격증명 입력
+
+`.env` 파일을 열어 복사한 값을 입력:
+
+```env
+VITE_GOOGLE_CLIENT_ID=your-actual-client-id.apps.googleusercontent.com
+VITE_GOOGLE_API_KEY=your-actual-api-key
 ```
 
-### 3단계: 사용
+> **⚠️ 중요**: `.env` 파일은 Git에 커밋되지 않으므로 안전합니다. 절대 `.env` 파일의 내용을 공유하거나 공개하지 마세요.
+
+#### 6단계: 사용
 
 1. 앱 하단 우측의 **🔄 백업 및 동기화** 버튼 클릭
 2. **Google 로그인** 버튼 클릭

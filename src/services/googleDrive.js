@@ -3,8 +3,16 @@
  * Google Identity Services (GIS) 및 Google Drive API v3 사용
  */
 
-const CLIENT_ID = '291869999860-jl8tklpp3h58o7qlmmkmsovalqefvueo.apps.googleusercontent.com';
-const API_KEY = 'AIzaSyApBer_mDso-nKCeMfljPwUNDQ_tNnIxk0';
+// 환경 변수에서 Google API 자격증명 로드
+const CLIENT_ID = import.meta.env.VITE_GOOGLE_CLIENT_ID;
+const API_KEY = import.meta.env.VITE_GOOGLE_API_KEY;
+
+// 환경 변수가 설정되지 않은 경우 명확한 에러 메시지 표시
+if (!CLIENT_ID || !API_KEY) {
+  console.error('Google API credentials are missing!');
+  console.error('Please create a .env file with VITE_GOOGLE_CLIENT_ID and VITE_GOOGLE_API_KEY');
+  console.error('See .env.example for template');
+}
 
 const DISCOVERY_DOCS = ['https://www.googleapis.com/discovery/v1/apis/drive/v3/rest'];
 const SCOPES = 'https://www.googleapis.com/auth/drive.file';
