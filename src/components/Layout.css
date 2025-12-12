@@ -102,23 +102,22 @@
   display: flex;
   flex-direction: column;
   gap: 16px;
-  overflow: hidden;
+  overflow-y: auto; /* Changed from overflow: hidden */
 }
 
 .content-top {
   height: 400px;
+  margin-bottom: 10px;
   flex-shrink: 0;
 }
 
 .content-bottom {
   flex: 1;
-  overflow: hidden;
+  overflow-y: auto;
 }
 
 .content-bottom.full-height {
   flex: 1;
-  min-height: 100%;
-  height: 100%;
 }
 
 /* Mobile Menu Actions */
