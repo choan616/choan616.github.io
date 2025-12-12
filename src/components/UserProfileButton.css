@@ -1,0 +1,228 @@
+/* f:\LAB\DIARY2\src\components\UserProfileButton.css */
+/* Inspired by Google Drive's user profile menu */
+
+/* --- Base --- */
+.user-profile-button {
+  position: relative;
+  font-family: 'Roboto', 'Noto Sans KR', -apple-system, BlinkMacSystemFont, 'Segoe UI',
+    Helvetica, Arial, sans-serif;
+}
+
+/* --- Toggle Button (Avatar) --- */
+.profile-toggle {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
+  padding: 0;
+  background-color: transparent;
+  border: none;
+  border-radius: 50%;
+  cursor: pointer;
+  transition: background-color 0.2s ease-in-out;
+  overflow: hidden;
+}
+
+.profile-toggle:hover {
+  background-color: rgba(0, 0, 0, 0.08);
+}
+
+.profile-toggle:focus-visible {
+  outline: 2px solid var(--color-primary, #4c66fb);
+  outline-offset: 2px;
+}
+
+.profile-avatar {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  background: linear-gradient(
+    135deg,
+    var(--color-primary-light, #657ef8) 0%,
+    var(--color-primary, #4c66fb) 100%
+  );
+  color: var(--color-text-on-primary, white);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 15px;
+  font-weight: 600;
+  text-transform: uppercase;
+  user-select: none;
+}
+
+/* --- Dropdown Menu --- */
+.profile-backdrop {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: transparent;
+  z-index: 998;
+}
+
+.profile-menu {
+  position: absolute;
+  top: calc(100% + 12px);
+  right: 0;
+  width: 360px;
+  background-color: #fff;
+  border-radius: 16px;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
+  border: 1px solid rgba(0, 0, 0, 0.1);
+  z-index: 999;
+  overflow: hidden;
+  animation: fadeInScale 0.15s ease-out;
+  transform-origin: top right;
+  display: flex;
+  flex-direction: column;
+}
+
+@keyframes fadeInScale {
+  from {
+    opacity: 0;
+    transform: scale(0.95);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+/* Menu Header */
+.profile-menu-header {
+  padding: 24px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 16px;
+  text-align: center;
+}
+
+.profile-avatar-large {
+  width: 80px;
+  height: 80px;
+  border-radius: 50%;
+  background: linear-gradient(
+    135deg,
+    var(--color-primary-light, #657ef8),
+    var(--color-primary, #4c66fb)
+  );
+  color: var(--color-text-on-primary, white);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 36px;
+  font-weight: 500;
+  text-transform: uppercase;
+}
+
+.profile-menu-name {
+  font-size: 22px;
+  font-weight: 500;
+  color: #202124;
+}
+
+.profile-menu-email {
+  font-size: 15px;
+  color: #5f6368;
+}
+
+/* Sync Status Area */
+.profile-menu-sync-status {
+  padding: 16px 24px;
+  border-top: 1px solid #e0e0e0;
+  border-bottom: 1px solid #e0e0e0;
+}
+
+.sync-status {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  font-size: 14px;
+  font-weight: 400;
+  padding: 12px;
+  border-radius: 8px;
+  color: #3c4043;
+  background-color: #f1f3f4;
+}
+
+.sync-status .icon {
+  width: 20px;
+  height: 20px;
+  flex-shrink: 0;
+}
+.sync-status.success {
+  color: #1e8e3e;
+  background-color: #e6f4ea;
+}
+.sync-status.error {
+  color: #d93025;
+  background-color: #fce8e6;
+}
+.sync-status.offline {
+  color: #5f6368;
+  background-color: #f1f3f4;
+}
+.sync-status.syncing .icon {
+  animation: spin 1.5s linear infinite;
+}
+
+@keyframes spin {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+/* Menu Navigation */
+.profile-menu-nav ul {
+  list-style: none;
+  margin: 0;
+  padding: 8px 0;
+}
+
+.profile-menu-divider {
+  height: 1px;
+  background: #e0e0e0;
+  margin: 8px 0;
+}
+
+.profile-menu-item {
+  width: 100%;
+  padding: 12px 24px;
+  border: none;
+  background: transparent;
+  text-align: left;
+  cursor: pointer;
+  transition: background-color 0.15s ease;
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  font-size: 15px;
+  color: #3c4043;
+}
+
+.profile-menu-item:hover {
+  background-color: rgba(0, 0, 0, 0.04);
+}
+
+.profile-menu-item .menu-item-icon {
+  width: 20px;
+  height: 20px;
+  color: #5f6368;
+}
+
+.profile-menu-item.logout {
+  color: #d93025;
+}
+.profile-menu-item.logout .menu-item-icon {
+  color: #d93025;
+}
+.profile-menu-item.logout:hover {
+  background-color: #fce8e6;
+}

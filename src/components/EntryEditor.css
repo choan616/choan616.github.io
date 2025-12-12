@@ -4,7 +4,7 @@
   flex-direction: column;
   background: white;
   border-radius: 12px;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  border:1px solid #e5e7eb;
   overflow: hidden;
 }
 
@@ -34,8 +34,16 @@
   display: flex;
   gap: 8px;
   padding: 16px 20px;
+  align-items: center;
   border-bottom: 1px solid #e5e7eb;
   background: #f9fafb;
+  position: relative; /* z-index 적용을 위해 추가 */
+  z-index: 10; /* 다른 요소들 위에 표시되도록 z-index 설정 */
+}
+
+.editor-toolbar .flex {
+  display: flex;
+  gap: 8px;
 }
 
 .btn {
@@ -287,10 +295,16 @@
   font-size: 16px;
   line-height: 1.8;
   color: #374151;
+  white-space: pre-wrap; /* Preserve whitespace and newlines */
 }
 
 .entry-content p {
-  margin: 0 0 12px 0;
+  /* margin: 0 0 10px 0; */
+  margin: 0; /* Remove default paragraph margin */
+  user-select: none;
+  -webkit-user-select: none; /* 크롬, 사파리 등 */
+  -moz-user-select: none;    /* 파이어폭스 */
+  -ms-user-select: none;     /* MS 엣지 */
 }
 
 .entry-content .placeholder {
@@ -319,4 +333,122 @@
     grid-template-columns: repeat(auto-fill, minmax(100px, 1fr));
     gap: 8px;
   }
+
+  .btn-edit, .btn-save, .btn-cancel {
+    min-width: 48px;
+    min-height: 48px;
+    font-size: 18px;
+    padding: 12px 20px;
+    z-index: 20;
+    touch-action: manipulation;
+  }
+}
+
+/* �ؽ�Ʈ ũ�� ���� */
+.font-size-small .entry-content p {
+  font-size: 14px;
+  line-height: 1.4;
+}
+
+.font-size-medium .entry-content p {
+  font-size: 16px;
+  line-height: 1.5;
+}
+
+.font-size-large .entry-content p {
+  font-size: 18px;
+  line-height: 1.6;
+}
+
+/* Range Slider Styles */
+.font-size-label {
+  font-size: 14px;
+  font-weight: 600;
+  color: #6b7280;
+}
+
+.font-size-slider {
+  width: 80px;
+  height: 4px;
+  margin-top: 10px;
+  -webkit-appearance: none;
+  appearance: none;
+  background: #e5e7eb;
+  border-radius: 2px;
+  outline: none;
+  cursor: pointer;
+}
+
+.font-size-slider::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 16px;
+  height: 16px;
+  background: #3b82f6;
+  border-radius: 50%;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.font-size-slider::-webkit-slider-thumb:hover {
+  background: #2563eb;
+  transform: scale(1.2);
+}
+
+.font-size-slider::-moz-range-thumb {
+  width: 16px;
+  height: 16px;
+  background: #3b82f6;
+  border: none;
+  border-radius: 50%;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.font-size-slider::-moz-range-thumb:hover {
+  background: #2563eb;
+  transform: scale(1.2);
+}
+
+/* Font Size Slider Labels */
+.font-size-controls {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+  border-left: 1px solid #e5e7eb;
+  padding-left: 12px;
+  min-width: 80px;
+}
+
+.font-size-labels {
+  display: flex;
+  justify-content: space-between;
+  width: 100%;
+  padding: 0 2px;
+  margin-bottom: -4px;
+  align-items: flex-end;
+}
+
+.font-size-labels span {
+  color: #6b7280;
+  font-weight: 600;
+  cursor: pointer;
+  line-height: 1;
+}
+
+.font-size-labels span:hover {
+  color: #3b82f6;
+}
+
+.label-small {
+  font-size: 11px;
+}
+
+.label-medium {
+  font-size: 14px;
+}
+
+.label-large {
+  font-size: 17px;
 }

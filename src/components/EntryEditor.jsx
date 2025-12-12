@@ -1,29 +1,50 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { useToast } from './Toast';
-import { deleteImage } from '../db/adapter';
+import { useToast } from '../hooks/useToast';
+import { settingsManager } from '../services/settingsManager';
 import './EntryEditor.css';
 
-export function EntryEditor({ entry, onSave, isEditing, setIsEditing }) {
+export function EntryEditor({ entry, onSave, isEditing, setIsEditing, onImageDelete, onDelete }) {
   const [formData, setFormData] = useState({
     title: '',
     content: '',
     tags: ''
   });
   const [selectedFiles, setSelectedFiles] = useState([]);
+  const [fontSize, setFontSize] = useState(settingsManager.get('fontSize') || 'medium');
   const [isSaving, setIsSaving] = useState(false);
   const fileInputRef = useRef(null);
   const { showToast } = useToast();
+  const touchTimer = useRef(null); // 'this.touchTimer' 대신 useRef 사용
+
+  // entry prop을 기반으로 폼 데이터를 리셋하는 함수
+  const resetFormFromEntry = (currentEntry) => {
+    setFormData({
+      title: currentEntry?.title || '',
+      content: currentEntry?.content || '',
+      tags: (currentEntry?.tags || []).join(', ')
+    });
+    setSelectedFiles([]);
+  };
 
   useEffect(() => {
     if (entry) {
-      setFormData({
-        title: entry.title || '',
-        content: entry.content || '',
-        tags: (entry.tags || []).join(', ')
-      });
-      setSelectedFiles([]);
+      resetFormFromEntry(entry);
     }
   }, [entry]);
+
+  // 설정 변경 감지
+  useEffect(() => {
+    const handleSettingsChange = (settings) => {
+      setFontSize(settings.fontSize);
+    };
+    settingsManager.addListener(handleSettingsChange);
+    return () => settingsManager.removeListener(handleSettingsChange);
+  }, []);
+
+  // 컴포넌트 언마운트 시 생성된 Object URL 해제 (메모리 누수 방지)
+  useEffect(() => {
+    return () => selectedFiles.forEach(file => URL.revokeObjectURL(file.preview));
+  }, [selectedFiles]);
 
   const handleSave = async () => {
     if (isSaving) return;
@@ -48,19 +69,15 @@ export function EntryEditor({ entry, onSave, isEditing, setIsEditing }) {
       setSelectedFiles([]);
     } catch (error) {
       console.error('저장 오류:', error);
-      showToast('저장 중 오류가 발생했습니다', 'error');
+      // alert()를 사용하여 에러 메시지가 휘발되지 않도록 임시 조치
+      alert(`저장 중 오류가 발생했습니다: ${error.message || '알 수 없는 오류'}`);
     } finally {
       setIsSaving(false);
     }
   };
 
   const handleCancel = () => {
-    setFormData({
-      title: entry?.title || '',
-      content: entry?.content || '',
-      tags: (entry?.tags || []).join(', ')
-    });
-    setSelectedFiles([]);
+    resetFormFromEntry(entry);
     setIsEditing(false);
   };
 
@@ -74,30 +91,43 @@ export function EntryEditor({ entry, onSave, isEditing, setIsEditing }) {
       showToast('이미지 파일만 업로드할 수 있습니다', 'warning');
     }
 
-    setSelectedFiles(prev => [...prev, ...imageFiles]);
+    // 10장 제한 체크
+    const existingCount = entry.images?.length || 0;
+    const selectedCount = selectedFiles.length;
+    const totalCount = existingCount + selectedCount + imageFiles.length;
+
+    if (totalCount > 10) {
+      const remaining = 10 - existingCount - selectedCount;
+      if (remaining <= 0) {
+        showToast('최대 10장까지만 업로드할 수 있습니다', 'error');
+        return;
+      }
+      showToast(
+        `최대 10장까지 업로드할 수 있습니다. ${remaining}장만 추가됩니다.`,
+        'warning'
+      );
+      const newFiles = imageFiles.slice(0, remaining).map(file => Object.assign(file, { preview: URL.createObjectURL(file) }));
+      setSelectedFiles(prev => [...prev, ...newFiles]);
+    } else {
+      const newFiles = imageFiles.map(file => Object.assign(file, { preview: URL.createObjectURL(file) }));
+      setSelectedFiles(prev => [...prev, ...newFiles]);
+    }
+    // 파일 선택 후 input 값 초기화 (동일 파일 재선택 가능하도록)
+    e.target.value = '';
   };
 
   const handleRemoveSelectedFile = (index) => {
+    const fileToRemove = selectedFiles[index];
+    URL.revokeObjectURL(fileToRemove.preview); // 메모리 해제
     setSelectedFiles(prev => prev.filter((_, i) => i !== index));
   };
 
-  const handleDeleteExistingImage = async (imageId) => {
-    if (!confirm('이 이미지를 삭제하시겠습니까?')) {
-      return;
-    }
-
-    try {
-      await deleteImage(imageId);
-      showToast('이미지가 삭제되었습니다', 'success');
-
-      // 부모 컴포넌트에 새로고침 요청
-      if (onSave) {
-        window.location.reload(); // 임시 방편, 더 나은 방법은 상태 관리
-      }
-    } catch (error) {
-      console.error('이미지 삭제 오류:', error);
-      showToast('이미지 삭제 중 오류가 발생했습니다', 'error');
-    }
+  // 이미지 삭제 핸들러: DB에서 직접 삭제하는 대신 부모 컴포넌트에 알리기만 함
+  const handleDeleteExistingImage = (imageId) => {
+    // 콜백을 통해 부모 컴포넌트(App.jsx)에 즉시 알림
+    // App.jsx의 handleImageDelete가 상태를 업데이트하고,
+    // 최종 저장은 handleSave에서 처리됨
+    onImageDelete(imageId);
   };
 
   if (!entry) {
@@ -115,10 +145,10 @@ export function EntryEditor({ entry, onSave, isEditing, setIsEditing }) {
   const isEmptyEntry = !entry.title && !entry.content;
 
   return (
-    <div className="entry-editor">
-      <div className="editor-toolbar">
+    <div className="entry-editor flex flex-col h-full">
+      <div className="editor-toolbar flex justify-between items-center p-2 border-b">
         {isEditing ? (
-          <>
+          <div className="flex space-x-2">
             <button
               className="btn btn-save"
               onClick={handleSave}
@@ -133,29 +163,89 @@ export function EntryEditor({ entry, onSave, isEditing, setIsEditing }) {
             >
               취소
             </button>
-          </>
+          </div>
         ) : (
-          <button className="btn btn-edit" onClick={() => setIsEditing(true)}>
-            {isEmptyEntry ? '✏️ 쓰기' : '✏️ 편집'}
-          </button>
+          <div className="flex items-center space-x-2">
+            <button
+              className="btn btn-copy"
+              onClick={() => {
+                const textToCopy = entry.content || '';
+                if (!textToCopy) return;
+                navigator.clipboard.writeText(textToCopy).then(() => {
+                  showToast('클립보드에 복사되었습니다', 'success');
+                }).catch(() => {
+                  showToast('복사에 실패했습니다', 'error');
+                });
+              }}
+            >
+              📋 복사
+            </button>
+            <button className="btn btn-edit" onClick={() => setIsEditing(true)}>
+              {isEmptyEntry ? '✏️ 쓰기' : '✏️ 편집'}
+            </button>
+
+            {/* 삭제 버튼 추가 */}
+            {entry && (entry.title || entry.content || (entry.images && entry.images.length > 0)) && (
+              <button
+                className="btn btn-delete text-red-600 hover:bg-red-50 px-2 py-1 rounded"
+                onClick={onDelete}
+              >
+                🗑️ 삭제
+              </button>
+            )}
+          </div>
+        )}
+        {!isEditing && (
+            // 텍스트 크기 조절
+            <div className="font-size-controls">
+              <div className="font-size-labels">
+                <span className="label-small" onClick={() => settingsManager.set('fontSize', 'small')}>A</span>
+                <span className="label-medium" onClick={() => settingsManager.set('fontSize', 'medium')}>A</span>
+                <span className="label-large" onClick={() => settingsManager.set('fontSize', 'large')}>A</span>
+              </div>
+              <input
+                type="range"
+                min="0"
+                max="2"
+                step="1"
+                value={fontSize === 'small' ? 0 : fontSize === 'medium' ? 1 : 2}
+                onChange={(e) => {
+                  const value = parseInt(e.target.value);
+                  const size = value === 0 ? 'small' : value === 1 ? 'medium' : 'large';
+                  settingsManager.set('fontSize', size);
+                }}
+                onMouseUp={(e) => {
+                  const value = parseInt(e.target.value);
+                  const label = value === 0 ? '작게' : value === 1 ? '보통' : '크게';
+                  showToast(label, 'success', 800);
+                }}
+                onTouchEnd={(e) => {
+                  const value = parseInt(e.target.value);
+                  const label = value === 0 ? '작게' : value === 1 ? '보통' : '크게';
+                  showToast(label, 'success', 800);
+                }}
+                className="font-size-slider"
+                title="텍스트 크기 조절"
+              />
+            </div> 
         )}
       </div>
 
       {isEditing ? (
-        <div className="editor-form">
+        <div className="editor-form flex-grow overflow-y-auto p-4">
           <input
             type="text"
             className="input-title"
             placeholder="제목을 입력하세요"
             value={formData.title}
-            onChange={(e) => setFormData({ ...formData, title: e.target.value })}
+            onChange={(e) => setFormData(prev => ({ ...prev, title: e.target.value }))}
           />
 
           <textarea
             className="input-content"
             placeholder="오늘 하루는 어땠나요?&#10;자유롭게 작성해보세요..."
             value={formData.content}
-            onChange={(e) => setFormData({ ...formData, content: e.target.value })}
+            onChange={(e) => setFormData(prev => ({ ...prev, content: e.target.value }))}
           />
 
           <input
@@ -163,17 +253,23 @@ export function EntryEditor({ entry, onSave, isEditing, setIsEditing }) {
             className="input-tags"
             placeholder="태그 (쉼표로 구분, 예: 여행, 맛집, 친구)"
             value={formData.tags}
-            onChange={(e) => setFormData({ ...formData, tags: e.target.value })}
+            onChange={(e) => setFormData(prev => ({ ...prev, tags: e.target.value }))}
           />
 
           <div className="image-upload-section">
             <div className="upload-header">
-              <h3>이미지 추가</h3>
+              <h3>
+                이미지 추가 (
+                {((entry.images?.length || 0) + selectedFiles.length)}/10)
+              </h3>
               <button
                 className="btn btn-upload"
                 onClick={() => fileInputRef.current?.click()}
+                disabled={(entry.images?.length || 0) + selectedFiles.length >= 10}
               >
-                📷 이미지 선택
+                {(entry.images?.length || 0) + selectedFiles.length >= 10
+                  ? '🚫 최대 10장'
+                  : '📷 이미지 선택'}
               </button>
               <input
                 ref={fileInputRef}
@@ -212,7 +308,7 @@ export function EntryEditor({ entry, onSave, isEditing, setIsEditing }) {
                 <div className="image-grid">
                   {selectedFiles.map((file, index) => (
                     <div key={index} className="image-thumb">
-                      <img src={URL.createObjectURL(file)} alt="새 이미지" />
+                      <img src={file.preview} alt="새 이미지" />
                       <button
                         className="btn-delete-image"
                         onClick={() => handleRemoveSelectedFile(index)}
@@ -228,8 +324,8 @@ export function EntryEditor({ entry, onSave, isEditing, setIsEditing }) {
           </div>
         </div>
       ) : (
-        <div className="viewer-content">
-          <h1 className="entry-title">{entry.title || '제목 없음'}</h1>
+        <div className={`viewer-content font-size-${fontSize} flex-grow overflow-y-auto p-4`}>
+          {entry.title && <h1 className="entry-title">{entry.title}</h1>}
 
           <div className="entry-meta">
             <span className="entry-date">📅 {entry.date}</span>
@@ -242,7 +338,26 @@ export function EntryEditor({ entry, onSave, isEditing, setIsEditing }) {
             )}
           </div>
 
-          <div className="entry-content">
+          <div
+            className="entry-content"
+            onContextMenu={(e) => {
+              // 모바일에서 롱프레스 시 기본 메뉴 뜨는 것 방지 (선택적)
+              e.preventDefault(); 
+            }}
+            onTouchStart={() => {
+              touchTimer.current = setTimeout(() => {
+                navigator.clipboard.writeText(entry.content).then(() => {
+                  showToast('클립보드에 복사되었습니다', 'success');
+                });
+              }, 800); // 800ms 롱프레스
+            }}
+            onTouchEnd={() => {
+              if (touchTimer.current) clearTimeout(touchTimer.current);
+            }}
+            onTouchMove={() => {
+              if (touchTimer.current) clearTimeout(touchTimer.current);
+            }}
+          >
             {entry.content ? (
               entry.content.split('\n').map((line, i) => (
                 <p key={i}>{line || '\u00A0'}</p>

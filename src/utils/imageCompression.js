@@ -18,8 +18,10 @@ export async function compressImage(file, options = {}) {
     maxWidth = 1920,
     maxHeight = 1920,
     quality = 0.85,
-    format = 'webp'
+    format = 'jpeg'
   } = options;
+
+  console.log(`compressImage called with format: ${format}, quality: ${quality}`);
 
   return new Promise((resolve, reject) => {
     const reader = new FileReader();
@@ -56,13 +58,17 @@ export async function compressImage(file, options = {}) {
           ctx.drawImage(img, 0, 0, width, height);
 
           // Blob으로 변환
-          const mimeType = format === 'webp' && isWebPSupported()
+          const webpSupported = isWebPSupported();
+          const mimeType = format === 'webp' && webpSupported
             ? 'image/webp'
             : 'image/jpeg';
+            
+          console.log(`isWebPSupported: ${webpSupported}, Final MIME Type for toBlob: ${mimeType}`);
 
           canvas.toBlob(
             (blob) => {
               if (blob) {
+                console.log(`toBlob successful, resulting blob type: ${blob.type}`);
                 resolve(blob);
               } else {
                 reject(new Error('이미지 압축에 실패했습니다.'));
@@ -156,7 +162,19 @@ export async function blobToBase64(blob) {
  * @returns {Blob}
  */
 export function base64ToBlob(base64) {
+  console.log('base64ToBlob called with:', typeof base64, base64 ? base64.substring(0, 50) + '...' : base64); // 입력 로그
+
+  if (typeof base64 !== 'string' || !base64 || base64 === 'null' || base64 === 'undefined') { // 'null', 'undefined' 문자열도 처리
+    console.warn('Invalid or empty base64 string provided to base64ToBlob, returning empty Blob:', base64);
+    return new Blob([]); // 유효하지 않은 경우 빈 Blob 반환 (createObjectURL이 에러를 안 내도록)
+  }
+
   const parts = base64.split(';base64,');
+  if (parts.length !== 2) {
+      console.error('base64ToBlob: Invalid base64 format (missing ";base64,")', base64);
+      return new Blob([]);
+  }
+  
   const contentType = parts[0].split(':')[1];
   const raw = window.atob(parts[1]);
   const rawLength = raw.length;
@@ -166,7 +184,9 @@ export function base64ToBlob(base64) {
     uInt8Array[i] = raw.charCodeAt(i);
   }
 
-  return new Blob([uInt8Array], { type: contentType });
+  const resultBlob = new Blob([uInt8Array], { type: contentType });
+  console.log('base64ToBlob returned Blob:', resultBlob.type, resultBlob.size); // 출력 로그
+  return resultBlob;
 }
 
 /**

@@ -1,0 +1,80 @@
+/* SessionLockModal 알림/에러 스타일 개선 */
+.styled-error {
+  margin: 12px 0 8px 0;
+  padding: 8px 14px;
+  background: #fee2e2;
+  color: #b91c1c;
+  border-radius: 6px;
+  font-size: 15px;
+  font-weight: 500;
+  text-align: center;
+  box-shadow: 0 2px 8px rgba(220,38,38,0.08);
+}
+.styled-meta {
+  margin: 8px 0 16px 0;
+  padding: 6px 12px;
+  background: #f3f4f6;
+  color: #374151;
+  border-radius: 6px;
+  font-size: 14px;
+  text-align: center;
+  font-weight: 400;
+}
+/* Global modal styles used by PIN setup and lock modals */
+.modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.45);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 11000;
+  backdrop-filter: blur(4px);
+}
+
+.modal {
+  background: #ffffff;
+  border-radius: 14px;
+  padding: 20px 20px 24px 20px;
+  width: min(420px, calc(100vw - 40px));
+  box-shadow: 0 12px 40px rgba(2,6,23,0.2);
+  animation: modalIn 220ms cubic-bezier(.2,.9,.2,1);
+}
+
+@keyframes modalIn {
+  from { transform: translateY(-8px) scale(.995); opacity: 0 } 
+  to { transform: translateY(0) scale(1); opacity: 1 }
+}
+
+.modal h3 {
+  margin: 0 0 8px 0;
+  font-size: 18px;
+  color: #111827;
+}
+
+.modal p {
+  margin: 0 0 12px 0;
+  color: #6b7280;
+  font-size: 13px;
+}
+
+.modal form { display:flex; flex-direction:column; gap:12px }
+
+.modal input[type="text"], .modal input[type="password"] , .modal input[placeholder] {
+  padding: 12px 14px;
+  border-radius: 10px;
+  border: 1px solid #e5e7eb;
+  font-size: 16px;
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.modal .error { color:#b91c1c; background:#fff5f5; padding:8px 10px; border-radius:8px; font-size:13px }
+.modal .meta { color:#6b7280; font-size:13px }
+
+.modal button { padding:10px 14px; border-radius:10px; font-weight:600; cursor:pointer }
+.modal button[type="submit"] { background: #2563eb; color:white; border:none }
+.modal button:disabled { opacity:0.6; cursor:not-allowed }
+
+.pin-controls { display:flex; gap:8px; align-items:center }
+.pin-controls input { width:90px; text-align:center }

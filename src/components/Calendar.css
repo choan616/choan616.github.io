@@ -62,7 +62,7 @@
 .rdp-day {
   width: 40px;
   height: 40px;
-  border-radius: 8px;
+  border-radius: 50%;
   font-size: 14px;
   transition: all 0.2s;
   position: relative;
@@ -105,13 +105,17 @@
   background: white;
 }
 
-.rdp-day_outside {
+.rdp-outside {
   color: #d1d5db;
 }
 
 .rdp-day_disabled {
   color: #d1d5db;
   cursor: not-allowed;
+}
+
+.rdp-months { 
+  margin: 0 auto;
 }
 
 @media (max-width: 640px) {

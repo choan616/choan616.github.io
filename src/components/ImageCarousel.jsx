@@ -27,7 +27,7 @@ export function ImageCarousel({ images = [] }) {
   }
 
   return (
-    <div className="image-carousel">
+    <div className="image-carousel" style={{ zIndex: 0 }}>
       <Swiper
         ref={swiperRef}
         modules={[Navigation, Pagination, EffectFade]}

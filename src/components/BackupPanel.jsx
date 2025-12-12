@@ -1,18 +1,21 @@
 import React, { useState, useEffect } from 'react';
 import { googleDriveService } from '../services/googleDrive';
-import { exportAllData, importData } from '../db/adapter';
-import { useToast } from './Toast';
+import { useSyncContext } from '../contexts/SyncContext';
+import { useToast } from '../hooks/useToast';
 import './BackupPanel.css';
+import { SyncStatus } from '../constants';
+import JSZip from 'jszip';
 
-export function BackupPanel({ onClose }) {
+export function BackupPanel({ currentUser, onClose, onDataRestored }) {
   const [isOpen, setIsOpen] = useState(true);
   const [isAuthenticated, setIsAuthenticated] = useState(false);
-  const [currentUser, setCurrentUser] = useState(null);
+  const [googleUser, setGoogleUser] = useState(null);
   const [backupFiles, setBackupFiles] = useState([]);
   const [isLoading, setIsLoading] = useState(false);
   const [backupProgress, setBackupProgress] = useState(0);
   const [restoreProgress, setRestoreProgress] = useState(0);
   const { showToast } = useToast();
+  const { status, lastSyncTime, triggerSync } = useSyncContext();
 
   useEffect(() => {
     checkAuthStatus();
@@ -24,7 +27,7 @@ export function BackupPanel({ onClose }) {
       setIsAuthenticated(googleDriveService.isAuthenticated);
 
       if (googleDriveService.isAuthenticated) {
-        setCurrentUser(googleDriveService.getCurrentUser());
+        setGoogleUser(googleDriveService.getCurrentUser());
       }
     } catch (error) {
       console.error('인증 확인 오류:', error);
@@ -36,7 +39,7 @@ export function BackupPanel({ onClose }) {
       setIsLoading(true);
       await googleDriveService.signIn();
       setIsAuthenticated(true);
-      setCurrentUser(googleDriveService.getCurrentUser());
+      setGoogleUser(googleDriveService.getCurrentUser());
       showToast('Google 로그인 성공', 'success');
       await loadBackupFiles();
     } catch (error) {
@@ -51,7 +54,7 @@ export function BackupPanel({ onClose }) {
     try {
       await googleDriveService.signOut();
       setIsAuthenticated(false);
-      setCurrentUser(null);
+      setGoogleUser(null);
       setBackupFiles([]);
       showToast('로그아웃 되었습니다', 'info');
     } catch (error) {
@@ -62,7 +65,9 @@ export function BackupPanel({ onClose }) {
   async function loadBackupFiles() {
     try {
       setIsLoading(true);
-      const files = await googleDriveService.listBackupFiles();
+      let files = await googleDriveService.listBackupFiles();
+      // 파일을 최신순으로 정렬
+      files.sort((a, b) => new Date(b.createdTime) - new Date(a.createdTime));
       setBackupFiles(files);
     } catch (error) {
       console.error('파일 목록 로드 오류:', error);
@@ -79,20 +84,28 @@ export function BackupPanel({ onClose }) {
 
       showToast('백업을 시작합니다...', 'info');
 
-      // 데이터 내보내기
-      let data;
+      // 1. 데이터를 ZIP 파일로 압축
+      let zipBlob;
+      const { exportUserDataAsZip } = await import('../db/adapter');
       try {
-        data = await exportAllData();
-        console.log('백업 데이터 생성 완료. 크기:', JSON.stringify(data).length);
+        zipBlob = await exportUserDataAsZip(currentUser.userId);
+        console.log('백업 ZIP 파일 생성 완료. 크기:', zipBlob.size);
+
+        // 생성된 ZIP 파일이 너무 작으면 (유효하지 않은 ZIP 파일 가능성) 업로드 중단
+        if (zipBlob.size < 22) { // 22바이트는 비어있는 ZIP 파일의 최소 크기
+          showToast('백업할 데이터가 없습니다.', 'info');
+          setIsLoading(false);
+          return;
+        }
       } catch (exportError) {
         console.error('데이터 내보내기 오류:', exportError);
         throw new Error(`데이터 생성 실패: ${exportError.message}`);
       }
       setBackupProgress(30);
 
-      // Google Drive에 업로드
-      const result = await googleDriveService.backupToGoogleDrive(
-        data,
+      // 2. Google Drive에 ZIP 파일 업로드
+      const result = await googleDriveService.syncToGoogleDrive(
+        zipBlob, // 데이터를 직접 전달
         (percent) => setBackupProgress(30 + percent * 0.7)
       );
 
@@ -111,7 +124,7 @@ export function BackupPanel({ onClose }) {
   }
 
   async function handleRestore(fileId, fileName) {
-    if (!confirm(`"${fileName}"을(를) 복원하시겠습니까?\n\n⚠️ 기존 데이터가 덮어쓰여집니다!`)) {
+    if (!confirm(`"${fileName}"을(를) 복원하시겠습니까?\n\n클라우드의 데이터가 현재 기기에 병합됩니다.`)) {
       return;
     }
 
@@ -121,22 +134,29 @@ export function BackupPanel({ onClose }) {
 
       showToast('복원을 시작합니다...', 'info');
 
-      // Google Drive에서 다운로드
-      const data = await googleDriveService.restoreFromGoogleDrive(
+      // 1. Google Drive에서 ZIP 파일 다운로드 (ArrayBuffer)
+      const zipArrayBuffer = await googleDriveService.restoreFromGoogleDrive(
         fileId,
-        (percent) => setRestoreProgress(percent * 0.7)
+        (percent) => setRestoreProgress(percent * 0.5) // 다운로드 진행률을 50%까지 표시
       );
 
-      // 데이터 가져오기
-      await importData(data, false); // false = 덮어쓰기
+      if (!zipArrayBuffer) {
+        throw new Error('Google Drive에서 파일을 다운로드하지 못했습니다.');
+      }
+
+      // 2. ArrayBuffer를 그대로 importUserData에 전달
+      // importUserData가 내부에서 ZIP을 파싱하고 이미지를 복원합니다
+      const { importUserData } = await import('../db/adapter');
+      await importUserData(currentUser.userId, zipArrayBuffer, true); // true = 병합
       setRestoreProgress(100);
 
-      showToast('복원 완료! 페이지를 새로고침합니다.', 'success');
+      showToast('복원이 완료되었습니다.', 'success');
 
-      // 새로고침
+      // Add a small delay to allow any pending Service Worker messages to complete
+      // This is a diagnostic measure for "message channel closed" error
       setTimeout(() => {
-        window.location.reload();
-      }, 1000);
+        handleClose(); // 복원 후 패널 닫기
+      }, 500); // 500ms delay
     } catch (error) {
       console.error('복원 오류:', error);
       showToast(`복원 실패: ${error.message}`, 'error');
@@ -151,6 +171,7 @@ export function BackupPanel({ onClose }) {
       return;
     }
 
+    setIsLoading(true);
     try {
       await googleDriveService.deleteBackupFile(fileId);
       showToast('백업 파일이 삭제되었습니다', 'success');
@@ -158,46 +179,60 @@ export function BackupPanel({ onClose }) {
     } catch (error) {
       console.error('삭제 오류:', error);
       showToast('삭제 실패', 'error');
+    } finally {
+      setIsLoading(false);
     }
   }
 
-  async function handleExportJSON() {
+  async function handleExportZip() {
     try {
-      const data = await exportAllData();
-      const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+      const { exportUserDataAsZip } = await import('../db/adapter');
+      const blob = await exportUserDataAsZip(currentUser.userId);
       const url = URL.createObjectURL(blob);
       const a = document.createElement('a');
       a.href = url;
-      a.download = `diary_backup_${new Date().toISOString().split('T')[0]}.json`;
+      a.download = `diary_backup_${currentUser.email}_${new Date().toISOString().split('T')[0]}.zip`;
       a.click();
       URL.revokeObjectURL(url);
-      showToast('JSON 파일로 내보내기 완료', 'success');
+      showToast('ZIP 파일로 내보내기 완료', 'success');
     } catch (error) {
       console.error('내보내기 오류:', error);
       showToast('내보내기 실패', 'error');
     }
   }
 
-  async function handleImportJSON(e) {
+  async function handleImportZip(e) {
     const file = e.target.files[0];
     if (!file) return;
 
-    if (!confirm('파일을 가져오시겠습니까?\n\n⚠️ 기존 데이터가 덮어쓰여집니다!')) {
+    // We will merge data, so a simple confirmation is enough.
+    if (!confirm(`'${file.name}' 파일을 가져오시겠습니까?\n\n데이터가 현재 기기에 병합됩니다.`)) {
       e.target.value = '';
       return;
     }
 
     try {
-      const text = await file.text();
-      const data = JSON.parse(text);
-      await importData(data, false);
-      showToast('가져오기 완료! 페이지를 새로고침합니다.', 'success');
-      setTimeout(() => window.location.reload(), 1000);
+      // Read file as ArrayBuffer for importUserData
+      const { importUserData } = await import('../db/adapter');
+      const data = await file.arrayBuffer();
+      // Import with merge mode (true) to prevent data loss and duplication issues
+      await importUserData(currentUser.userId, data, true);
+      showToast('데이터를 성공적으로 가져왔습니다.', 'success');
+      // 데이터가 복원되었음을 부모에게 알림
+      if (onDataRestored) {
+        onDataRestored();
+      }
+
+      // SyncContext를 통해 부모 컴포넌트의 데이터 재로드 트리거
+      if (triggerSync) {
+        triggerSync({ silent: false }); // UI 업데이트 및 사용자 피드백을 위해 동기화 트리거
+      }
+      handleClose();
     } catch (error) {
-      console.error('가져오기 오류:', error);
-      showToast('가져오기 실패: 파일 형식이 올바르지 않습니다', 'error');
+      console.error('ZIP 가져오기 오류:', error);
+      showToast(`가져오기 실패: ${error.message}`, 'error');
     }
-    e.target.value = '';
+    e.target.value = ''; // 동일한 파일을 다시 선택할 수 있도록 초기화
   }
 
   const handleClose = () => {
@@ -214,7 +249,10 @@ export function BackupPanel({ onClose }) {
       <div className="backup-panel-overlay" onClick={handleClose} />
       <div className="backup-panel">
         <div className="backup-header">
-          <h2>💾 백업 및 동기화</h2>
+          <div>
+            <h2>💾 백업 및 동기화</h2>
+            <p className="backup-user-info">사용자: {currentUser.name || currentUser.email}</p>
+          </div>
           <button className="close-btn" onClick={handleClose}>✕</button>
         </div>
 
@@ -237,14 +275,14 @@ export function BackupPanel({ onClose }) {
             ) : (
               <div className="authenticated-section">
                 <div className="user-info">
-                  {currentUser && (
+                  {googleUser && (
                     <>
-                      {currentUser.imageUrl && (
-                        <img src={currentUser.imageUrl} alt="프로필" />
+                      {googleUser.imageUrl && (
+                        <img src={googleUser.imageUrl} alt="프로필" />
                       )}
                       <div>
-                        <div className="user-name">{currentUser.name}</div>
-                        <div className="user-email">{currentUser.email}</div>
+                        <div className="user-name">{googleUser.name}</div>
+                        <div className="user-email">{googleUser.email}</div>
                       </div>
                     </>
                   )}
@@ -259,7 +297,21 @@ export function BackupPanel({ onClose }) {
                     onClick={handleBackup}
                     disabled={isLoading}
                   >
-                    📤 지금 백업하기
+                    📤 지금 백업하기 (수동)
+                  </button>
+                  <button
+                    className="btn btn-primary"
+                    onClick={() => triggerSync()
+                      .then(() => {
+                        showToast('동기화 완료', 'success');
+                        loadBackupFiles(); // 동기화 후 목록 새로고침
+                      }).catch(err => {
+                        console.error("수동 동기화 실패:", err);
+                        showToast(err.message.includes('central directory') ? '동기화 실패: Drive의 백업 파일이 손상되었을 수 있습니다.' : `동기화 실패: ${err.message}`, 'error');
+                      })}
+                    disabled={status === SyncStatus.SYNCING}
+                  >
+                    {status === SyncStatus.SYNCING ? '🔄 동기화 중...' : '🔄 지금 동기화 (자동)'}
                   </button>
                   <button
                     className="btn btn-secondary"
@@ -268,6 +320,11 @@ export function BackupPanel({ onClose }) {
                   >
                     🔄 목록 새로고침
                   </button>
+                </div>
+
+                <div className="sync-status-info" style={{ margin: '10px 0', padding: '10px', background: '#f5f5f5', borderRadius: '4px' }}>
+                  <strong>동기화 상태:</strong> {status} <br />
+                  <strong>마지막 동기화:</strong> {lastSyncTime ? new Date(lastSyncTime).toLocaleString() : '없음'}
                 </div>
 
                 {backupProgress > 0 && (
@@ -294,7 +351,7 @@ export function BackupPanel({ onClose }) {
                   <div className="backup-files">
                     <h4>백업 파일 목록</h4>
                     <div className="file-list">
-                      {backupFiles.map(file => (
+                      {backupFiles.map((file, index) => (
                         <div key={file.id} className="file-item">
                           <div className="file-info">
                             <div className="file-name">📄 {file.name}</div>
@@ -303,6 +360,9 @@ export function BackupPanel({ onClose }) {
                               {' · '}
                               {googleDriveService.constructor.formatFileSize(file.size)}
                             </div>
+                            {index === 0 && (
+                              <span className="latest-backup-badge">가장 최근</span>
+                            )}
                           </div>
                           <div className="file-actions">
                             <button
@@ -314,6 +374,7 @@ export function BackupPanel({ onClose }) {
                             <button
                               className="btn btn-small btn-danger"
                               onClick={() => handleDeleteBackup(file.id, file.name)}
+                              disabled={isLoading}
                             >
                               삭제
                             </button>
@@ -329,22 +390,22 @@ export function BackupPanel({ onClose }) {
 
           {/* 수동 백업 섹션 */}
           <section className="backup-section">
-            <h3>💾 수동 백업</h3>
-            <p>JSON 파일로 백업하거나 복원할 수 있습니다.</p>
+            <h3>💾 수동 백업 (로컬)</h3>
+            <p>일기 데이터를 ZIP 파일로 컴퓨터에 저장하거나, 저장된 파일을 복원합니다.</p>
             <div className="manual-backup-actions">
               <button
                 className="btn btn-secondary"
-                onClick={handleExportJSON}
+                onClick={handleExportZip}
               >
-                📥 JSON 내보내기
+                📥 ZIP으로 내보내기
               </button>
               <label className="btn btn-secondary">
-                📤 JSON 가져오기
+                📤 ZIP 가져오기
                 <input
                   type="file"
-                  accept=".json"
+                  accept=".zip,application/zip"
                   style={{ display: 'none' }}
-                  onChange={handleImportJSON}
+                  onChange={handleImportZip}
                 />
               </label>
             </div>

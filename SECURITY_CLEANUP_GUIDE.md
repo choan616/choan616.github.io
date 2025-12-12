@@ -12,8 +12,8 @@
 2. 프로젝트 선택
 3. **API 및 서비스** → **사용자 인증 정보** 메뉴
 4. 노출된 자격증명 찾기:
-   - **Client ID**: `291869999860-jl8tklpp3h58o7qlmmkmsovalqefvueo.apps.googleusercontent.com`
-   - **API Key**: `AIzaSyApBer_mDso-nKCeMfljPwUNDQ_tNnIxk0`
+   - **Client ID**: `YOUR_EXPOSED_CLIENT_ID`
+   - **API Key**: `YOUR_EXPOSED_API_KEY`
 5. 각 자격증명의 **삭제** 또는 **비활성화** 버튼 클릭
 
 ---
@@ -85,8 +85,8 @@ cd f:\LAB\DIARY2
 git clone --mirror . ../DIARY2-backup
 
 # 2. 민감한 문자열이 포함된 파일 생성
-echo "AIzaSyApBer_mDso-nKCeMfljPwUNDQ_tNnIxk0" > secrets.txt
-echo "291869999860-jl8tklpp3h58o7qlmmkmsovalqefvueo" >> secrets.txt
+echo "YOUR_EXPOSED_API_KEY" > secrets.txt
+echo "YOUR_EXPOSED_CLIENT_ID" >> secrets.txt
 
 # 3. BFG로 히스토리에서 제거
 bfg --replace-text secrets.txt .
@@ -122,8 +122,8 @@ cd f:\LAB\DIARY2
 git clone . ../DIARY2-backup
 
 # 2. 특정 문자열을 히스토리에서 제거
-git filter-repo --replace-text <(echo "AIzaSyApBer_mDso-nKCeMfljPwUNDQ_tNnIxk0==>***REMOVED***")
-git filter-repo --replace-text <(echo "291869999860-jl8tklpp3h58o7qlmmkmsovalqefvueo==>***REMOVED***")
+git filter-repo --replace-text <(echo "YOUR_EXPOSED_API_KEY==>***REMOVED***")
+git filter-repo --replace-text <(echo "YOUR_EXPOSED_CLIENT_ID==>***REMOVED***")
 
 # 3. 원격 저장소 재설정 및 강제 푸시
 git remote add origin <your-repo-url>

@@ -1,66 +1,61 @@
 import React from 'react';
 import './Layout.css';
 
-export function Layout({ children, currentEntry, onBackupClick, isMobileSidebarOpen, setIsMobileSidebarOpen }) {
+export function Layout({ children, currentEntry, userProfileButton }) {
   const hasImages = currentEntry?.images && currentEntry.images.length > 0;
 
-  const handleBackupClick = () => {
-    setIsMobileSidebarOpen(false);
-    if (onBackupClick) {
-      onBackupClick();
-    }
-  };
+
+  // 이미지가 없을 경우 캐러셀 영역을 숨깁니다.
+  const showCarousel = hasImages;
 
   return (
     <div className="app-layout">
       {/* Mobile Header */}
       <header className="mobile-header">
-        <button
-          className="mobile-menu-btn"
-          onClick={() => setIsMobileSidebarOpen(!isMobileSidebarOpen)}
-        >
-          {isMobileSidebarOpen ? '✕' : '☰'}
-        </button>
-        <h1>📖 일기장</h1>
+        <h1>My Diary</h1>
+        {userProfileButton && (
+          <div className="header-profile">{userProfileButton}</div>
+        )}
       </header>
-
-      {/* Sidebar Overlay (Mobile) */}
-      {isMobileSidebarOpen && (
-        <div
-          className="sidebar-overlay"
-          onClick={() => setIsMobileSidebarOpen(false)}
-        />
-      )}
 
       {/* Main Container */}
       <div className="main-container">
         {/* Left Sidebar */}
-        <aside className={`sidebar ${isMobileSidebarOpen ? 'open' : ''}`}>
-          {children.sidebar}
-
-          {/* Mobile Menu Actions */}
-          <div className="mobile-menu-actions">
-            <button
-              className="menu-action-btn"
-              onClick={handleBackupClick}
-            >
-              💾 백업 및 동기화
-            </button>
+        <aside className="sidebar">
+          <div className="sidebar-main-content">
+            {/* Desktop Sidebar Header */}
+            <div className="desktop-sidebar-header">
+              <h1>My Diary</h1>
+              {userProfileButton && (
+                <div className="sidebar-profile">{userProfileButton}</div>
+              )}
+            </div>
           </div>
+          {/* Calendar is now part of the Sidebar flow */}
+          <section className="content-sidebar">
+            {children.sidebar}
+          </section>
+          {/* Sidebar Footer */}
+          <footer className="sidebar-footer">
+            {/* This footer is now mainly for desktop or can be repurposed */}
+          </footer>
         </aside>
 
         {/* Main Content */}
         <main className="content-area">
-          {/* Top Section - Image Carousel (conditional) */}
-          {hasImages && (
-            <section className="content-top">
-              {children.carousel}
-            </section>
-          )}
+          
 
-          {/* Bottom Section - Entry Editor */}
-          <section className={`content-bottom ${!hasImages ? 'full-height' : ''}`}>
-            {children.editor}
+          <section className="content-main">
+            {/* Top Section - Image Carousel (conditional) */}
+            {hasImages && (
+              <div className="content-top">
+                {children.carousel}
+              </div>
+            )}
+            {/* Bottom Section - Entry Editor */}
+            <div className={`content-bottom ${!showCarousel ? 'full-height' : ''}`}>
+              {children.editor}
+            </div>
           </section>
         </main>
       </div>

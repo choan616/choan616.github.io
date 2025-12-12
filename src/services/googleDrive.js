@@ -2,6 +2,7 @@
  * Google Drive 동기화 서비스
  * Google Identity Services (GIS) 및 Google Drive API v3 사용
  */
+import JSZip from 'jszip';
 
 // 환경 변수에서 Google API 자격증명 로드
 const CLIENT_ID = import.meta.env.VITE_GOOGLE_CLIENT_ID;
@@ -16,15 +17,16 @@ if (!CLIENT_ID || !API_KEY) {
 
 const DISCOVERY_DOCS = ['https://www.googleapis.com/discovery/v1/apis/drive/v3/rest'];
 const SCOPES = 'https://www.googleapis.com/auth/drive.file';
-const FOLDER_NAME = 'DiaryBackup';
+const FOLDER_NAME = 'Diary2Backup'; // 폴더 이름 변경 (선택 사항)
+const SYNC_FILE_NAME = 'diary_backup.zip'; // ZIP 파일 형식으로 변경
 
 class GoogleDriveService {
   constructor() {
     this.tokenClient = null;
     this.accessToken = null;
+    this.tokenExpiresAt = null; // 토큰 만료 시간
     this.gapiInited = false;
     this.gisInited = false;
-    this.isAuthenticated = false;
 
     // 이벤트 리스너를 위한 콜백 배열
     this.authListeners = [];
@@ -123,20 +125,41 @@ class GoogleDriveService {
    * GIS 토큰 클라이언트 설정
    */
   initGisClient() {
+    // signIn Promise를 해결/거부하기 위한 변수
+    let resolvePromise, rejectPromise;
+
     this.tokenClient = window.google.accounts.oauth2.initTokenClient({
       client_id: CLIENT_ID,
       scope: SCOPES,
       callback: (response) => {
         if (response.error !== undefined) {
           console.error('Auth error:', response);
-          throw response;
+          if (rejectPromise) rejectPromise(response);
+          return;
         }
         this.accessToken = response.access_token;
-        this.isAuthenticated = true;
+        // GIS는 expires_in (초)를 반환. 만료 시각을 타임스탬프로 저장.
+        // 약간의 여유 시간 (60초)을 둠.
+        this.tokenExpiresAt = Date.now() + (response.expires_in - 60) * 1000;
+        
         this.notifyAuthListeners(true);
+        if (resolvePromise) resolvePromise();
       },
     });
     this.gisInited = true;
+    // signIn에서 사용할 수 있도록 Promise 핸들러를 노출
+    this.setPromiseHandlers = (resolve, reject) => {
+      resolvePromise = resolve;
+      rejectPromise = reject;
+    };
+  }
+
+  /**
+   * 사용자가 현재 인증 상태인지 확인 (토큰 유효성 검사)
+   * @returns {boolean}
+   */
+  get isAuthenticated() {
+    return this.accessToken && Date.now() < this.tokenExpiresAt;
   }
 
   /**
@@ -146,9 +169,7 @@ class GoogleDriveService {
   onAuthChange(callback) {
     this.authListeners.push(callback);
     // 현재 상태 즉시 전달
-    if (this.isAuthenticated) {
-      callback(true);
-    }
+    callback(this.isAuthenticated);
   }
 
   notifyAuthListeners(status) {
@@ -164,29 +185,17 @@ class GoogleDriveService {
       await this.initClient();
     }
 
-    // 기존 토큰이 유효한지 확인하는 로직은 생략하고
-    // 사용자 액션이 있을 때마다 명시적으로 토큰을 요청합니다.
     // GIS 모델에서는 팝업이 뜹니다.
     return new Promise((resolve, reject) => {
       try {
-        // 토큰 클라이언트의 콜백을 일시적으로 래핑하여 Promise 해결
-        const originalCallback = this.tokenClient.callback;
-        this.tokenClient.callback = (resp) => {
-          if (resp.error) {
-            reject(resp);
-          } else {
-            this.accessToken = resp.access_token;
-            this.isAuthenticated = true;
-            this.notifyAuthListeners(true);
-            resolve();
-          }
-          // 원래 콜백 복구 (필요한 경우)
-          // this.tokenClient.callback = originalCallback; 
-        };
-
-        if (window.gapi.client.getToken() === null) {
+        // initGisClient에 설정된 콜백이 Promise를 처리하도록 핸들러 설정
+        this.setPromiseHandlers(resolve, reject);
+        
+        // 토큰이 없거나 만료되었다면 사용자 동의(consent) 팝업을 띄움
+        if (!this.isAuthenticated) {
           this.tokenClient.requestAccessToken({ prompt: 'consent' });
         } else {
+          // 유효한 토큰이 있으면 추가 팝업 없이 진행
           this.tokenClient.requestAccessToken({ prompt: '' });
         }
       } catch (err) {
@@ -208,7 +217,7 @@ class GoogleDriveService {
     }
 
     this.accessToken = null;
-    this.isAuthenticated = false;
+    this.tokenExpiresAt = null; // 토큰 만료 시간 초기화
     window.gapi.client.setToken(null);
     this.notifyAuthListeners(false);
   }
@@ -273,85 +282,10 @@ class GoogleDriveService {
   }
 
   /**
-   * 데이터를 Google Drive에 백업
-   * @param {Object} data - exportAllData()로 생성된 데이터
-   * @param {Function} onProgress - 진행률 콜백 (percent)
-   * @returns {Promise<Object>} 업로드된 파일 정보
+   * 단일 동기화 파일 찾기
+   * @returns {Promise<Object|null>} 파일 정보 또는 null
    */
-  async backupToGoogleDrive(data, onProgress = null) {
-    if (!this.isAuthenticated) {
-      await this.signIn();
-    }
-
-    if (!this.folderId) {
-      await this.findOrCreateFolder();
-    }
-
-    // 파일명 생성 (날짜 포함)
-    const now = new Date();
-    const dateStr = now.toISOString().split('T')[0];
-    const timeStr = now.toTimeString().split(' ')[0].replace(/:/g, '-');
-    const fileName = `diary_backup_${dateStr}_${timeStr}.json`;
-
-    // JSON 문자열 변환
-    const fileContent = JSON.stringify(data, null, 2);
-    const file = new Blob([fileContent], { type: 'application/json' });
-
-    // 메타데이터
-    const metadata = {
-      name: fileName,
-      mimeType: 'application/json',
-      parents: [this.folderId],
-    };
-
-    // FormData 생성
-    const form = new FormData();
-    form.append('metadata', new Blob([JSON.stringify(metadata)], { type: 'application/json' }));
-    form.append('file', file);
-
-    // 업로드 (GAPI Multipart Upload)
-    if (onProgress) onProgress(10);
-
-    const boundary = '-------314159265358979323846';
-    const delimiter = "\r\n--" + boundary + "\r\n";
-    const close_delim = "\r\n--" + boundary + "--";
-
-    const contentType = 'application/json';
-
-    const multipartRequestBody =
-      delimiter +
-      'Content-Type: application/json\r\n\r\n' +
-      JSON.stringify(metadata) +
-      delimiter +
-      'Content-Type: ' + contentType + '\r\n\r\n' +
-      fileContent +
-      close_delim;
-
-    try {
-      const response = await window.gapi.client.request({
-        'path': '/upload/drive/v3/files',
-        'method': 'POST',
-        'params': { 'uploadType': 'multipart' },
-        'headers': {
-          'Content-Type': 'multipart/related; boundary="' + boundary + '"'
-        },
-        'body': multipartRequestBody
-      });
-
-      if (onProgress) onProgress(100);
-
-      return response.result;
-    } catch (error) {
-      console.error('Backup error:', error);
-      throw new Error(`백업 실패: ${error.result?.error?.message || error.message || '알 수 없는 오류'}`);
-    }
-  }
-
-  /**
-   * 백업 파일 목록 조회
-   * @returns {Promise<Array>}
-   */
-  async listBackupFiles() {
+  async findSyncFile() {
     if (!this.isAuthenticated) {
       throw new Error('로그인이 필요합니다.');
     }
@@ -361,13 +295,140 @@ class GoogleDriveService {
     }
 
     const response = await window.gapi.client.drive.files.list({
-      q: `'${this.folderId}' in parents and trashed=false and mimeType='application/json'`,
-      orderBy: 'createdTime desc',
+      q: `name='${SYNC_FILE_NAME}' and '${this.folderId}' in parents and trashed=false`,
       fields: 'files(id, name, createdTime, size, modifiedTime)',
       spaces: 'drive'
     });
 
-    return response.result.files || [];
+    if (response.result.files && response.result.files.length > 0) {
+      return response.result.files[0];
+    }
+
+    return null;
+  }
+
+  /**
+   * 단일 파일 동기화 (자동/수동 백업 모두 사용)
+   * @param {Blob} zipBlob - JSZip으로 생성된 ZIP 파일 Blob
+   * @param {Function} onProgress - 진행률 콜백 (percent)
+   * @returns {Promise<{file: Object, status: string}>} 업로드 결과 (updated, skipped, created)
+   */
+  async syncToGoogleDrive(zipBlob, onProgress = null) {
+    if (!this.isAuthenticated) {
+      await this.signIn();
+    }
+
+    if (!this.folderId) {
+      await this.findOrCreateFolder();
+    }
+
+    if (onProgress) onProgress(10);
+
+    const existingFile = await this.findSyncFile();
+    if (onProgress) onProgress(20);
+
+    const contentType = 'application/zip';
+
+    try {
+      let metadata, path, method;
+      if (existingFile) {
+        // 기존 파일 업데이트
+        path = `https://www.googleapis.com/upload/drive/v3/files/${existingFile.id}?uploadType=multipart`;
+        method = 'PATCH';
+        metadata = { mimeType: contentType }; // 업데이트 시에는 일부 메타데이터만 필요
+      } else {
+        // 새 파일 생성
+        path = 'https://www.googleapis.com/upload/drive/v3/files?uploadType=multipart';
+        method = 'POST';
+        metadata = {
+          name: SYNC_FILE_NAME,
+          mimeType: contentType,
+          parents: [this.folderId],
+        };
+      }
+
+      // FormData를 사용하여 멀티파트 요청 생성
+      const form = new FormData();
+      form.append('metadata', new Blob([JSON.stringify(metadata)], { type: 'application/json' }));
+      form.append('file', zipBlob, SYNC_FILE_NAME);
+
+      const response = await fetch(path, {
+        method: method,
+        headers: {
+          Authorization: `Bearer ${this.accessToken}`,
+        },
+        body: form,
+      });
+
+      if (!response.ok) {
+        const errorBody = await response.json();
+        const errorMessage = errorBody.error?.message || response.statusText;
+        throw new Error(`Google Drive 업로드 실패: ${errorMessage}`);
+      }
+
+      const result = await response.json();
+      const status = existingFile ? 'updated' : 'created';
+      
+      if (onProgress) onProgress(100);
+
+      return { file: result, status };
+
+    } catch (error) {
+      console.error('Sync error:', error);
+      if (error.message.includes('401')) { // fetch 응답에서 401 처리
+        this.signOut();
+        throw new Error('Google Drive 인증이 만료되었습니다. 다시 로그인해주세요.');
+      }
+      throw new Error(`동기화 실패: ${error.message || '알 수 없는 오류'}`);
+    }
+  }
+
+  /**
+   * 동기화 파일 데이터 가져오기
+   * @returns {Promise<ArrayBuffer|null>} 동기화 데이터 ZIP 파일의 ArrayBuffer 또는 null
+   */
+  async getSyncData() {
+    if (!this.isAuthenticated) {
+      throw new Error('로그인이 필요합니다.');
+    }
+
+    const syncFile = await this.findSyncFile();
+
+    if (!syncFile) {
+      return null;
+    }
+
+    // 파일 다운로드
+    const response = await fetch(
+      `https://www.googleapis.com/drive/v3/files/${syncFile.id}?alt=media`,
+      {
+        headers: {
+          Authorization: `Bearer ${this.accessToken}`,
+        },
+      }
+    );
+
+    if (!response.ok) {
+      throw new Error('파일 다운로드 실패');
+    }
+
+    // ZIP 파일을 그대로 ArrayBuffer로 반환
+    const fileArrayBuffer = await response.arrayBuffer();
+    return fileArrayBuffer;
+  }
+
+  /**
+   * 백업 파일 목록 조회 (단일 동기화 파일)
+   * @returns {Promise<Array>}
+   */
+  async listBackupFiles() {
+    if (!this.isAuthenticated) {
+      throw new Error('로그인이 필요합니다.');
+    }
+
+    const syncFile = await this.findSyncFile();
+
+    return syncFile ? [syncFile] : [];
   }
 
   /**
@@ -398,11 +459,11 @@ class GoogleDriveService {
       throw new Error('파일 다운로드 실패');
     }
 
-    const data = await response.json();
+    const fileArrayBuffer = await response.arrayBuffer();
 
     if (onProgress) onProgress(100);
 
-    return data;
+    return fileArrayBuffer;
   }
 
   /**

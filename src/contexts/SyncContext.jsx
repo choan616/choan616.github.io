@@ -1,0 +1,25 @@
+import { createContext, useContext } from 'react';
+import { SyncStatus } from '../constants';
+
+/**
+ * SyncContext - 전역 동기화 상태 관리
+ */
+export const SyncContext = createContext({
+  status: SyncStatus.IDLE,
+  lastSyncTime: null,
+  lastError: null,
+  isOnline: true,
+  triggerSync: async () => { },
+  triggerDebouncedSync: () => { },
+});
+
+/**
+ * useSyncContext Hook
+ */
+export function useSyncContext() {
+  const context = useContext(SyncContext);
+  if (!context) {
+    throw new Error('useSyncContext must be used within SyncProvider');
+  }
+  return context;
+}
