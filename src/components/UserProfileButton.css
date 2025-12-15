@@ -1,11 +1,7 @@
-/* f:\LAB\DIARY2\src\components\UserProfileButton.css */
-/* Inspired by Google Drive's user profile menu */
-
-/* --- Base --- */
+/* Using global modal styles defined in Modal.css, this file contains specific styles for the profile menu content. */
 .user-profile-button {
   position: relative;
-  font-family: 'Roboto', 'Noto Sans KR', -apple-system, BlinkMacSystemFont, 'Segoe UI',
-    Helvetica, Arial, sans-serif;
+  z-index: 100; /* Ensure it's above other elements */
 }
 
 /* --- Toggle Button (Avatar) --- */
@@ -16,33 +12,24 @@
   width: 40px;
   height: 40px;
   padding: 0;
-  background-color: transparent;
-  border: none;
+  background-color: var(--bg-secondary);
+  border: 1px solid var(--border-color);
   border-radius: 50%;
   cursor: pointer;
-  transition: background-color 0.2s ease-in-out;
+  transition: all 0.2s ease-in-out;
   overflow: hidden;
 }
 
 .profile-toggle:hover {
-  background-color: rgba(0, 0, 0, 0.08);
-}
-
-.profile-toggle:focus-visible {
-  outline: 2px solid var(--color-primary, #4c66fb);
-  outline-offset: 2px;
+  box-shadow: var(--shadow-sm);
+  border-color: var(--text-secondary);
 }
 
 .profile-avatar {
-  width: 32px;
-  height: 32px;
-  border-radius: 50%;
-  background: linear-gradient(
-    135deg,
-    var(--color-primary-light, #657ef8) 0%,
-    var(--color-primary, #4c66fb) 100%
-  );
-  color: var(--color-text-on-primary, white);
+  width: 100%;
+  height: 100%;
+  background: var(--accent-primary);
+  color: white;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -51,44 +38,20 @@
   text-transform: uppercase;
   user-select: none;
 }
-
-/* --- Dropdown Menu --- */
-.profile-backdrop {
-  position: fixed;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  background: transparent;
-  z-index: 998;
+.profile-avatar img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
 }
 
+/* --- Dropdown Menu (Now styled as a modal) --- */
+/* The .modal-overlay and base .modal styles from Modal.css are used */
 .profile-menu {
-  position: absolute;
-  top: calc(100% + 12px);
-  right: 0;
-  width: 360px;
-  background-color: #fff;
-  border-radius: 16px;
-  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
-  border: 1px solid rgba(0, 0, 0, 0.1);
-  z-index: 999;
-  overflow: hidden;
-  animation: fadeInScale 0.15s ease-out;
-  transform-origin: top right;
+  /* Inherits modal properties but we can override width, etc. */
+  width: min(380px, calc(100vw - 40px));
+  padding: 0; /* Remove padding to have full-width sections */
   display: flex;
   flex-direction: column;
-}
-
-@keyframes fadeInScale {
-  from {
-    opacity: 0;
-    transform: scale(0.95);
-  }
-  to {
-    opacity: 1;
-    transform: scale(1);
-  }
 }
 
 /* Menu Header */
@@ -105,12 +68,8 @@
   width: 80px;
   height: 80px;
   border-radius: 50%;
-  background: linear-gradient(
-    135deg,
-    var(--color-primary-light, #657ef8),
-    var(--color-primary, #4c66fb)
-  );
-  color: var(--color-text-on-primary, white);
+  background: var(--accent-primary);
+  color: white;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -118,23 +77,30 @@
   font-weight: 500;
   text-transform: uppercase;
 }
+.profile-avatar-large img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  border-radius: 50%;
+}
 
 .profile-menu-name {
   font-size: 22px;
   font-weight: 500;
-  color: #202124;
+  color: var(--text-primary);
 }
 
 .profile-menu-email {
   font-size: 15px;
-  color: #5f6368;
+  color: var(--text-secondary);
 }
 
 /* Sync Status Area */
 .profile-menu-sync-status {
-  padding: 16px 24px;
-  border-top: 1px solid #e0e0e0;
-  border-bottom: 1px solid #e0e0e0;
+  padding: 16px;
+  border-top: 1px solid var(--border-color);
+  border-bottom: 1px solid var(--border-color);
+  background: var(--bg-primary);
 }
 
 .sync-status {
@@ -142,11 +108,10 @@
   align-items: center;
   gap: 12px;
   font-size: 14px;
-  font-weight: 400;
   padding: 12px;
-  border-radius: 8px;
-  color: #3c4043;
-  background-color: #f1f3f4;
+  border-radius: var(--border-radius-md);
+  color: var(--text-primary);
+  background-color: var(--bg-secondary);
 }
 
 .sync-status .icon {
@@ -155,46 +120,32 @@
   flex-shrink: 0;
 }
 .sync-status.success {
-  color: #1e8e3e;
-  background-color: #e6f4ea;
+  color: var(--accent-secondary);
+  background-color: #e8f5e9; /* Light green */
 }
 .sync-status.error {
   color: #d93025;
-  background-color: #fce8e6;
-}
-.sync-status.offline {
-  color: #5f6368;
-  background-color: #f1f3f4;
+  background-color: #fce8e6; /* Light red */
 }
 .sync-status.syncing .icon {
   animation: spin 1.5s linear infinite;
 }
 
 @keyframes spin {
-  from {
-    transform: rotate(0deg);
-  }
-  to {
-    transform: rotate(360deg);
-  }
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
 }
 
 /* Menu Navigation */
 .profile-menu-nav ul {
   list-style: none;
   margin: 0;
-  padding: 8px 0;
-}
-
-.profile-menu-divider {
-  height: 1px;
-  background: #e0e0e0;
-  margin: 8px 0;
+  padding: 8px;
 }
 
 .profile-menu-item {
   width: 100%;
-  padding: 12px 24px;
+  padding: 12px 16px;
   border: none;
   background: transparent;
   text-align: left;
@@ -204,17 +155,22 @@
   align-items: center;
   gap: 16px;
   font-size: 15px;
-  color: #3c4043;
+  border-radius: var(--border-radius-md);
+  color: var(--text-secondary);
 }
 
 .profile-menu-item:hover {
-  background-color: rgba(0, 0, 0, 0.04);
+  background-color: var(--bg-secondary);
+  color: var(--text-primary);
 }
 
 .profile-menu-item .menu-item-icon {
   width: 20px;
   height: 20px;
-  color: #5f6368;
+  color: var(--text-muted);
+}
+.profile-menu-item:hover .menu-item-icon {
+    color: var(--text-primary);
 }
 
 .profile-menu-item.logout {
@@ -225,4 +181,5 @@
 }
 .profile-menu-item.logout:hover {
   background-color: #fce8e6;
+  color: #c53030;
 }

@@ -18,7 +18,7 @@ if (!CLIENT_ID || !API_KEY) {
 const DISCOVERY_DOCS = ['https://www.googleapis.com/discovery/v1/apis/drive/v3/rest'];
 const SCOPES = 'https://www.googleapis.com/auth/drive.file';
 const FOLDER_NAME = 'Diary2Backup'; // 폴더 이름 변경 (선택 사항)
-const SYNC_FILE_NAME = 'diary_backup.zip'; // ZIP 파일 형식으로 변경
+const SYNC_FILE_NAME = 'sync_data.json'; // ZIP 파일 형식에서 JSON으로 변경
 
 class GoogleDriveService {
   constructor() {
@@ -308,6 +308,15 @@ class GoogleDriveService {
   }
 
   /**
+   * 동기화 파일의 메타데이터(ID, 수정 시간 등)를 가져옵니다.
+   * @returns {Promise<Object|null>} 파일 메타데이터 또는 null
+   */
+  async getSyncFileMetadata() {
+    // findSyncFile 함수가 이미 필요한 메타데이터를 포함하여 반환하므로 재사용합니다.
+    return this.findSyncFile();
+  }
+
+  /**
    * 단일 파일 동기화 (자동/수동 백업 모두 사용)
    * @param {Blob} zipBlob - JSZip으로 생성된 ZIP 파일 Blob
    * @param {Function} onProgress - 진행률 콜백 (percent)
@@ -327,7 +336,7 @@ class GoogleDriveService {
     const existingFile = await this.findSyncFile();
     if (onProgress) onProgress(20);
 
-    const contentType = 'application/zip';
+    const contentType = 'application/json';
 
     try {
       let metadata, path, method;
@@ -413,8 +422,8 @@ class GoogleDriveService {
     }
 
     // ZIP 파일을 그대로 ArrayBuffer로 반환
-    const fileArrayBuffer = await response.arrayBuffer();
-    return fileArrayBuffer;
+    const fileJson = await response.json();
+    return fileJson;
   }
 
   /**

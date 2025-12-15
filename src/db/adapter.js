@@ -217,7 +217,8 @@ export async function saveEntryWithImages(userId, entry, imageFiles = [], onProg
       tags: tags || [],
       createdAt: existingEntry?.createdAt || now, // 기존 생성 시간 유지
       updatedAt: now // 수정 시간 갱신
-    });
+      // deletedAt은 생성/수정 시 null 또는 undefined 상태여야 함
+    }, { userId, date }); // put의 두 번째 인자로 key를 전달하여 명확성 확보
 
     // 처리된 이미지 저장
     if (processedImages.length > 0) {
@@ -245,13 +246,15 @@ export async function saveEntryWithImages(userId, entry, imageFiles = [], onProg
 export async function getEntryWithImages(userId, date) {
   const entry = await db.entries.where('[userId+date]').equals([userId, date]).first();
 
-  if (!entry) {
+  // 삭제된 항목은 null 반환
+  if (!entry || entry.deletedAt) {
     return null;
   }
 
-  // 해당 날짜의 모든 이미지 조회
+  // 해당 날짜의 삭제되지 않은 이미지만 조회
   const imageRecords = await db.images
     .where({ userId, entryDate: date })
+    .and(img => !img.deletedAt)
     .toArray();
 
   const images = imageRecords.map(record => {
@@ -334,7 +337,8 @@ export async function verifyPin(userId, pin) {
  * @returns {Promise<Array>}
  */
 export async function getAllEntries(userId) {
-  return await db.entries.where('userId').equals(userId).toArray();
+  // 삭제되지 않은 일기만 조회
+  return await db.entries.where({ userId }).and(e => !e.deletedAt).toArray();
 }
 
 /**
@@ -343,7 +347,8 @@ export async function getAllEntries(userId) {
  * @returns {Promise<string[]>}
  */
 export async function getEntriesDateList(userId) {
-  const entries = await db.entries.where('userId').equals(userId).toArray();
+  // 삭제되지 않은 일기만 조회
+  const entries = await db.entries.where({ userId }).and(e => !e.deletedAt).toArray();
   return entries.map(e => e.date);
 }
 
@@ -354,14 +359,23 @@ export async function getEntriesDateList(userId) {
  * @returns {Promise<void>}
  */
 export async function deleteEntry(userId, date) {
+  const now = new Date().toISOString();
   await db.transaction('rw', db.entries, db.images, async () => {
-    // 일기 삭제
-    await db.entries.where('[userId+date]').equals([userId, date]).delete();
+    // 일기를 soft delete (deletedAt 필드 업데이트)
+    const entryCount = await db.entries.where({ userId, date }).modify({
+      deletedAt: now,
+      updatedAt: now
+    });
 
-    // 연결된 이미지 모두 삭제
-    await db.images
-      .where({ userId, entryDate: date })
-      .delete();
+    console.log(`[deleteEntry] Deleted ${entryCount} entries for ${date}`);
+
+    // 연결된 이미지 모두 soft delete
+    const imageCount = await db.images.where({ userId, entryDate: date }).modify({
+      deletedAt: now,
+      updatedAt: now
+    });
+
+    console.log(`[deleteEntry] Deleted ${imageCount} images for ${date}`);
   });
 }
 
@@ -371,7 +385,11 @@ export async function deleteEntry(userId, date) {
  * @returns {Promise<void>}
  */
 export async function deleteImage(imageId) {
-  await db.images.delete(imageId);
+  // 이미지를 soft delete
+  await db.images.update(imageId, {
+    deletedAt: new Date().toISOString(),
+    updatedAt: new Date().toISOString()
+  });
 }
 
 /**
@@ -385,14 +403,15 @@ export async function deleteOldImages(userId, olderThanDays = 365) {
   cutoffDate.setDate(cutoffDate.getDate() - olderThanDays);
 
   const oldImages = await db.images
-    .where('userId').equals(userId)
+    .where({ userId })
     .and(img => img.createdAt < cutoffDate)
     .toArray();
 
   const count = oldImages.length;
 
+  // 실제 삭제 (Hard Delete)
   await db.images
-    .where('userId').equals(userId)
+    .where({ userId })
     .and(img => img.createdAt < cutoffDate)
     .delete();
 
@@ -405,14 +424,15 @@ export async function deleteOldImages(userId, olderThanDays = 365) {
  * @returns {Promise<number>} 삭제된 이미지 수
  */
 export async function deleteOrphanedImages(userId) {
-  const allImages = await db.images.where('userId').equals(userId).toArray();
-  const allEntries = await db.entries.where('userId').equals(userId).toArray();
+  const allImages = await db.images.where({ userId }).toArray();
+  // 삭제되지 않은 엔트리만 고려
+  const allEntries = await db.entries.where({ userId }).and(e => !e.deletedAt).toArray();
   const entryDates = new Set(allEntries.map(e => e.date));
 
   const orphanedIds = allImages
     .filter(img => !entryDates.has(img.entryDate))
     .map(img => img.id);
-
+  // 실제 삭제 (Hard Delete)
   if (orphanedIds.length > 0) {
     await db.images.bulkDelete(orphanedIds);
   }
@@ -457,11 +477,13 @@ export async function exportUserData(userId, options = {}) {
   } = options;
 
   const user = await db.users.get(userId);
-  const entries = await db.entries.where('userId').equals(userId).toArray();
+  // 삭제되지 않은 데이터만 내보내기
+  const entries = await db.entries.where({ userId }).and(e => !e.deletedAt).toArray();
   let imagesWithBase64 = [];
 
   if (includeImages) {
-    const images = await db.images.where('userId').equals(userId).toArray();
+    // 삭제되지 않은 이미지만 내보내기
+    const images = await db.images.where({ userId }).and(img => !img.deletedAt).toArray();
 
     // Blob을 Base64로 변환
     imagesWithBase64 = await Promise.all(
@@ -554,7 +576,9 @@ export async function exportUserDataAsZip(userId, options = {}) {
   if (!user) {
     throw new Error(`백업할 사용자를 찾을 수 없습니다: ${userId}`);
   }
-  const entries = await db.entries.where('userId').equals(userId).toArray();
+
+  // 모든 엔트리 내보내기 (삭제된 것도 포함하여 Tombstone 전파)
+  const entries = await db.entries.where({ userId }).toArray();
 
   const dataJson = {
     version: 3, // ZIP 아카이브 방식 버전
@@ -574,7 +598,19 @@ export async function exportUserDataAsZip(userId, options = {}) {
   const imageFolder = zip.folder('images');
 
   for (const entry of entries) {
-    const entryImages = await db.images.where({ userId, entryDate: entry.date }).toArray();
+    // 삭제된 엔트리의 경우 이미지는 내보내지 않음 (메타데이터만 전송)
+    if (entry.deletedAt) {
+      dataJson.entries.push({
+        ...entry,
+        images: [] // 이미지 참조 없음
+      });
+      continue;
+    }
+
+    // 삭제되지 않은 이미지만 내보내기
+    const entryImages = await db.images.where({ userId, entryDate: entry.date })
+      .and(img => !img.deletedAt)
+      .toArray();
     const imageReferences = [];
 
     if (includeImages && entryImages.length > 0) {
@@ -713,7 +749,7 @@ async function _internal_importUserData(userId, data, merge = false) {
   const preparedEntries = [];
 
   for (const entry of importData.entries) {
-    const { images, ...entryToSave } = entry;
+    const { images, ...entryToSave } = entry; // images는 참조 배열
     const preparedImages = [];
 
     if (images && images.length > 0 && importData.version === 3 && zip) {
@@ -766,7 +802,11 @@ async function _internal_importUserData(userId, data, merge = false) {
     }
 
     preparedEntries.push({
-      entryData: { ...entryToSave, userId },
+      entryData: {
+        ...entryToSave,
+        userId,
+        deletedAt: entry.deletedAt || null // deletedAt 필드 처리
+      },
       images: preparedImages
     });
   }
@@ -785,10 +825,15 @@ async function _internal_importUserData(userId, data, merge = false) {
 
     // 2. 엔트리 및 이미지 저장 (이미 Base64로 변환된 상태)
     for (const prepared of preparedEntries) {
-      await db.entries.put(prepared.entryData);
+      // 병합 로직: deletedAt이 있으면 삭제된 상태로, 아니면 일반 put
+      if (prepared.entryData.deletedAt) {
+        await db.entries.put(prepared.entryData);
+      } else {
+        await db.entries.put({ ...prepared.entryData, deletedAt: null });
+      }
 
       for (const imagePayload of prepared.images) {
-        try {
+        try { // 이미지도 deletedAt을 처리해야 하지만, export에서 이미 걸러졌으므로 일단 put
           await db.images.put(imagePayload);
           console.log(`[IMPORT] Saved image (ID: ${imagePayload.id}) for entry ${imagePayload.entryDate}`);
         } catch (imagePutError) {
@@ -809,7 +854,8 @@ async function _internal_importUserData(userId, data, merge = false) {
               userId: userId,
               entryDate: img.entryDate,
               createdAt: new Date(img.createdAt),
-              blob: img.blob,
+              deletedAt: img.deletedAt || null, // soft delete 필드
+              blob: img.blob, // blob과 thumbnail은 이미 base64 문자열
               thumbnail: img.thumbnail
             });
           } catch (imagePutError) {
@@ -1060,4 +1106,155 @@ export async function hasChangesSince(timestamp) {
 
   // 업데이트된 항목이 있으면 변경 사항이 있는 것입니다.
   return !!updatedEntry;
+}
+
+
+/**
+ * 지정된 시간 이후의 변경사항(Changelog)을 내보냅니다.
+ * @param {string} userId 
+ * @param {string | null} since - ISO 8601 형식의 타임스탬프
+ * @returns {Promise<Object>}
+ */
+export async function exportChangelog(userId, since) {
+  const changelog = {
+    version: '1.0-changelog',
+    since,
+    timestamp: new Date().toISOString(),
+    created: { entries: [], images: [] },
+    updated: { entries: [], images: [] },
+    deleted: { entries: [], images: [] }, // soft-delete된 항목의 ID 목록
+  };
+
+  const sinceDate = since ? new Date(since) : new Date(0);
+  const sinceISO = sinceDate.toISOString();
+
+  // Helper to safely convert blob or string to base64
+  const safeToBase64 = async (data) => {
+    if (!data) return null;
+    if (data instanceof Blob) {
+      return await blobToBase64(data, false); // false to get raw base64
+    }
+    if (typeof data === 'string' && data.startsWith('data:')) {
+      return data.split(',')[1];
+    }
+    return data; // Assume it's already a raw base64 string
+  };
+
+  // 1. Entries
+  const entries = await db.entries.where('userId').equals(userId).and(e => e.updatedAt > sinceISO).toArray();
+  for (const entry of entries) {
+    if (entry.deletedAt > sinceISO) {
+      changelog.deleted.entries.push(entry.date);
+    } else if (entry.createdAt > sinceISO) {
+      changelog.created.entries.push(entry);
+    } else {
+      changelog.updated.entries.push(entry);
+    }
+  }
+
+  // 2. Images
+  const images = await db.images.where('userId').equals(userId).and(img => img.updatedAt > sinceISO).toArray();
+  for (const img of images) {
+    if (img.deletedAt > sinceISO) {
+      changelog.deleted.images.push(img.id);
+      continue;
+    }
+    
+    // Convert blobs to base64 for transport
+    const imageForTransport = {
+      ...img,
+      blob: await safeToBase64(img.blob),
+      thumbnail: await safeToBase64(img.thumbnail),
+    };
+
+    if (img.createdAt > sinceISO) {
+      changelog.created.images.push(imageForTransport);
+    } else {
+      changelog.updated.images.push(imageForTransport);
+    }
+  }
+
+  return changelog;
+}
+
+/**
+ * Changelog를 데이터베이스에 적용합니다.
+ * @param {string} userId 
+ * @param {Object} changelog 
+ */
+export async function importChangelog(userId, changelog) {
+  const now = new Date().toISOString();
+
+  return db.transaction('rw', db.entries, db.images, async () => {
+    // 1. Deleted items
+    if (changelog.deleted) {
+      if (changelog.deleted.entries?.length > 0) {
+        await db.entries.where('date').anyOf(changelog.deleted.entries)
+          .and(e => e.userId === userId)
+          .modify({ deletedAt: now, updatedAt: now });
+      }
+      if (changelog.deleted.images?.length > 0) {
+        await db.images.where('id').anyOf(changelog.deleted.images)
+          .modify({ deletedAt: now, updatedAt: now });
+      }
+    }
+
+    // 2. Created and Updated items
+    const allEntries = [
+      ...(changelog.created?.entries || []),
+      ...(changelog.updated?.entries || []),
+    ].map(e => ({ ...e, userId })); // Ensure userId is correct
+
+    const allImages = [
+      ...(changelog.created?.images || []),
+      ...(changelog.updated?.images || []),
+    ].map(img => ({ ...img, userId })); // Ensure userId is correct
+
+    if (allEntries.length > 0) {
+      await db.entries.bulkPut(allEntries);
+    }
+
+    if (allImages.length > 0) {
+      // The base64ToBlob conversion is not needed if the DB stores base64 strings
+      await db.images.bulkPut(allImages);
+    }
+  });
+}
+
+
+/**
+ * 사용자의 모든 데이터 중에서 가장 최근의 updatedAt 타임스탬프를 찾습니다.
+ * @param {string} userId
+ * @returns {Promise<string|null>} 가장 최근의 ISO 타임스탬프 문자열 또는 null
+ */
+export async function getLatestLocalTimestamp(userId) {
+  if (!userId) return null;
+
+  let latestTimestamp = null;
+
+  // 모든 테이블을 순회하며 가장 최근의 updatedAt을 찾습니다.
+  // 'users' 테이블은 동기화 대상이 아니므로 건너뜁니다.
+  const tablesToScan = db.tables.filter(table => table.name !== 'users');
+
+  for (const table of tablesToScan) {
+    // 테이블에 'userId'와 'updatedAt' 인덱스가 있는지 확인합니다.
+    const hasUserIdIndex = table.schema.indexes.some(idx => idx.keyPath === 'userId' || (Array.isArray(idx.keyPath) && idx.keyPath.includes('userId')));
+    const hasUpdatedAtIndex = table.schema.indexes.some(idx => idx.keyPath === 'updatedAt');
+
+    if (hasUserIdIndex && hasUpdatedAtIndex) {
+      const latestEntry = await table
+        .where('userId').equals(userId)
+        .reverse()
+        .sortBy('updatedAt')
+        .then(items => items[0]);
+
+      if (latestEntry && latestEntry.updatedAt) {
+        if (!latestTimestamp || new Date(latestEntry.updatedAt) > new Date(latestTimestamp)) {
+          latestTimestamp = latestEntry.updatedAt;
+        }
+      }
+    }
+  }
+
+  return latestTimestamp;
 }

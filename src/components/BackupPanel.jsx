@@ -3,8 +3,9 @@ import { googleDriveService } from '../services/googleDrive';
 import { useSyncContext } from '../contexts/SyncContext';
 import { useToast } from '../hooks/useToast';
 import './BackupPanel.css';
+import './ConflictResolutionModal.css';
 import { SyncStatus } from '../constants';
-import JSZip from 'jszip';
+import { ConflictResolutionModal } from './ConflictResolutionModal';
 
 export function BackupPanel({ currentUser, onClose, onDataRestored }) {
   const [isOpen, setIsOpen] = useState(true);
@@ -15,7 +16,8 @@ export function BackupPanel({ currentUser, onClose, onDataRestored }) {
   const [backupProgress, setBackupProgress] = useState(0);
   const [restoreProgress, setRestoreProgress] = useState(0);
   const { showToast } = useToast();
-  const { status, lastSyncTime, triggerSync } = useSyncContext();
+  const { status, lastSyncTime, lastError, triggerSync, conflictDetails } = useSyncContext();
+  const [showConflictModal, setShowConflictModal] = useState(false);
 
   useEffect(() => {
     checkAuthStatus();
@@ -114,6 +116,12 @@ export function BackupPanel({ currentUser, onClose, onDataRestored }) {
 
       // 파일 목록 새로고침
       await loadBackupFiles();
+
+      // 충돌 해결 후 상태 갱신을 위해 동기화 재시도
+      if (status === SyncStatus.CONFLICT) {
+        console.log('충돌 해결(Push) 후 동기화 상태를 갱신합니다.');
+        triggerSync({ silent: true, isManual: true });
+      }
     } catch (error) {
       console.error('백업 오류:', error);
       showToast(`백업 실패: ${error.message}`, 'error');
@@ -135,22 +143,29 @@ export function BackupPanel({ currentUser, onClose, onDataRestored }) {
       showToast('복원을 시작합니다...', 'info');
 
       // 1. Google Drive에서 ZIP 파일 다운로드 (ArrayBuffer)
-      const zipArrayBuffer = await googleDriveService.restoreFromGoogleDrive(
+      const zipBlob = await googleDriveService.restoreFromGoogleDrive(
         fileId,
         (percent) => setRestoreProgress(percent * 0.5) // 다운로드 진행률을 50%까지 표시
       );
 
-      if (!zipArrayBuffer) {
+      if (!zipBlob) {
         throw new Error('Google Drive에서 파일을 다운로드하지 못했습니다.');
       }
 
-      // 2. ArrayBuffer를 그대로 importUserData에 전달
+      // 2. Blob을 ArrayBuffer로 변환하여 importUserData에 전달
+      const zipArrayBuffer = await zipBlob.arrayBuffer();
       // importUserData가 내부에서 ZIP을 파싱하고 이미지를 복원합니다
       const { importUserData } = await import('../db/adapter');
       await importUserData(currentUser.userId, zipArrayBuffer, true); // true = 병합
       setRestoreProgress(100);
 
       showToast('복원이 완료되었습니다.', 'success');
+
+      // 충돌 해결 후 또는 데이터 복원 후 상태 갱신을 위해 동기화 재시도
+      if (status === SyncStatus.CONFLICT || onDataRestored) {
+        console.log('충돌 해결(Pull) 또는 데이터 복원 후 동기화 상태를 갱신합니다.');
+        triggerSync({ silent: true, isManual: true });
+      }
 
       // Add a small delay to allow any pending Service Worker messages to complete
       // This is a diagnostic measure for "message channel closed" error
@@ -235,6 +250,20 @@ export function BackupPanel({ currentUser, onClose, onDataRestored }) {
     e.target.value = ''; // 동일한 파일을 다시 선택할 수 있도록 초기화
   }
 
+  const handleResolveConflict = async (resolution) => {
+    setShowConflictModal(false);
+    if (resolution === 'push') {
+      // 로컬 데이터로 덮어쓰기
+      await handleBackup();
+    } else if (resolution === 'pull') {
+      // 원격 데이터로 덮어쓰기
+      if (conflictDetails?.remoteMetadata) {
+        const { id, name } = conflictDetails.remoteMetadata;
+        await handleRestore(id, name);
+      }
+    }
+  };
+
   const handleClose = () => {
     setIsOpen(false);
     if (onClose) {
@@ -246,6 +275,16 @@ export function BackupPanel({ currentUser, onClose, onDataRestored }) {
 
   return (
     <>
+      {showConflictModal && conflictDetails && (
+        <ConflictResolutionModal
+          currentUser={currentUser}
+          remoteMetadata={conflictDetails.remoteMetadata}
+          localModifiedTime={conflictDetails.localModifiedTime}
+          onClose={() => setShowConflictModal(false)}
+          onResolve={handleResolveConflict}
+        />
+      )}
+
       <div className="backup-panel-overlay" onClick={handleClose} />
       <div className="backup-panel">
         <div className="backup-header">
@@ -301,17 +340,16 @@ export function BackupPanel({ currentUser, onClose, onDataRestored }) {
                   </button>
                   <button
                     className="btn btn-primary"
-                    onClick={() => triggerSync()
+                    onClick={() => triggerSync({ silent: false, isManual: true })
                       .then(() => {
-                        showToast('동기화 완료', 'success');
                         loadBackupFiles(); // 동기화 후 목록 새로고침
                       }).catch(err => {
                         console.error("수동 동기화 실패:", err);
-                        showToast(err.message.includes('central directory') ? '동기화 실패: Drive의 백업 파일이 손상되었을 수 있습니다.' : `동기화 실패: ${err.message}`, 'error');
+                        // 토스트는 SyncProvider에서 이미 표시됨
                       })}
                     disabled={status === SyncStatus.SYNCING}
                   >
-                    {status === SyncStatus.SYNCING ? '🔄 동기화 중...' : '🔄 지금 동기화 (자동)'}
+                    {status === SyncStatus.SYNCING ? '🔄 동기화 중...' : '🔄 지금 동기화'}
                   </button>
                   <button
                     className="btn btn-secondary"
@@ -322,8 +360,23 @@ export function BackupPanel({ currentUser, onClose, onDataRestored }) {
                   </button>
                 </div>
 
-                <div className="sync-status-info" style={{ margin: '10px 0', padding: '10px', background: '#f5f5f5', borderRadius: '4px' }}>
-                  <strong>동기화 상태:</strong> {status} <br />
+                {status === SyncStatus.CONFLICT && (
+                  <div className="sync-status-info conflict">
+                    <div className="conflict-header-info">
+                      <h4>⚠️ 동기화 충돌</h4>
+                      <p>{lastError || '다른 기기와 데이터 충돌이 발생했습니다.'}</p>
+                    </div>
+                    <button
+                      className="btn btn-danger"
+                      onClick={() => setShowConflictModal(true)}
+                    >
+                      충돌 해결하기
+                    </button>
+                  </div>
+                )}
+
+                <div className="sync-status-info">
+                  <strong>동기화 상태:</strong> <span className={`status-${status.toLowerCase()}`}>{status}</span> <br />
                   <strong>마지막 동기화:</strong> {lastSyncTime ? new Date(lastSyncTime).toLocaleString() : '없음'}
                 </div>
 

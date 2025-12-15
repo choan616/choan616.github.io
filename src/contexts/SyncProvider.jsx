@@ -35,14 +35,38 @@ export function SyncProvider({ children }) {
 
   /**
    * 수동/자동 동기화 트리거
-   * @param {Object} options - { silent: boolean }
+   * @param {Object} options - { silent: boolean, isManual: boolean }
    */
   const triggerSync = useCallback(async (options = {}) => {
-    // syncManager.autoSync는 내부적으로 재시도를 포함하므로,
-    // 오류 처리는 이 함수를 호출하는 컴포넌트(App.jsx, BackupPanel.jsx)에서 담당.
-    // 여기서는 syncManager의 autoSync를 실행하는 역할만 수행.
-    await syncManager.autoSync(options);
-  }, []);
+    try {
+      await syncManager.autoSync(options);
+
+      // 수동 동기화 성공 시 토스트 표시
+      if (options.isManual) {
+        showToast('✅ 동기화 완료', 'success');
+      }
+    } catch (error) {
+      console.error('동기화 에러:', error);
+
+      // 에러 메시지 개선 - 사용자가 이해하기 쉽고 실행 가능한 메시지
+      const errorMsg = error.message || '';
+
+      if (errorMsg.includes('central directory')) {
+        showToast('동기화 실패: 백업 파일이 손상되었을 수 있습니다', 'error');
+      } else if (errorMsg.includes('오프라인')) {
+        showToast('동기화 실패: 인터넷 연결을 확인해주세요', 'error');
+      } else if (errorMsg.includes('Wi-Fi')) {
+        showToast('동기화 실패: Wi-Fi 연결이 필요합니다 (설정에서 변경 가능)', 'error');
+      } else if (errorMsg.includes('로그인')) {
+        showToast('동기화 실패: Google Drive 로그인이 필요합니다', 'error');
+      } else {
+        showToast(`동기화 실패: ${errorMsg}`, 'error');
+      }
+
+      // 에러를 다시 throw하여 호출자가 처리할 수 있도록 함
+      throw error;
+    }
+  }, [showToast]);
 
   /**
    * 저장 후 지연 동기화 트리거

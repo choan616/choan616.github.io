@@ -101,6 +101,40 @@ db.version(6).stores({
   images: '++id, [userId+entryDate], userId, entryDate, createdAt, blob, thumbnail, blobType, blobSize, thumbnailType, thumbnailSize'
 });
 
+// 스키마 버전 7 (Soft Delete 지원)
+db.version(7).stores({
+  // entries와 images 테이블에 deletedAt 인덱스 추가
+  // IMPORTANT: title을 유지해야 이전 버전과 호환되며 primary key 변경 에러가 발생하지 않음
+  entries: '[userId+date], userId, date, title, *tags, createdAt, updatedAt, deletedAt',
+  images: '++id, [userId+entryDate], userId, entryDate, createdAt, updatedAt, deletedAt'
+}).upgrade(async tx => {
+  // images 테이블에 updatedAt 필드 추가 및 초기화
+  await tx.table('images').toCollection().modify(img => {
+    img.updatedAt = img.updatedAt || img.createdAt || new Date().toISOString();
+  });
+});
+
+// 스키마 버전 8 (자동 동기화 메타데이터 추가)
+db.version(8).stores({
+  // 자동 동기화 상태를 추적하기 위한 메타데이터 테이블
+  // &id: 유니크하고 자동 증가하는 PK
+  // lastSyncAt: 마지막 동기화가 성공한 시간
+  // remoteFileId: Google Drive에 저장된 백업 파일의 ID
+  // lastSyncDeviceId: 마지막으로 동기화를 수행한 기기의 고유 ID
+  syncMetadata: '&id, lastSyncAt, remoteFileId, lastSyncDeviceId'
+});
+
+/**
+ * 다른 탭에서 데이터베이스 버전 업그레이드가 발생했을 때 처리합니다.
+ * 현재 연결을 닫아 업그레이드가 원활하게 진행되도록 하고,
+ * 페이지를 새로고침하여 최신 스키마를 적용합니다.
+ */
+db.on('versionchange', () => {
+  console.log('다른 탭에서 데이터베이스 버전 업그레이드가 감지되었습니다. 연결을 닫고 새로고침합니다.');
+  db.close();
+  window.location.reload();
+});
+
 /**
  * 일기 엔트리 타입
  * @typedef {Object} DiaryEntry

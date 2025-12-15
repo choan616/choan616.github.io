@@ -1,7 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { useToast } from '../hooks/useToast';
-import { settingsManager } from '../services/settingsManager';
 import './EntryEditor.css';
+import { useToast } from '../hooks/useToast';
 
 export function EntryEditor({ entry, onSave, isEditing, setIsEditing, onImageDelete, onDelete }) {
   const [formData, setFormData] = useState({
@@ -10,11 +9,14 @@ export function EntryEditor({ entry, onSave, isEditing, setIsEditing, onImageDel
     tags: ''
   });
   const [selectedFiles, setSelectedFiles] = useState([]);
-  const [fontSize, setFontSize] = useState(settingsManager.get('fontSize') || 'medium');
+  const [fontSize, setFontSize] = useState(() => {
+    const savedSettings = JSON.parse(localStorage.getItem('app_settings') || '{}');
+    return savedSettings.fontSize || 'medium';
+  });
   const [isSaving, setIsSaving] = useState(false);
   const fileInputRef = useRef(null);
-  const { showToast } = useToast();
   const touchTimer = useRef(null); // 'this.touchTimer' 대신 useRef 사용
+  const { showToast } = useToast();
 
   // entry prop을 기반으로 폼 데이터를 리셋하는 함수
   const resetFormFromEntry = (currentEntry) => {
@@ -33,13 +35,16 @@ export function EntryEditor({ entry, onSave, isEditing, setIsEditing, onImageDel
   }, [entry]);
 
   // 설정 변경 감지
-  useEffect(() => {
-    const handleSettingsChange = (settings) => {
-      setFontSize(settings.fontSize);
-    };
-    settingsManager.addListener(handleSettingsChange);
-    return () => settingsManager.removeListener(handleSettingsChange);
-  }, []);
+  const handleFontSizeChange = (size) => {
+    setFontSize(size);
+    try {
+      const savedSettings = JSON.parse(localStorage.getItem('app_settings') || '{}');
+      savedSettings.fontSize = size;
+      localStorage.setItem('app_settings', JSON.stringify(savedSettings));
+    } catch (e) {
+      console.error("Failed to save font size setting:", e);
+    }
+  };
 
   // 컴포넌트 언마운트 시 생성된 Object URL 해제 (메모리 누수 방지)
   useEffect(() => {
@@ -199,9 +204,9 @@ export function EntryEditor({ entry, onSave, isEditing, setIsEditing, onImageDel
             // 텍스트 크기 조절
             <div className="font-size-controls">
               <div className="font-size-labels">
-                <span className="label-small" onClick={() => settingsManager.set('fontSize', 'small')}>A</span>
-                <span className="label-medium" onClick={() => settingsManager.set('fontSize', 'medium')}>A</span>
-                <span className="label-large" onClick={() => settingsManager.set('fontSize', 'large')}>A</span>
+                <span className="label-small" onClick={() => handleFontSizeChange('small')}>A</span>
+                <span className="label-medium" onClick={() => handleFontSizeChange('medium')}>A</span>
+                <span className="label-large" onClick={() => handleFontSizeChange('large')}>A</span>
               </div>
               <input
                 type="range"
@@ -212,7 +217,7 @@ export function EntryEditor({ entry, onSave, isEditing, setIsEditing, onImageDel
                 onChange={(e) => {
                   const value = parseInt(e.target.value);
                   const size = value === 0 ? 'small' : value === 1 ? 'medium' : 'large';
-                  settingsManager.set('fontSize', size);
+                  handleFontSizeChange(size);
                 }}
                 onMouseUp={(e) => {
                   const value = parseInt(e.target.value);

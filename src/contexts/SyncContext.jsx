@@ -5,7 +5,7 @@ import { SyncStatus } from '../constants';
  * SyncContext - 전역 동기화 상태 관리
  */
 export const SyncContext = createContext({
-  status: SyncStatus.IDLE,
+  status: SyncStatus.IDLE, // 'idle', 'syncing', 'success', 'error', 'conflict'
   lastSyncTime: null,
   lastError: null,
   isOnline: true,

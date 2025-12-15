@@ -4,6 +4,7 @@ import { useSyncContext } from '../contexts/SyncContext';
 import { SyncStatus } from '../constants';
 import { Icon } from './Icon';
 import './UserProfileButton.css';
+import './Modal.css';
 
 /**
  * 사용자 프로필 버튼 (헤더용)
@@ -61,9 +62,8 @@ export function UserProfileButton({ user, onLogout, onSettingsClick, onBackupCli
       </button>
 
       {showMenu && (
-        <>
-          <div className="profile-backdrop" onClick={() => setShowMenu(false)} />
-          <div className="profile-menu">
+        <div className="modal-overlay" onClick={() => setShowMenu(false)}>
+          <div className="profile-menu modal" onClick={(e) => e.stopPropagation()}>
             <div className="profile-menu-header">
               <div className="profile-avatar-large">{initial}</div>
               <div className="profile-menu-user-info">
@@ -97,7 +97,7 @@ export function UserProfileButton({ user, onLogout, onSettingsClick, onBackupCli
               </ul>
             </nav>
           </div>
-        </>
+        </div>
       )}
     </div>
   );

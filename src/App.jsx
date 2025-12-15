@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { useLiveQuery } from 'dexie-react-hooks';
 import { format } from 'date-fns';
 import { useRegisterSW } from 'virtual:pwa-register/react';
 import { ToastProvider } from './components/Toast';
@@ -12,13 +13,15 @@ import { Calendar } from './components/Calendar';
 import { ImageCarousel } from './components/ImageCarousel';
 import { EntryEditor } from './components/EntryEditor';
 import { BackupPanel } from './components/BackupPanel';
-import ErrorBoundary from './components/ErrorBoundary'; // <--- 수정
+import { Settings } from './components/Settings';
+import { OfflineBanner } from './components/OfflineBanner';
+import ErrorBoundary from './components/ErrorBoundary';
 import { getCurrentUser, isAuthenticated } from './utils/auth';
 import './App.css';
 import { PasswordSetupModal } from './components/PasswordSetupModal';
 import { SessionLockModal } from './components/SessionLockModal';
 import { syncManager } from './services/syncManager';
-import { useLiveQuery } from 'dexie-react-hooks';
+
 import { db } from './db/db';
 
 function AppContent() {
@@ -28,11 +31,22 @@ function AppContent() {
   const [isLoading, setIsLoading] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
   const [showBackupPanel, setShowBackupPanel] = useState(false);
-  const [showSettings, setShowSettings] = useState(false);  // Lazy load settings component
-  const Settings = React.lazy(() => import('./components/Settings').then(module => ({ default: module.Settings })));
+  const [showSettings, setShowSettings] = useState(false);
 
   const { showToast } = useToast();
   const { triggerSync, triggerDebouncedSync } = useSyncContext();
+
+  // 일기가 있는 날짜 목록 조회 (삭제된 일기 제외됨)
+  const entriesDateList = useLiveQuery(async () => {
+    if (!currentUser) return [];
+    try {
+      const { getEntriesDateList } = await import('./db/adapter');
+      return await getEntriesDateList(currentUser.userId);
+    } catch (error) {
+      console.error('Failed to load entries list:', error);
+      return [];
+    }
+  }, [currentUser], []);
 
   // PWA 서비스 워커 업데이트 로직
   const {
@@ -60,8 +74,10 @@ function AppContent() {
   // 인증 확인
   useEffect(() => {
     // 앱 시작 시 인증 상태를 확인하고 사용자를 설정합니다.
-    // 이 로직은 handleAuthenticated 함수로 통합되어 일관성을 유지합니다.
-    const initializeUser = async () => {
+    const initializeApp = async () => {
+      // SyncManager 초기화
+      await syncManager.init();
+      
       if (isAuthenticated() && !currentUser) {
         const userId = getCurrentUser();
         if (userId) {
@@ -75,7 +91,7 @@ function AppContent() {
       }
     };
 
-    initializeUser();
+    initializeApp();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []); // 이 useEffect는 앱 시작 시 한 번만 실행되어야 합니다.
 
@@ -90,48 +106,18 @@ function AppContent() {
 
     setIsLoading(true);
     try {
-      const entry = await db.entries.get([currentUser.userId, selectedDate]);
-      const imageRecords = await db.images.where({ userId: currentUser.userId, entryDate: selectedDate }).toArray();
+      const { getEntryWithImages } = await import('./db/adapter');
+      const entryData = await getEntryWithImages(currentUser.userId, selectedDate);
 
-      // Clean up previous object URLs before setting the new state.
-      currentEntry?.images?.forEach(img => {
-        if (img.url && img.url.startsWith('blob:')) {
-          URL.revokeObjectURL(img.url);
-        }
-        if (img.thumbnailUrl && img.thumbnailUrl.startsWith('blob:')) {
-          URL.revokeObjectURL(img.thumbnailUrl);
-        }
-      });
+      // getEntryWithImages는 이미 처리가 완료된 객체(Blob URL 등 포함)를 반환함
+      // 하지만 현재 getEntryWithImages는 URL.createObjectURL을 내부적으로 처리함.
+      // App.jsx의 기존 로직은 여기서 처리하고 있었으므로, adapter가 반환하는 구조에 맞게 setCurrentEntry를 업데이트해야 함.
 
-      const imageUrls = imageRecords.map(img => {
-        // Path 1: Data is a Base64 string (from iOS/Safari)
-        if (typeof img.blob === 'string' && typeof img.thumbnail === 'string') {
-          return {
-            id: img.id,
-            url: img.blob, // Use data: URL directly
-            thumbnailUrl: img.thumbnail, // Use data: URL directly
-            createdAt: img.createdAt,
-          };
-        }
-
-        // Path 2: Data is a Blob (from other browsers)
-        if (img.blob instanceof Blob && img.thumbnail instanceof Blob) {
-          return {
-            id: img.id,
-            url: URL.createObjectURL(img.blob),
-            thumbnailUrl: URL.createObjectURL(img.thumbnail),
-            createdAt: img.createdAt,
-          };
-        }
-
-        console.warn(`Skipping image ${img.id} due to invalid or missing image data.`);
-        return null;
-      }).filter(Boolean);
-
-      if (entry) {
-        setCurrentEntry({ ...entry, images: imageUrls });
+      if (entryData) {
+        setCurrentEntry(entryData);
         setIsEditing(false); // 기존 일기가 있으면 보기 모드
       } else {
+        // 엔트리가 없거나 삭제된 경우
         setCurrentEntry({
           date: selectedDate,
           title: '',
@@ -141,6 +127,8 @@ function AppContent() {
         });
         setIsEditing(true); // 새 일기는 편집 모드
       }
+    } catch (error) {
+      console.error("데이터 로딩 중 오류:", error);
     } finally {
       setIsLoading(false);
     }
@@ -187,6 +175,17 @@ function AppContent() {
       await deleteEntry(currentUser.userId, currentEntry.date);
       showToast('일기가 삭제되었습니다.', 'success');
 
+      // UI 즉시 갱신 (빈 일기 템플릿으로 교체)
+      setCurrentEntry({
+        date: currentEntry.date,
+        title: '',
+        content: '',
+        images: [],
+        tags: []
+      });
+      // 편집 모드 종료
+      setIsEditing(false);
+
       // 삭제 후 현재 날짜의 빈 일기를 다시 로드할 필요 없음. useLiveQuery가 자동으로 처리.
       triggerDebouncedSync();
     } catch (error) {
@@ -218,9 +217,7 @@ function AppContent() {
     if (!isInitialLoad) {
       triggerSync({ silent: false }).catch(err => {
         console.log('로그인 후 동기화 실패:', err);
-        if (err.message.includes('central directory')) {
-          showToast('자동 동기화 실패: Drive의 백업 파일이 손상되었을 수 있습니다.', 'error');
-        }
+        // 토스트는 SyncProvider에서 이미 표시됨
       });
     } else {
       console.log('최초 접속: 자동 동기화 건너뜀');
@@ -245,6 +242,9 @@ function AppContent() {
   return (
     <ErrorBoundary>
       <>
+        {/* 오프라인 배너 */}
+        <OfflineBanner />
+
         {/* PWA 업데이트 알림 UI */}
         {needRefresh && (
           <div className="pwa-update-toast">
@@ -270,7 +270,7 @@ function AppContent() {
           }
         >
           {{
-            sidebar: <Calendar selectedDate={selectedDate} onSelect={handleDateSelect} userId={currentUser.userId} />,
+            sidebar: <Calendar selectedDate={selectedDate} onSelect={handleDateSelect} userId={currentUser.userId} entriesDateList={entriesDateList} />,
             carousel: <ImageCarousel images={currentEntry?.images || []} />,
             editor: (
               <EntryEditor
@@ -289,15 +289,17 @@ function AppContent() {
           <BackupPanel
             currentUser={currentUser}
             onClose={() => setShowBackupPanel(false)}
+            // 데이터 복원 후 페이지를 새로고침하는 대신,
+            // useLiveQuery가 자동으로 데이터를 다시 로드하므로 별도 작업이 필요 없습니다.
+            onDataRestored={() => console.log('Data restored. UI will update automatically.')}
           />
         )}
 
         {showSettings && (
-          <React.Suspense fallback={<div>Loading...</div>}>
-            <Settings
-              onClose={() => setShowSettings(false)}
-            />
-          </React.Suspense>
+          <Settings
+            onClose={() => setShowSettings(false)}
+            showToast={showToast}
+          />
         )}
         {/* 전역 모달: PIN 설정 및 잠금 모달 */}
         <PasswordSetupModal />

@@ -1,14 +1,16 @@
 .calendar-wrapper {
   padding: 20px;
-  background: white;
-  border-radius: 12px;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  background: var(--card-bg);
+  border-radius: var(--border-radius-lg);
+  border: 1px solid var(--border-color);
+  box-shadow: var(--shadow-md);
 }
 
-/* DayPicker 한국어 스타일 커스터마이징 */
+/* DayPicker Customization */
 .rdp {
-  --rdp-accent-color: #3b82f6;
-  --rdp-background-color: #eff6ff;
+  --rdp-accent-color: var(--accent-primary);
+  --rdp-background-color: var(--accent-primary-hover); /* Selected day background */
+  --rdp-selected-color: #fff; /* Selected day text color */
   margin: 0;
 }
 
@@ -26,7 +28,7 @@
 .rdp-caption_label {
   font-size: 18px;
   font-weight: 600;
-  color: #1f2937;
+  color: var(--text-primary);
 }
 
 .rdp-nav {
@@ -37,19 +39,22 @@
 .rdp-nav_button {
   width: 32px;
   height: 32px;
-  border-radius: 6px;
+  border-radius: var(--border-radius-md);
   background: transparent;
-  border: none;
+  border: 1px solid var(--border-color);
+  color: var(--text-secondary);
   cursor: pointer;
-  transition: background 0.2s;
+  transition: all 0.2s;
 }
 
 .rdp-nav_button:hover {
-  background: #f3f4f6;
+  background: var(--bg-secondary);
+  border-color: var(--accent-primary);
+  color: var(--accent-primary);
 }
 
 .rdp-head_cell {
-  color: #6b7280;
+  color: var(--text-muted);
   font-weight: 500;
   font-size: 14px;
   text-transform: uppercase;
@@ -66,51 +71,62 @@
   font-size: 14px;
   transition: all 0.2s;
   position: relative;
+  border: 1px solid transparent;
 }
 
-.rdp-day:hover:not(.rdp-day_disabled) {
-  background: #f3f4f6;
+.rdp-day:hover:not(.rdp-day_disabled):not(.rdp-day_selected) {
+  background-color: var(--bg-secondary);
 }
 
 .rdp-day_selected {
-  background: var(--rdp-accent-color);
-  color: white;
+  background-color: var(--rdp-accent-color);
+  color: var(--rdp-selected-color);
   font-weight: 600;
+}
+.rdp-day_selected:hover {
+  background-color: var(--rdp-background-color);
 }
 
 .rdp-day_today {
   font-weight: 700;
-  color: var(--rdp-accent-color);
+  color: var(--accent-primary);
+  background-color: transparent;
+}
+
+.rdp-day_today:not(.rdp-day_selected) {
+    border: 1px solid var(--accent-primary);
 }
 
 /* 일기가 있는 날짜 표시 */
 .day-has-entry {
   font-weight: 600;
-  color: #059669;
+  color: var(--accent-secondary);
 }
 
 .day-has-entry::after {
   content: '';
   position: absolute;
-  bottom: 4px;
+  bottom: 5px;
   left: 50%;
   transform: translateX(-50%);
-  width: 4px;
-  height: 4px;
-  background: #059669;
+  width: 5px;
+  height: 5px;
+  background: var(--accent-secondary);
   border-radius: 50%;
 }
 
 .rdp-day_selected.day-has-entry::after {
-  background: white;
+  background: var(--rdp-selected-color);
 }
 
 .rdp-outside {
-  color: #d1d5db;
+  color: var(--text-muted);
+  opacity: 0.5;
 }
 
 .rdp-day_disabled {
-  color: #d1d5db;
+  color: var(--text-muted);
+  opacity: 0.5;
   cursor: not-allowed;
 }
 
@@ -121,11 +137,6 @@
 @media (max-width: 640px) {
   .calendar-wrapper {
     padding: 16px 12px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    width: 100%;
-    box-sizing: border-box;
   }
 
   .rdp {

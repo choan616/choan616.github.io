@@ -26,7 +26,7 @@ export function Layout({ children, currentEntry, userProfileButton }) {
             {/* Desktop Sidebar Header */}
             <div className="desktop-sidebar-header">
               <h1>My Diary</h1>
-              {userProfileButton && (
+              {userProfileButton && ( // 이 부분이 누락된 버튼을 추가합니다.
                 <div className="sidebar-profile">{userProfileButton}</div>
               )}
             </div>
