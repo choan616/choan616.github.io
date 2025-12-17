@@ -10,6 +10,7 @@ const DEFAULT_SETTINGS = {
   syncOnSave: true,
   fontSize: 'medium',
   theme: 'light',
+  enableScreenLock: true,
 };
 
 /**
@@ -135,18 +136,36 @@ export function Settings({ onClose, showToast }) {
               />
             </div>
           </div>
-        </div>
 
-        <div className="settings-footer">
-          <button
-            onClick={handleSave}
-            className="btn btn-primary"
-          >
-            <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-              <path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z" /><polyline points="17 21 17 13 7 13 7 21" /><polyline points="7 3 7 8 15 8" />
-            </svg>
-            저장
-          </button>
+          <div className="settings-section">
+            <h3>보안</h3>
+            {/* 화면 잠금 사용 설정 */}
+            <div className="setting-item">
+              <div className="setting-info">
+                <label htmlFor="enableScreenLock" className="setting-label">
+                  화면 잠금 사용
+                </label>
+                <span className="setting-desc">PIN이 설정된 경우, 일정 시간 미사용 시 화면을 잠급니다.</span>
+              </div>
+              <Switch
+                id="enableScreenLock"
+                checked={settings.enableScreenLock}
+                onChange={() => setSettings(prev => ({ ...prev, enableScreenLock: !prev.enableScreenLock }))}
+              />
+            </div>
+          </div>
+
+          <div className="settings-footer">
+            <button
+              onClick={handleSave}
+              className="btn btn-primary"
+            >
+              <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z" /><polyline points="17 21 17 13 7 13 7 21" /><polyline points="7 3 7 8 15 8" />
+              </svg>
+              저장
+            </button>
+          </div>
         </div>
       </div>
     </div>

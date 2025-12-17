@@ -1,4 +1,24 @@
-.calendar-wrapper {
+/* 연/월/오늘 버튼을 감싸는 네비게이션 영역 */
+.calendar-navigation {
+  display: flex;
+  gap: 8px;
+  padding: 0 8px 16px 8px;
+}
+
+.calendar-navigation select,
+.calendar-navigation .btn-today {
+  flex: 1;
+  padding: 8px;
+  border-radius: var(--border-radius-md);
+  border: 1px solid var(--border-color);
+  background-color: var(--bg-secondary);
+  color: var(--text-primary);
+  font-size: 14px;
+  cursor: pointer;
+  transition: background-color 0.2s, border-color 0.2s;
+}
+
+.calendar-container {
   padding: 20px;
   background: var(--card-bg);
   border-radius: var(--border-radius-lg);
@@ -7,10 +27,11 @@
 }
 
 /* DayPicker Customization */
-.rdp {
+.rdp-root {
   --rdp-accent-color: var(--accent-primary);
   --rdp-background-color: var(--accent-primary-hover); /* Selected day background */
   --rdp-selected-color: #fff; /* Selected day text color */
+  --rdp-today-color: var(--accent-primary);
   margin: 0;
 }
 
@@ -90,11 +111,11 @@
 .rdp-day_today {
   font-weight: 700;
   color: var(--accent-primary);
-  background-color: transparent;
+  background-color: color-mix(in srgb, var(--accent-primary) 10%, transparent);
 }
 
 .rdp-day_today:not(.rdp-day_selected) {
-    border: 1px solid var(--accent-primary);
+  border: 1px solid var(--accent-primary);
 }
 
 /* 일기가 있는 날짜 표시 */
@@ -116,7 +137,7 @@
 }
 
 .rdp-day_selected.day-has-entry::after {
-  background: var(--rdp-selected-color);
+  background-color: var(--rdp-selected-color);
 }
 
 .rdp-outside {
@@ -135,7 +156,7 @@
 }
 
 @media (max-width: 640px) {
-  .calendar-wrapper {
+  .calendar-container {
     padding: 16px 12px;
   }
 

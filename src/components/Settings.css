@@ -139,7 +139,7 @@
 .setting-select:focus {
   outline: none;
   border-color: var(--accent-primary);
-  box-shadow: 0 0 0 3px rgba(51, 102, 255, 0.2);
+  box-shadow: 0 0 0 3px var(--accent-primary-alpha);
 }
 
 .app-info {
@@ -197,7 +197,7 @@ input:checked+.slider {
 }
 
 input:focus-visible+.slider {
-  box-shadow: 0 0 0 3px rgba(51, 102, 255, 0.2);
+  box-shadow: 0 0 0 3px var(--accent-primary-alpha);
 }
 
 input:checked+.slider:before {
@@ -229,13 +229,13 @@ input:checked+.slider:before {
 }
 
 .btn-danger {
-  background: #fee2e2;
-  color: #ef4444;
-  border-color: #fecaca;
+  background: color-mix(in srgb, var(--color-danger) 15%, transparent);
+  color: var(--color-danger);
+  border-color: color-mix(in srgb, var(--color-danger) 30%, transparent);
 }
 .btn-danger:hover:not(:disabled) {
-  background: #fecaca;
-  color: #dc2626;
+  background: color-mix(in srgb, var(--color-danger) 25%, transparent);
+  color: var(--color-danger-hover);
 }
 
 /* Footer */

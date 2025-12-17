@@ -1,0 +1,149 @@
+.tag-cloud-container {
+  padding: 16px;
+  background: var(--card-bg);
+  border-radius: var(--border-radius-lg);
+  border: 1px solid var(--border-color);
+  box-shadow: var(--shadow-md);
+  margin: 16px 0;
+}
+
+.tag-cloud-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin: 0 0 0 0;
+  padding-bottom: 12px;
+  cursor: pointer;
+  border-bottom: 1px solid transparent;
+  transition: all 0.2s;
+}
+
+.tag-cloud-container:has(.tag-list) .tag-cloud-header {
+  border-bottom-color: var(--border-color);
+  margin-bottom: 12px;
+}
+
+.tag-cloud-title {
+  font-size: 16px;
+  font-weight: 600;
+  color: var(--text-primary);
+  margin: 0;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.tag-count-badge {
+  font-size: 12px;
+  background: var(--bg-secondary);
+  color: var(--text-secondary);
+  padding: 2px 8px;
+  border-radius: 12px;
+  font-weight: 500;
+}
+
+.tag-toggle-btn {
+  background: transparent;
+  border: none;
+  font-size: 12px;
+  color: var(--text-secondary);
+  transition: transform 0.2s;
+  cursor: pointer;
+  padding: 4px;
+}
+
+.tag-toggle-btn.expanded {
+  transform: rotate(180deg);
+}
+
+.tag-toggle-btn .icon {
+  width: 16px;
+  height: 16px;
+}
+
+/* 기본(데스크탑): 항상 펼쳐짐, 토글 버튼 숨김 */
+.tag-toggle-btn {
+  display: none;
+}
+
+.tag-cloud-header {
+  cursor: default;
+  /* 데스크탑에서는 클릭 불가 */
+}
+
+.tag-list {
+  display: flex !important;
+  /* 데스크탑에서는 항상 보임 */
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+/* 모바일: 토글 가능 */
+@media (max-width: 768px) {
+  .tag-toggle-btn {
+    display: block;
+    /* 모바일에서만 토글 버튼 표시 */
+    background: transparent;
+    border: none;
+    font-size: 12px;
+    color: var(--text-secondary);
+    transition: transform 0.2s;
+    cursor: pointer;
+    padding: 4px;
+  }
+
+  .tag-toggle-btn.expanded {
+    transform: rotate(180deg);
+  }
+
+  .tag-cloud-header {
+    cursor: pointer;
+    border-bottom-color: var(--border-color);
+    /* 모바일에서는 헤더 구분선 유지 */
+    margin-bottom: 12px;
+  }
+
+  /* 모바일에서 header border-bottom 제어 (접혔을 때/펼쳤을 때) */
+  .tag-cloud-container:has(.tag-list.expanded) .tag-cloud-header {
+    border-bottom-color: var(--border-color);
+  }
+
+  .tag-cloud-container:not(:has(.tag-list.expanded)) .tag-cloud-header {
+    border-bottom-color: transparent;
+    margin-bottom: -12px;
+  }
+
+  .tag-list {
+    display: none !important;
+    /* 기본적으로 숨김 */
+  }
+
+  .tag-list.expanded {
+    display: flex !important;
+    /* 펼쳐졌을 때만 보임 */
+  }
+}
+
+.tag-item {
+  background: var(--bg-secondary);
+  color: var(--text-secondary);
+  padding: 6px 14px;
+  border-radius: 99px;
+  font-size: 13px;
+  font-weight: 500;
+  cursor: pointer;
+  border: 1px solid transparent;
+  transition: all 0.2s;
+}
+
+.tag-item:hover {
+  background: var(--accent-primary);
+  color: white;
+}
+
+.tag-item.active {
+  background: var(--accent-primary);
+  color: white;
+  font-weight: 600;
+  border-color: var(--accent-primary-hover);
+}

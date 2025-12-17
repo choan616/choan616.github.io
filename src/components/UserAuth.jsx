@@ -37,17 +37,21 @@ export function UserAuth({ onAuthenticated }) {
       if (!googleUser) throw new Error('Google 사용자 정보를 가져올 수 없습니다.');
 
       // 3. 허용된 이메일인지 확인합니다.
-      if (ALLOWED_EMAILS.length > 0 && !ALLOWED_EMAILS.includes(googleUser.email)) {
+      if (ALLOWED_EMAILS.length > 0 && !ALLOWED_EMAILS.includes(googleUser.email)) { 
         await googleDriveService.signOut();
         throw new Error(`접근 권한이 없는 계정입니다: ${googleUser.email}`);
       }
 
-      // 4. 로컬 DB에서 기존 사용자인지 확인합니다.
-      const { getAllUsers, createUser } = await import('../db/adapter');
-      const currentUsers = await getAllUsers();
-      let user = currentUsers.find(u => u.email === googleUser.email);
-      if (!user) {
-        // 4-2. 허용된 신규 사용자일 경우, 자동으로 계정을 생성하고 로그인합니다.
+      // 4. 로컬 DB에 사용자를 생성하거나 프로필 정보를 업데이트합니다.
+      const { createUser, getUser } = await import('../db/adapter');
+      const userId = await createUser(
+        { email: googleUser.email, name: googleUser.name },
+        { imageUrl: googleUser.imageUrl } // googleData에 imageUrl을 전달합니다.
+      );
+
+      let user = await getUser(userId);
+
+      if (!user) { // 만약을 대비한 방어 코드
         const userData = {
           email: googleUser.email,
           name: googleUser.name,
@@ -94,7 +98,7 @@ export function UserAuth({ onAuthenticated }) {
           </div>
         </div>
         <footer className="login-footer">
-          <p>© My Diary Corp.</p>
+          <p>© CHOAN</p>
         </footer>
       </div>
     </div>

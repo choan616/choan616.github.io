@@ -1,12 +1,8 @@
 import React from 'react';
 import './Layout.css';
 
-export function Layout({ children, currentEntry, userProfileButton }) {
-  const hasImages = currentEntry?.images && currentEntry.images.length > 0;
-
-
-  // 이미지가 없을 경우 캐러셀 영역을 숨깁니다.
-  const showCarousel = hasImages;
+export function Layout({ sidebar, main, carousel, userProfileButton }) {
+  const showCarousel = !!carousel;
 
   return (
     <div className="app-layout">
@@ -33,7 +29,7 @@ export function Layout({ children, currentEntry, userProfileButton }) {
           </div>
           {/* Calendar is now part of the Sidebar flow */}
           <section className="content-sidebar">
-            {children.sidebar}
+            {sidebar}
           </section>
           {/* Sidebar Footer */}
           <footer className="sidebar-footer">
@@ -43,18 +39,16 @@ export function Layout({ children, currentEntry, userProfileButton }) {
 
         {/* Main Content */}
         <main className="content-area">
-          
-
           <section className="content-main">
             {/* Top Section - Image Carousel (conditional) */}
-            {hasImages && (
+            {showCarousel && (
               <div className="content-top">
-                {children.carousel}
+                {carousel}
               </div>
             )}
             {/* Bottom Section - Entry Editor */}
             <div className={`content-bottom ${!showCarousel ? 'full-height' : ''}`}>
-              {children.editor}
+              {main}
             </div>
           </section>
         </main>

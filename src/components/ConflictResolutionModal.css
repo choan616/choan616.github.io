@@ -79,6 +79,14 @@
   overflow-y: auto;
 }
 
+.conflict-hash {
+  margin-top: 8px;
+  font-size: 0.75rem;
+  color: #888;
+  word-break: keep-all;
+  overflow: hidden;
+}
+
 .conflict-footer {
   display: flex;
   justify-content: flex-end;

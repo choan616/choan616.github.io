@@ -1,0 +1,116 @@
+/* 검색 컨테이너 */
+.search-container {
+  padding: 0 8px 16px 8px; /* 캘린더 네비게이션과 유사한 패딩 */
+}
+
+/* 검색 폼 */
+.search-form {
+  display: flex;
+  position: relative;
+}
+
+/* 검색 입력창 */
+.search-input {
+  width: 100%;
+  padding: 10px 40px 10px 16px; /* 오른쪽 버튼 공간 확보 */
+  border-radius: var(--border-radius-lg);
+  border: 1px solid var(--border-color);
+  background-color: var(--bg-secondary);
+  color: var(--text-primary);
+  font-size: 15px;
+  transition: border-color 0.2s;
+}
+
+.search-input:focus {
+  outline: none;
+  border-color: var(--accent-primary);
+  box-shadow: 0 0 0 2px var(--accent-primary-alpha);
+}
+
+/* 검색/지우기 버튼 */
+.search-button {
+  position: absolute;
+  right: 5px;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 36px;
+  height: 36px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background-color: transparent;
+  border: none;
+  border-radius: 50%;
+  cursor: pointer;
+  color: var(--text-secondary);
+  transition: background-color 0.2s, color 0.2s;
+}
+
+.search-button:hover {
+  background-color: var(--bg-tertiary);
+  color: var(--text-primary);
+}
+
+.search-button.clear {
+  font-size: 20px;
+  font-weight: bold;
+}
+
+/* 검색 결과 컨테이너 */
+.search-results-container {
+  flex-grow: 1;
+  overflow-y: auto;
+  /* flex 아이템이 overflow를 가지려면 min-height가 필요합니다. */
+  min-height: 0;
+  padding: 0 8px;
+}
+
+.search-results-list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+/* 개별 검색 결과 아이템 */
+.search-result-item {
+  padding: 12px;
+  border-radius: var(--border-radius-md);
+  background-color: var(--bg-secondary);
+  cursor: pointer;
+  transition: background-color 0.2s;
+  border: 1px solid transparent;
+}
+
+.search-result-item:hover {
+  background-color: var(--border-color);
+  border-color: var(--accent-primary);
+}
+
+.result-date {
+  font-size: 0.8rem;
+  color: var(--text-muted);
+  margin-bottom: 4px;
+}
+
+.result-title {
+  font-weight: 600;
+  color: var(--text-primary);
+  margin-bottom: 6px;
+}
+
+.result-snippet {
+  font-size: 0.9rem;
+  color: var(--text-secondary);
+  margin: 0;
+  line-height: 1.4;
+}
+
+/* 검색 결과 없음 메시지 */
+.search-no-results {
+  padding: 40px 20px;
+  text-align: center;
+  color: var(--text-muted);
+}

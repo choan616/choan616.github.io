@@ -44,7 +44,7 @@ export const getSyncMetadata = async () => {
     try {
       await db.syncMetadata.add(defaultMetadata);
       metadata = defaultMetadata;
-    } catch (e) {
+    } catch {
       // 다른 탭/작업에서 이미 추가한 경우, 다시 가져옴
       metadata = await db.syncMetadata.get(METADATA_ID);
     }

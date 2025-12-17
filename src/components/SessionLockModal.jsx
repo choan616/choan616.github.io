@@ -38,6 +38,21 @@ export function SessionLockModal() {
   useEffect(() => {
     async function checkPin() {
       if (isLocked && currentUserId) {
+        // 설정 확인
+        try {
+          const savedSettings = localStorage.getItem('app_settings');
+          if (savedSettings) {
+            const settings = JSON.parse(savedSettings);
+            if (settings.enableScreenLock === false) {
+              setPinRequired(false);
+              unlock();
+              return;
+            }
+          }
+        } catch (e) {
+          console.error("Failed to read settings in LockModal", e);
+        }
+
         const { getUser } = await import('../db/adapter');
         const user = await getUser(currentUserId);
         if (!user || !user.pinHash || !user.pinSalt) {
@@ -54,7 +69,7 @@ export function SessionLockModal() {
   if (!isLocked || (lastUnlockTime && now - lastUnlockTime < 600000) || !pinRequired) return null;
 
   const handleChange = (e) => {
-    const v = e.target.value.replace(/\D/g, '').slice(0,4);
+    const v = e.target.value.replace(/\D/g, '').slice(0, 4);
     setInput(v);
     setError('');
   };

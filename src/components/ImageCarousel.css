@@ -1,7 +1,7 @@
 .image-grid-container {
   width: 100%;
-  background: #f9fafb;
-  border-radius: 12px;
+  background: var(--bg-primary);
+  border-radius: var(--border-radius-lg);
   overflow: hidden;
   position: relative;
   display: flex;
@@ -24,9 +24,9 @@
   break-inside: avoid-column; /* Prevent items from breaking across columns */
   position: relative;
   overflow: hidden;
-  border-radius: 8px;
+  border-radius: var(--border-radius-md);
   cursor: pointer;
-  background-color: #e5e7eb;
+  background-color: var(--bg-secondary);
 }
 
 .grid-item img {
@@ -47,9 +47,9 @@
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  background: #f9fafb;
-  border-radius: 12px;
-  color: #9ca3af;
+  background: var(--bg-primary);
+  border-radius: var(--border-radius-lg);
+  color: var(--text-muted);
   min-height: 150px;
 }
 

@@ -10,13 +10,20 @@ import './OfflineBanner.css';
  */
 export function OfflineBanner() {
   const { isOnline } = useSyncContext();
-  const [queueCount, setQueueCount] = useState(0);
+  // 초기 큐 개수를 가져와서 상태를 초기화합니다.
+  const [queueCount, setQueueCount] = useState(() => syncManager.getPendingCount());
 
   useEffect(() => {
-    // 상태가 변경될 때마다 큐 개수 업데이트
-    const count = syncManager.getPendingCount();
-    setQueueCount(count);
-  }, [isOnline]);
+    // syncManager의 상태 변경을 구독합니다.
+    const handleStateChange = () => {
+      setQueueCount(syncManager.getPendingCount());
+    };
+
+    syncManager.addListener(handleStateChange);
+
+    // 컴포넌트가 언마운트될 때 리스너를 정리합니다.
+    return () => syncManager.removeListener(handleStateChange);
+  }, []); // 이 effect는 컴포넌트 마운트 시 한 번만 실행됩니다.
 
   // 온라인 상태면 배너 숨김
   if (isOnline) return null;

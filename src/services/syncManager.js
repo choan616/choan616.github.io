@@ -1,8 +1,9 @@
 import { googleDriveService } from './googleDrive';
-import { getLatestLocalTimestamp } from '../db/adapter';
+import { getLatestLocalTimestamp, exportUserDataAsZip, importUserData, getLocalDataSummary, getUser } from '../db/adapter';
 import { getSyncMetadata, updateSyncMetadata, getDeviceId } from '../db/syncMetadata';
 import { SyncStatus } from '../constants';
 
+import { syncSettings } from './syncSettings'; // syncSettings 모듈 import
 class SyncManager {
   constructor() {
     this.userId = null; // 현재 사용자 ID
@@ -23,7 +24,7 @@ class SyncManager {
     // 설정이 변경되면 타이머를 재시작하도록 이벤트 리스너 설정
     window.addEventListener('settings-updated', this.startAutoSyncTimer.bind(this));
   }
-  
+
   /**
    * SyncManager 초기화. 비동기 데이터를 로드합니다.
    */
@@ -32,7 +33,7 @@ class SyncManager {
     this.lastSyncTime = metadata.lastSyncAt;
     this.remoteFileId = metadata.remoteFileId;
     console.log('SyncManager initialized with metadata:', metadata);
-    
+
     this.notifyListeners();
     this.startAutoSyncTimer();
   }
@@ -47,6 +48,14 @@ class SyncManager {
   }
 
   /**
+   * 현재 설정된 사용자 ID를 반환합니다.
+   * @returns {string | null}
+   */
+  getUserId() {
+    return this.userId;
+  }
+
+  /**
    * 자동 동기화 타이머 시작
    */
   startAutoSyncTimer() {
@@ -56,15 +65,8 @@ class SyncManager {
       this.syncTimer = null;
     }
 
-    const settings = JSON.parse(localStorage.getItem('app_settings') || '{}');
-    const DEFAULT_SYNC_SETTINGS = {
-      autoSyncEnabled: false,
-      syncInterval: 30,
-    };
-
-    const enabled = settings.autoSyncEnabled ?? DEFAULT_SYNC_SETTINGS.autoSyncEnabled;
-    const intervalMinutes = settings.syncInterval ?? DEFAULT_SYNC_SETTINGS.syncInterval;
-
+    const enabled = syncSettings.get('autoSyncEnabled');
+    const intervalMinutes = syncSettings.get('syncInterval');
     if (enabled && intervalMinutes > 0) {
       console.log(`자동 동기화 타이머 시작: ${intervalMinutes}분 간격`);
       this.syncTimer = setInterval(() => {
@@ -88,8 +90,7 @@ class SyncManager {
       await this.processPendingQueue();
 
       // 2. 오프라인에서 온라인으로 복구 시 자동 동기화 (설정 확인)
-      const settings = JSON.parse(localStorage.getItem('app_settings') || '{}');
-      if (settings.autoSyncEnabled) {
+      if (syncSettings.get('autoSyncEnabled')) {
         this.autoSync({ silent: true }).catch((error) => {
           console.log('온라인 복구 동기화 실패:', error);
         });
@@ -136,7 +137,36 @@ class SyncManager {
       lastSyncTime: this.lastSyncTime,
       lastError: this.lastError,
       isOnline: this.isOnline,
+      conflictDetails: this.conflictDetails || null,
     };
+  }
+
+  /**
+   * 외부(BackupPanel)에서의 동기화(백업/복원) 성공을 알림
+   * 상태를 SUCCESS로 변경하고 메타데이터를 업데이트합니다.
+   * @param {Object} fileMetadata - 업데이트된 원격 파일 메타데이터
+   */
+  async notifySyncSuccess(fileMetadata) {
+    // fileMetadata는 { file, status } 형태의 객체일 수 있으므로 file 속성을 추출합니다.
+    const file = fileMetadata?.file || fileMetadata;
+    if (!file || !file.modifiedTime) return;
+
+    try {
+      const newSyncTime = new Date(file.modifiedTime).toISOString();
+      await updateSyncMetadata({
+        lastSyncAt: newSyncTime,
+        remoteFileId: file.id,
+        lastSyncDeviceId: this.deviceId,
+      });
+      this.lastSyncTime = newSyncTime;
+      this.remoteFileId = file.id;
+
+      this.setStatus(SyncStatus.SUCCESS);
+      this.notifyListeners();
+      console.log('[SyncManager] External sync success notified. State updated.');
+    } catch (error) {
+      console.error('[SyncManager] Failed to update metadata after external sync:', error);
+    }
   }
 
   /**
@@ -149,7 +179,7 @@ class SyncManager {
 
     // 성공 시 lastSyncTime 업데이트는 autoSync 로직 내에서 직접 처리
     if (status !== SyncStatus.SUCCESS) {
-        this.notifyListeners();
+      this.notifyListeners();
     }
   }
 
@@ -332,8 +362,8 @@ class SyncManager {
 
     return this.retryWithBackoff(async () => {
       try {
-        // 1. 로컬 DB의 전체 데이터를 ZIP Blob으로 가져오기
-        const { exportUserDataAsZip } = await import('../db/adapter');
+        // 1. 로컬 데이터 요약 정보와 ZIP Blob을 동시에 가져오기
+        const localSummary = await getLocalDataSummary(this.userId);
         const snapshotBlob = await exportUserDataAsZip(this.userId);
         console.log(`[Push] 전체 데이터 스냅샷 생성 완료 (size: ${snapshotBlob.size} bytes)`);
 
@@ -343,10 +373,21 @@ class SyncManager {
           return { skipped: true };
         }
 
-        // 2. Google Drive에 전체 데이터 스냅샷 업로드
-        const result = await googleDriveService.syncToGoogleDrive(snapshotBlob);
+        // 2. 파일 내용의 해시 계산 (버전 비교용)
+        const buffer = await snapshotBlob.arrayBuffer();
+        const hashBuffer = await crypto.subtle.digest('SHA-256', buffer);
+        const hashArray = Array.from(new Uint8Array(hashBuffer));
+        const contentHash = hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
+
+        // 3. Google Drive에 업로드할 때 appProperties에 요약 정보와 해시를 포함
+        const appProperties = {
+          ...localSummary, // entryCount, imageCount
+          contentHash,
+        };
+
+        const result = await googleDriveService.syncToGoogleDrive(snapshotBlob, appProperties, () => {}); // Provide an empty progress callback
         console.log('Push 동기화 완료');
-        return result.file;
+        return result; // { file, status } 객체 전체를 반환하도록 수정
       } catch (error) {
         console.error('Push 동기화 실패:', error);
         throw error;
@@ -359,26 +400,19 @@ class SyncManager {
    * @param {Object} options - 옵션
    * @param {boolean} [options.silent=false] - 조용한 동기화 (에러를 throw하지 않음)
    * @param {boolean} [options.isManual=false] - 수동 동기화 여부
+   * @param {string} [options.resolution=null] - 충돌 해결 방법 ('push' 또는 'pull')
    * @returns {Promise<void>}
    */
-  async autoSync({ silent = false, isManual = false } = {}) {
+  async autoSync({ silent = false, isManual = false, resolution = null } = {}) {
     // 1. 설정 확인
-    const settings = JSON.parse(localStorage.getItem('app_settings') || '{}');
-    const DEFAULT_SETTINGS = {
-      autoSyncEnabled: false,
-      wifiOnly: false,
-    };
-    const enabled = settings.autoSyncEnabled ?? DEFAULT_SETTINGS.autoSyncEnabled;
-
+    const enabled = syncSettings.get('autoSyncEnabled');
     if (!enabled && !isManual && silent) {
       // 수동 호출(silent=false)이 아니고 자동 호출(silent=true)인데 비활성화 상태면 중단
       console.log('자동 동기화가 비활성화되어 있습니다.');
       return;
     }
-
     // 2. Wi-Fi 전용 모드 확인
-    const wifiOnly = settings.wifiOnly ?? DEFAULT_SETTINGS.wifiOnly;
-
+    const wifiOnly = syncSettings.get('wifiOnly');
     if (wifiOnly && !this.isWifiConnected()) {
       if (!silent) {
         throw new Error('Wi-Fi 연결이 필요합니다 (설정됨)');
@@ -441,14 +475,30 @@ class SyncManager {
       const isRemoteNewer = remoteModifiedTime > lastSyncTimestamp;
       const isLocalNewer = localModifiedTime > lastSyncTimestamp;
 
+      // 2a. 충돌 해결 모드인 경우, 지정된 방향으로 강제 실행
+      if (resolution) {
+        console.log(`충돌 해결 모드: '${resolution}' 실행`);
+        if (resolution === 'push') {
+          await this.performPush();
+        } else if (resolution === 'pull') {
+          await this.performPull(remoteMetadata);
+        }
+        // 충돌 해결 후에는 아래의 일반 동기화 로직을 건너뜁니다.
+        this.setStatus(SyncStatus.SUCCESS);
+        this.notifyListeners();
+        return;
+      }
       if (isRemoteNewer && isLocalNewer) {
         // --- 충돌 해결 로직 ---
         // 충돌 발생 시, 수동/자동 관계없이 CONFLICT 상태로 설정하고 중단.
         // 사용자가 BackupPanel에서 직접 해결하도록 유도.
         const conflictErrorMsg = '원격과 로컬 데이터가 모두 변경되었습니다. 수동 동기화로 해결해주세요.';
         console.warn('충돌 감지:', conflictErrorMsg);
+        // 충돌 상세 정보에 로컬 요약 정보와 사용자 정보를 포함시킵니다.
+        const localSummary = await getLocalDataSummary(this.userId);
+        const currentUser = await getUser(this.userId);
         this.setStatus(SyncStatus.CONFLICT, conflictErrorMsg, {
-          conflictDetails: { remoteMetadata, localModifiedTime }
+          conflictDetails: { remoteMetadata, localModifiedTime, localSummary, currentUser }
         });
         return;
       } else if (isRemoteNewer) {
@@ -462,12 +512,15 @@ class SyncManager {
       } else {
         // 변경 사항 없음
         console.log('원격과 로컬 모두 변경사항이 없습니다. 동기화를 건너뜁니다.');
+        // 변경이 없더라도, 동기화를 시도한 현재 시간을 기준으로 마지막 동기화 시간을 갱신합니다.
+        // 이렇게 하면 불필요한 재동기화 시도를 방지할 수 있습니다.
+        const now = new Date().toISOString();
+        await updateSyncMetadata({ lastSyncAt: now });
+        this.lastSyncTime = now;
       }
 
       this.setStatus(SyncStatus.SUCCESS);
-      // 성공 시 리스너에게 직접 알림
-      this.lastSyncTime = new Date().toISOString();
-      this.notifyListeners();
+      this.notifyListeners(); // 상태 변경 후 리스너에게 알림
 
     } catch (error) {
       console.error('자동 동기화 실패:', error);
@@ -491,7 +544,6 @@ class SyncManager {
       const zipArrayBuffer = await remoteSyncData.blob.arrayBuffer();
 
       // importUserData를 사용하여 이미지 포함 전체 데이터를 병합
-      const { importUserData } = await import('../db/adapter');
       await importUserData(this.userId, zipArrayBuffer, true); // true = 병합 모드
 
       console.log('Remote changelog applied successfully.');
@@ -514,18 +566,20 @@ class SyncManager {
   async performPush() {
     console.log('Pushing local changes to remote...');
     const uploadedFile = await this.pushSync();
-    if (uploadedFile && !uploadedFile.skipped) {
-        console.log('Local changes pushed successfully.');
-        
-        // 메타데이터 업데이트
-        const newSyncTime = new Date(uploadedFile.modifiedTime).toISOString();
-        await updateSyncMetadata({
-            lastSyncAt: newSyncTime,
-            remoteFileId: uploadedFile.id,
-            lastSyncDeviceId: this.deviceId,
-        });
-        this.lastSyncTime = newSyncTime;
-        this.remoteFileId = uploadedFile.id;
+    // uploadedFile은 이제 { file, status, skipped? } 형태의 객체입니다.
+    if (uploadedFile && uploadedFile.file && !uploadedFile.skipped) {
+      console.log('Local changes pushed successfully.');
+
+      // 메타데이터 업데이트
+      const file = uploadedFile.file;
+      const newSyncTime = new Date(file.modifiedTime).toISOString();
+      await updateSyncMetadata({
+        lastSyncAt: newSyncTime,
+        remoteFileId: file.id,
+        lastSyncDeviceId: this.deviceId,
+      });
+      this.lastSyncTime = newSyncTime;
+      this.remoteFileId = file.id;
     }
   }
 
@@ -544,12 +598,7 @@ class SyncManager {
    */
   debouncedSyncAfterSave() {
     // 설정 확인
-    const settings = JSON.parse(localStorage.getItem('app_settings') || '{}');
-    const DEFAULT_SETTINGS = {
-      syncOnSave: true,
-    };
-    const syncOnSaveEnabled = settings.syncOnSave ?? DEFAULT_SETTINGS.syncOnSave;
-
+    const syncOnSaveEnabled = syncSettings.get('syncOnSave');
     if (!syncOnSaveEnabled) {
       console.log('일기 저장 시 자동 동기화가 비활성화되어 있습니다.');
       return;

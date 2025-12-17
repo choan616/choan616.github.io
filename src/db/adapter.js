@@ -14,13 +14,22 @@ import JSZip from 'jszip';
  * @param {Object} userData - { email, name, password }
  * @returns {Promise<string>} 생성된 userId
  */
-export async function createUser(userData) {
+export async function createUser(userData, googleData = null) {
   const { email, name, password } = userData;
+  const { imageUrl } = googleData || {};
 
   // 이메일 중복 확인
   const existing = await db.users.where('email').equals(email).first();
   if (existing) {
-    throw new Error('이미 존재하는 이메일입니다.');
+    // 이미 사용자가 존재하면, Google 프로필 정보(이름, 이미지)를 업데이트합니다.
+    const updateData = {};
+    if (name && existing.name !== name) updateData.name = name;
+    if (imageUrl && existing.imageUrl !== imageUrl) updateData.imageUrl = imageUrl;
+
+    if (Object.keys(updateData).length > 0) {
+      await db.users.update(existing.userId, updateData);
+    }
+    return existing.userId;
   }
 
   // 비밀번호 해싱
@@ -36,6 +45,7 @@ export async function createUser(userData) {
     email,
     name: name || email.split('@')[0],
     passwordHash,
+    imageUrl: imageUrl || null,
     passwordSalt: salt,
     createdAt: new Date().toISOString(),
     pinHash: null,
@@ -350,6 +360,62 @@ export async function getEntriesDateList(userId) {
   // 삭제되지 않은 일기만 조회
   const entries = await db.entries.where({ userId }).and(e => !e.deletedAt).toArray();
   return entries.map(e => e.date);
+}
+
+/**
+ * 사용자의 일기가 있는 모든 연도와 월 목록을 조회합니다.
+ * @param {string} userId - 사용자 ID
+ * @returns {Promise<Object>} { '2023': [1, 2, 12], '2024': [3, 5] } 형태의 객체
+ */
+export async function getAvailableYearsAndMonths(userId) {
+  const entries = await db.entries.where({ userId }).and(e => !e.deletedAt).toArray();
+  const yearMonthMap = {};
+
+  entries.forEach(entry => {
+    const [year, month] = entry.date.split('-');
+    const yearNum = parseInt(year, 10);
+    const monthNum = parseInt(month, 10);
+
+    if (!yearMonthMap[yearNum]) {
+      yearMonthMap[yearNum] = new Set();
+    }
+    yearMonthMap[yearNum].add(monthNum);
+  });
+
+  // Set을 정렬된 배열로 변환
+  Object.keys(yearMonthMap).forEach(year => {
+    yearMonthMap[year] = Array.from(yearMonthMap[year]).sort((a, b) => a - b);
+  });
+
+  return yearMonthMap;
+}
+
+/**
+ * 제목, 내용, 태그에서 키워드로 일기를 검색합니다.
+ * @param {string} userId - 사용자 ID
+ * @param {string} query - 검색어
+ * @returns {Promise<Array>} 검색된 일기 객체 배열
+ */
+export async function searchEntries(userId, query) {
+  if (!query || !userId) {
+    return [];
+  }
+  const lowerCaseQuery = query.toLowerCase();
+
+  // 제목, 내용, 태그에서 대소문자 구분 없이 검색
+  const results = await db.entries
+    .where('userId').equals(userId)
+    .and(entry =>
+      !entry.deletedAt && (
+        (entry.title && entry.title.toLowerCase().includes(lowerCaseQuery)) ||
+        (entry.content && entry.content.toLowerCase().includes(lowerCaseQuery)) ||
+        (entry.tags && entry.tags.some(tag => tag.toLowerCase().includes(lowerCaseQuery)))
+      )
+    )
+    .reverse() // 최신 일기부터 보여주기 위해 역순 정렬
+    .toArray();
+
+  return results;
 }
 
 /**
@@ -905,6 +971,25 @@ export async function importUserData(userId, data, merge = false) {
   return await _internal_importUserData(userId, data, merge);
 }
 
+/**
+ * 여러 개의 일기 데이터를 데이터베이스에 병합합니다.
+ * 날짜가 중복되면 기존 일기를 덮어씁니다.
+ * @param {Array<Object>} entries - 저장할 일기 객체 배열
+ * @returns {Promise<number>} 추가/수정된 일기 개수
+ */
+export async function bulkAddEntries(entries) {
+  if (!entries || entries.length === 0) {
+    return 0;
+  }
+
+  try {
+    await db.entries.bulkPut(entries);
+    return entries.length;
+  } catch (error) {
+    console.error('일괄 추가 실패:', error);
+    throw new Error('데이터베이스 저장 중 오류가 발생했습니다.');
+  }
+}
 
 /**
  * 전체 데이터 내보내기 (모든 사용자)
@@ -1085,6 +1170,36 @@ export async function getStorageUsage(userId) {
     total: entriesSize + imagesSize
   };
 }
+
+/**
+ * 로컬 데이터의 요약 정보를 가져옵니다 (일기 수, 이미지 수).
+ * @param {string} userId - 사용자 ID
+ * @returns {Promise<Object>} { entryCount, imageCount }
+ */
+export async function getLocalDataSummary(userId, includeHash = true) {
+  if (!userId) {
+    return { entryCount: 0, imageCount: 0, contentHash: null };
+  }
+  // 삭제되지 않은 항목만 카운트합니다.
+  const entryCount = await db.entries.where({ userId }).and(e => !e.deletedAt).count();
+  const imageCount = await db.images.where({ userId }).and(img => !img.deletedAt).count();
+
+  let contentHash = null;
+  if (includeHash) {
+    try {
+      const zipBlob = await exportUserDataAsZip(userId);
+      const buffer = await zipBlob.arrayBuffer();
+      const hashBuffer = await crypto.subtle.digest('SHA-256', buffer);
+      const hashArray = Array.from(new Uint8Array(hashBuffer));
+      contentHash = hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
+    } catch (error) {
+      console.error('로컬 데이터 해시 생성 실패:', error);
+    }
+  }
+
+  return { entryCount, imageCount, contentHash };
+}
+
 
 
 

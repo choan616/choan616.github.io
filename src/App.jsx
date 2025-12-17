@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { useLiveQuery } from 'dexie-react-hooks';
 import { format } from 'date-fns';
 import { useRegisterSW } from 'virtual:pwa-register/react';
@@ -12,6 +12,10 @@ import { Layout } from './components/Layout';
 import { Calendar } from './components/Calendar';
 import { ImageCarousel } from './components/ImageCarousel';
 import { EntryEditor } from './components/EntryEditor';
+import { TagCloud } from './components/TagCloud';
+import { StatsDashboard } from './components/StatsDashboard';
+import { useTheme } from './contexts/useTheme';
+import { Search, SearchResultList } from './components/Search';
 import { BackupPanel } from './components/BackupPanel';
 import { Settings } from './components/Settings';
 import { OfflineBanner } from './components/OfflineBanner';
@@ -22,17 +26,18 @@ import { PasswordSetupModal } from './components/PasswordSetupModal';
 import { SessionLockModal } from './components/SessionLockModal';
 import { syncManager } from './services/syncManager';
 
-import { db } from './db/db';
-
 function AppContent() {
   const [currentUser, setCurrentUser] = useState(null);
   const [selectedDate, setSelectedDate] = useState(format(new Date(), 'yyyy-MM-dd'));
   const [currentEntry, setCurrentEntry] = useState(null);
-  const [isLoading, setIsLoading] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
   const [showBackupPanel, setShowBackupPanel] = useState(false);
   const [showSettings, setShowSettings] = useState(false);
+  const [searchResults, setSearchResults] = useState(null);
+  const [showStats, setShowStats] = useState(false);
+  const [activeTag, setActiveTag] = useState(null);
 
+  const { theme } = useTheme();
   const { showToast } = useToast();
   const { triggerSync, triggerDebouncedSync } = useSyncContext();
 
@@ -48,6 +53,17 @@ function AppContent() {
     }
   }, [currentUser], []);
 
+  // 모든 일기 목록을 가져오는 useLiveQuery
+  const allEntries = useLiveQuery(async () => {
+    if (!currentUser) return [];
+    try {
+      const { getAllEntries } = await import('./db/adapter');
+      return await getAllEntries(currentUser.userId);
+    } catch (error) {
+      console.error('Failed to load all entries:', error);
+      return [];
+    }
+  }, [currentUser], []);
   // PWA 서비스 워커 업데이트 로직
   const {
     offlineReady: [offlineReady],
@@ -77,7 +93,7 @@ function AppContent() {
     const initializeApp = async () => {
       // SyncManager 초기화
       await syncManager.init();
-      
+
       if (isAuthenticated() && !currentUser) {
         const userId = getCurrentUser();
         if (userId) {
@@ -97,14 +113,59 @@ function AppContent() {
 
   // 날짜 선택 핸들러 - 모바일 사이드바 닫기
   const handleDateSelect = (date) => {
-    setSelectedDate(date);
+    // 날짜를 선택하면 모든 필터링 상태를 초기화합니다.
+    setSelectedDate(format(date, 'yyyy-MM-dd'));
+    setSearchResults(null);
+    setActiveTag(null);
+    setShowStats(false);
   };
+
+  // 태그 선택 핸들러
+  const handleTagSelect = (tag) => {
+    if (tag) {
+      // 태그를 선택하면 검색 결과는 초기화
+      setSearchResults(null);
+      setActiveTag(tag);
+      setShowStats(false); // 통계 뷰 비활성화
+    } else {
+      setActiveTag(null);
+    }
+  };
+
+  // 검색 실행 핸들러
+  const handleSearch = async (query) => {
+    if (query && currentUser) {
+      const { searchEntries } = await import('./db/adapter');
+      const results = await searchEntries(currentUser.userId, query);
+      setSearchResults(results);
+      setShowStats(false); // 통계 뷰 비활성화
+    } else {
+      setSearchResults(null); // 검색어가 없으면 검색 모드 해제
+    }
+  };
+
+  // 검색 결과 클릭 핸들러
+  const handleResultClick = (date) => {
+    // 날짜 선택 핸들러를 호출하여 모든 필터링 상태를 초기화합니다.
+    handleDateSelect(new Date(date));
+  };
+
+  // 태그 또는 검색어에 따라 필터링된 일기 목록
+  const filteredEntriesByTag = useMemo(() => {
+    if (activeTag) {
+      return allEntries.filter(entry => entry.tags?.includes(activeTag));
+    }
+    return null; // 태그 필터링이 활성화되지 않았으면 null 반환
+  }, [allEntries, activeTag]);
+
+  // 최종적으로 표시될 일기 목록 (검색, 태그 필터링 또는 전체)
+  const displayedEntries = searchResults ?? filteredEntriesByTag ?? allEntries;
+  const isFiltered = !!(searchResults || activeTag);
 
   // useLiveQuery를 사용하여 데이터 로딩, 상태 업데이트를 한 번에 처리
   useLiveQuery(async () => {
     if (!currentUser?.userId || !selectedDate) return null;
 
-    setIsLoading(true);
     try {
       const { getEntryWithImages } = await import('./db/adapter');
       const entryData = await getEntryWithImages(currentUser.userId, selectedDate);
@@ -129,8 +190,6 @@ function AppContent() {
       }
     } catch (error) {
       console.error("데이터 로딩 중 오류:", error);
-    } finally {
-      setIsLoading(false);
     }
   }, [currentUser?.userId, selectedDate]); // 의존성 배열
 
@@ -257,33 +316,51 @@ function AppContent() {
         )}
 
         <Layout
-          currentEntry={currentEntry}
-          isLoading={isLoading}
-          onBackupClick={() => setShowBackupPanel(true)}
           userProfileButton={
             <UserProfileButton
               user={currentUser}
               onLogout={handleLogout}
               onSettingsClick={() => setShowSettings(true)}
               onBackupClick={() => setShowBackupPanel(true)}
+              onStatsClick={() => setShowStats(true)}
             />
           }
-        >
-          {{
-            sidebar: <Calendar selectedDate={selectedDate} onSelect={handleDateSelect} userId={currentUser.userId} entriesDateList={entriesDateList} />,
-            carousel: <ImageCarousel images={currentEntry?.images || []} />,
-            editor: (
-              <EntryEditor
-                entry={currentEntry}
-                onSave={handleSave}
-                isEditing={isEditing}
-                setIsEditing={setIsEditing}
-                onImageDelete={handleImageDelete}
-                onDelete={handleDelete}
-              />
-            )
-          }}
-        </Layout>
+          sidebar={showStats ? (
+            <div className="sidebar-actions">
+              <button className="btn-stats" onClick={() => setShowStats(false)}>
+                ⬅️ 일기로 돌아가기
+              </button>
+            </div>
+          ) : (
+            <>
+              <Search onSearch={handleSearch} onClear={() => handleSearch('')} isSearching={!!searchResults} />
+              {searchResults ? ( // `isFiltered` 대신 `searchResults`를 직접 확인
+                <SearchResultList results={searchResults} onResultClick={handleResultClick} />
+              ) : (
+                <>
+                  <Calendar selectedDate={selectedDate} onSelect={handleDateSelect} entryDates={entriesDateList} currentUser={currentUser} />
+                  {/* 통계 버튼은 프로필 메뉴로 이동됨 */}
+                  {/* 검색 중이 아닐 때만 태그 클라우드 표시 */}
+                  {!searchResults && <TagCloud entries={allEntries} onTagSelect={handleTagSelect} activeTag={activeTag} />}
+                </>
+              )}
+            </>
+          )}
+          main={showStats
+            ? <StatsDashboard key={theme} entries={allEntries} />
+            : (
+              isFiltered
+                ? <SearchResultList
+                  results={displayedEntries}
+                  onResultClick={handleResultClick}
+                />
+                : <EntryEditor
+                  entry={currentEntry}
+                  onSave={handleSave} isEditing={isEditing} setIsEditing={setIsEditing} onImageDelete={handleImageDelete} onDelete={handleDelete}
+                />
+            )}
+          carousel={!showStats && !isFiltered && currentEntry?.images?.length > 0 ? <ImageCarousel images={currentEntry.images} /> : null}
+        />
 
         {showBackupPanel && (
           <BackupPanel

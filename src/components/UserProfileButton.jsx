@@ -3,6 +3,7 @@ import { clearCurrentUser } from '../utils/auth';
 import { useSyncContext } from '../contexts/SyncContext';
 import { SyncStatus } from '../constants';
 import { Icon } from './Icon';
+import { useTheme } from '../contexts/useTheme';
 import './UserProfileButton.css';
 import './Modal.css';
 
@@ -10,9 +11,10 @@ import './Modal.css';
  * 사용자 프로필 버튼 (헤더용)
  * 현재 사용자 표시 및 로그아웃 기능
  */
-export function UserProfileButton({ user, onLogout, onSettingsClick, onBackupClick }) {
+export function UserProfileButton({ user, onLogout, onSettingsClick, onBackupClick, onStatsClick }) {
   const [showMenu, setShowMenu] = useState(false);
   const { status, lastSyncTime, isOnline } = useSyncContext();
+  const { theme, toggleTheme } = useTheme();
 
   function handleLogout() {
     clearCurrentUser();
@@ -20,8 +22,15 @@ export function UserProfileButton({ user, onLogout, onSettingsClick, onBackupCli
     onLogout();
   }
 
-  const initial = user.name?.[0] || user.email[0];
+  const initial = (user.name?.[0] || user.email[0]).toUpperCase();
   const displayName = user.name || user.email.split('@')[0];
+
+  const themeItem = {
+    key: 'theme',
+    icon: theme === 'light' ? 'moon' : 'sun',
+    label: theme === 'light' ? '다크 모드' : '라이트 모드',
+    action: toggleTheme,
+  };
 
   const menuItems = [
     {
@@ -31,11 +40,18 @@ export function UserProfileButton({ user, onLogout, onSettingsClick, onBackupCli
       action: () => onBackupClick && onBackupClick(),
     },
     {
+      key: 'stats',
+      icon: 'stats',
+      label: '통계 보기',
+      action: () => onStatsClick && onStatsClick(),
+    },
+    {
       key: 'settings',
       icon: 'settings',
       label: '설정',
       action: () => onSettingsClick && onSettingsClick(),
     },
+    themeItem,
     { key: 'divider1', isDivider: true },
     {
       key: 'logout',
@@ -58,14 +74,26 @@ export function UserProfileButton({ user, onLogout, onSettingsClick, onBackupCli
         onClick={() => setShowMenu(!showMenu)}
         title={`${displayName} (${user.email})`}
       >
-        <div className="profile-avatar">{initial}</div>
+        <div className="profile-avatar">
+          {user.imageUrl ? (
+            <img src={user.imageUrl} alt={displayName} referrerPolicy="no-referrer" />
+          ) : (
+            initial
+          )}
+        </div>
       </button>
 
       {showMenu && (
         <div className="modal-overlay" onClick={() => setShowMenu(false)}>
           <div className="profile-menu modal" onClick={(e) => e.stopPropagation()}>
             <div className="profile-menu-header">
-              <div className="profile-avatar-large">{initial}</div>
+              <div className="profile-avatar-large">
+                {user.imageUrl ? (
+                  <img src={user.imageUrl} alt={displayName} referrerPolicy="no-referrer" />
+                ) : (
+                  initial
+                )}
+              </div>
               <div className="profile-menu-user-info">
                 <div className="profile-menu-name">{displayName}</div>
                 <div className="profile-menu-email">{user.email}</div>
@@ -121,10 +149,10 @@ function renderSyncStatus(status, isOnline, lastSyncTime) {
   }
 
   const { icon, text, className } = statusMap[status] || statusMap[SyncStatus.IDLE];
-  const title = status === SyncStatus.SUCCESS && lastSyncTime 
+  const title = status === SyncStatus.SUCCESS && lastSyncTime
     ? `마지막 동기화: ${new Date(lastSyncTime).toLocaleString()}`
     : text;
-  
+
   return (
     <div className={`sync-status ${className}`} title={title}>
       <Icon name={icon} />

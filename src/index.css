@@ -1,7 +1,7 @@
 :root {
   /* Font */
   --font-family-sans: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol";
-  
+
   /* Colors - Light Theme */
   --bg-primary: #f8f9fa;
   --bg-secondary: #f1f3f5;
@@ -9,10 +9,26 @@
   --text-primary: #212529;
   --text-secondary: #495057;
   --text-muted: #868e96;
-  --accent-primary: #3366ff;
-  --accent-primary-hover: #2055e6;
-  --accent-secondary: #10b981;
+  --accent-primary: #2F80ED;
+  /* 47, 128, 237 */
+  --accent-primary-rgb: 47, 128, 237;
+  --accent-primary-hover: #1A6ED8;
+  --accent-secondary: #26A69A;
+  --accent-secondary-rgb: 16, 185, 129;
+  --color-danger: #d93025;
+  --color-danger-hover: #c53030;
   --border-color: #dee2e6;
+  --accent-primary-alpha: rgba(51, 102, 255, 0.2);
+  /* Chart Colors */
+  --chart-color-1-rgb: 255, 199, 0;
+  /* Yellow */
+  --chart-color-2-rgb: 255, 159, 64;
+  /* Orange */
+  --chart-color-3-rgb: 255, 107, 107;
+  /* Red */
+  --chart-color-4-rgb: 156, 136, 255;
+  /* Purple */
+
   --shadow-color: rgba(0, 0, 0, 0.05);
 
   /* Radius */
@@ -26,6 +42,31 @@
   --shadow-lg: 0 10px 15px -3px var(--shadow-color), 0 4px 6px -4px var(--shadow-color);
 }
 
+.dark {
+  /* Colors - Dark Theme */
+  --bg-primary: #1a1a1a;
+  --bg-secondary: #242424;
+  --card-bg: #2a2a2a;
+  --text-primary: #f5f5f5;
+  --text-secondary: #b3b3b3;
+  --text-muted: #7a7a7a;
+  --accent-primary: #4DA3FF;
+  /* 77, 163, 255 */
+  --accent-primary-rgb: 77, 163, 255;
+  --accent-primary-hover: #6AAEFF;
+  --accent-secondary: #00897B;
+  --accent-secondary-rgb: 69, 212, 160;
+  --color-danger: #ff8a80;
+  --color-danger-hover: #ff5252;
+  --border-color: #444444;
+  --accent-primary-alpha: rgba(93, 156, 236, 0.2);
+  /* Chart Colors - Dark */
+  --chart-color-1-rgb: 250, 219, 94;
+  --chart-color-2-rgb: 255, 171, 96;
+  --chart-color-3-rgb: 255, 129, 129;
+  --chart-color-4-rgb: 181, 167, 255;
+  --shadow-color: rgba(0, 0, 0, 0.5);
+}
 
 * {
   margin: 0;

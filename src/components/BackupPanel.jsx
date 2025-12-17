@@ -1,11 +1,11 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { googleDriveService } from '../services/googleDrive';
+import { syncManager } from '../services/syncManager';
 import { useSyncContext } from '../contexts/SyncContext';
 import { useToast } from '../hooks/useToast';
 import './BackupPanel.css';
 import './ConflictResolutionModal.css';
 import { SyncStatus } from '../constants';
-import { ConflictResolutionModal } from './ConflictResolutionModal';
 
 export function BackupPanel({ currentUser, onClose, onDataRestored }) {
   const [isOpen, setIsOpen] = useState(true);
@@ -16,25 +16,7 @@ export function BackupPanel({ currentUser, onClose, onDataRestored }) {
   const [backupProgress, setBackupProgress] = useState(0);
   const [restoreProgress, setRestoreProgress] = useState(0);
   const { showToast } = useToast();
-  const { status, lastSyncTime, lastError, triggerSync, conflictDetails } = useSyncContext();
-  const [showConflictModal, setShowConflictModal] = useState(false);
-
-  useEffect(() => {
-    checkAuthStatus();
-  }, []);
-
-  async function checkAuthStatus() {
-    try {
-      await googleDriveService.initClient();
-      setIsAuthenticated(googleDriveService.isAuthenticated);
-
-      if (googleDriveService.isAuthenticated) {
-        setGoogleUser(googleDriveService.getCurrentUser());
-      }
-    } catch (error) {
-      console.error('인증 확인 오류:', error);
-    }
-  }
+  const { status, lastSyncTime, lastError, triggerSync } = useSyncContext();
 
   async function handleSignIn() {
     try {
@@ -103,25 +85,36 @@ export function BackupPanel({ currentUser, onClose, onDataRestored }) {
         console.error('데이터 내보내기 오류:', exportError);
         throw new Error(`데이터 생성 실패: ${exportError.message}`);
       }
-      setBackupProgress(30);
 
-      // 2. Google Drive에 ZIP 파일 업로드
+      // 2. 요약 정보 및 해시 생성 (syncManager.js와 동일한 로직)
+      const { getLocalDataSummary } = await import('../db/adapter');
+      const localSummary = await getLocalDataSummary(currentUser.userId);
+      const buffer = await zipBlob.arrayBuffer();
+      const hashBuffer = await crypto.subtle.digest('SHA-256', buffer);
+      const hashArray = Array.from(new Uint8Array(hashBuffer));
+      const contentHash = hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
+
+      const appProperties = {
+        ...localSummary,
+        contentHash,
+      };
+
+      // 3. Google Drive에 ZIP 파일과 메타데이터 업로드
       const result = await googleDriveService.syncToGoogleDrive(
-        zipBlob, // 데이터를 직접 전달
-        (percent) => setBackupProgress(30 + percent * 0.7)
+        zipBlob,
+        appProperties,
+        (percent) => setBackupProgress(percent)
       );
 
       setBackupProgress(100);
-      showToast(`백업 완료: ${result.name}`, 'success');
+      showToast(`백업 완료: ${result.file.name}`, 'success');
+
+      // SyncManager에게 성공 알림 (상태 업데이트 및 에러 클리어)
+      await syncManager.notifySyncSuccess(result);
 
       // 파일 목록 새로고침
       await loadBackupFiles();
 
-      // 충돌 해결 후 상태 갱신을 위해 동기화 재시도
-      if (status === SyncStatus.CONFLICT) {
-        console.log('충돌 해결(Push) 후 동기화 상태를 갱신합니다.');
-        triggerSync({ silent: true, isManual: true });
-      }
     } catch (error) {
       console.error('백업 오류:', error);
       showToast(`백업 실패: ${error.message}`, 'error');
@@ -143,17 +136,14 @@ export function BackupPanel({ currentUser, onClose, onDataRestored }) {
       showToast('복원을 시작합니다...', 'info');
 
       // 1. Google Drive에서 ZIP 파일 다운로드 (ArrayBuffer)
-      const zipBlob = await googleDriveService.restoreFromGoogleDrive(
-        fileId,
-        (percent) => setRestoreProgress(percent * 0.5) // 다운로드 진행률을 50%까지 표시
-      );
+      const restoredData = await googleDriveService.restoreFromGoogleDrive(fileId);
 
-      if (!zipBlob) {
+      if (!restoredData || !restoredData.blob) {
         throw new Error('Google Drive에서 파일을 다운로드하지 못했습니다.');
       }
 
       // 2. Blob을 ArrayBuffer로 변환하여 importUserData에 전달
-      const zipArrayBuffer = await zipBlob.arrayBuffer();
+      const zipArrayBuffer = await restoredData.blob.arrayBuffer();
       // importUserData가 내부에서 ZIP을 파싱하고 이미지를 복원합니다
       const { importUserData } = await import('../db/adapter');
       await importUserData(currentUser.userId, zipArrayBuffer, true); // true = 병합
@@ -250,19 +240,38 @@ export function BackupPanel({ currentUser, onClose, onDataRestored }) {
     e.target.value = ''; // 동일한 파일을 다시 선택할 수 있도록 초기화
   }
 
-  const handleResolveConflict = async (resolution) => {
-    setShowConflictModal(false);
-    if (resolution === 'push') {
-      // 로컬 데이터로 덮어쓰기
-      await handleBackup();
-    } else if (resolution === 'pull') {
-      // 원격 데이터로 덮어쓰기
-      if (conflictDetails?.remoteMetadata) {
-        const { id, name } = conflictDetails.remoteMetadata;
-        await handleRestore(id, name);
-      }
+  async function handleImportTxt(e) {
+    const file = e.target.files[0];
+    if (!file) return;
+
+    if (!confirm(`'${file.name}' 텍스트 파일을 가져오시겠습니까?\n\n파일의 내용을 분석하여 일기를 추가합니다.`)) {
+      e.target.value = '';
+      return;
     }
-  };
+
+    try {
+      const textContent = await file.text();
+      const { parseTxtDiary } = await import('../utils/txtDiaryParser');
+      const entries = parseTxtDiary(textContent, currentUser.userId);
+
+      if (entries.length === 0) {
+        showToast('파일에서 유효한 일기 데이터를 찾지 못했습니다.', 'warning');
+        return;
+      }
+
+      const { bulkAddEntries } = await import('../db/adapter');
+      const addedCount = await bulkAddEntries(entries);
+
+      showToast(`${addedCount}개의 일기를 성공적으로 가져왔습니다.`, 'success');
+
+      if (onDataRestored) onDataRestored();
+      handleClose();
+
+    } catch (error) {
+      console.error('TXT 가져오기 오류:', error);
+      showToast(`가져오기 실패: ${error.message}`, 'error');
+    }
+  }
 
   const handleClose = () => {
     setIsOpen(false);
@@ -275,16 +284,6 @@ export function BackupPanel({ currentUser, onClose, onDataRestored }) {
 
   return (
     <>
-      {showConflictModal && conflictDetails && (
-        <ConflictResolutionModal
-          currentUser={currentUser}
-          remoteMetadata={conflictDetails.remoteMetadata}
-          localModifiedTime={conflictDetails.localModifiedTime}
-          onClose={() => setShowConflictModal(false)}
-          onResolve={handleResolveConflict}
-        />
-      )}
-
       <div className="backup-panel-overlay" onClick={handleClose} />
       <div className="backup-panel">
         <div className="backup-header">
@@ -368,7 +367,7 @@ export function BackupPanel({ currentUser, onClose, onDataRestored }) {
                     </div>
                     <button
                       className="btn btn-danger"
-                      onClick={() => setShowConflictModal(true)}
+                      onClick={() => showToast('충돌 해결 모달이 이미 열려있습니다.')}
                     >
                       충돌 해결하기
                     </button>
@@ -405,34 +404,14 @@ export function BackupPanel({ currentUser, onClose, onDataRestored }) {
                     <h4>백업 파일 목록</h4>
                     <div className="file-list">
                       {backupFiles.map((file, index) => (
-                        <div key={file.id} className="file-item">
-                          <div className="file-info">
-                            <div className="file-name">📄 {file.name}</div>
-                            <div className="file-meta">
-                              {googleDriveService.constructor.formatDate(file.createdTime)}
-                              {' · '}
-                              {googleDriveService.constructor.formatFileSize(file.size)}
-                            </div>
-                            {index === 0 && (
-                              <span className="latest-backup-badge">가장 최근</span>
-                            )}
-                          </div>
-                          <div className="file-actions">
-                            <button
-                              className="btn btn-small btn-primary"
-                              onClick={() => handleRestore(file.id, file.name)}
-                            >
-                              복원
-                            </button>
-                            <button
-                              className="btn btn-small btn-danger"
-                              onClick={() => handleDeleteBackup(file.id, file.name)}
-                              disabled={isLoading}
-                            >
-                              삭제
-                            </button>
-                          </div>
-                        </div>
+                        <BackupListItem
+                          key={file.id}
+                          file={file}
+                          isLatest={index === 0}
+                          isLoading={isLoading}
+                          onRestore={handleRestore}
+                          onDelete={handleDeleteBackup}
+                        />
                       ))}
                     </div>
                   </div>
@@ -461,10 +440,57 @@ export function BackupPanel({ currentUser, onClose, onDataRestored }) {
                   onChange={handleImportZip}
                 />
               </label>
+              <label className="btn btn-secondary">
+                📄 TXT 가져오기
+                <input
+                  type="file"
+                  accept=".txt,text/plain"
+                  style={{ display: 'none' }}
+                  onChange={handleImportTxt}
+                />
+              </label>
             </div>
           </section>
         </div>
       </div>
     </>
+  );
+}
+
+function BackupListItem({ file, isLatest, isLoading, onRestore, onDelete }) {
+  return (
+    <div className="file-item">
+      <div className="file-info">
+        <div className="file-main-text">
+          <span className="file-date">
+            {googleDriveService.constructor.formatDate(file.createdTime)}
+          </span>
+          {isLatest && (
+            <span className="latest-backup-badge">가장 최근</span>
+          )}
+        </div>
+        <div className="file-sub-text">
+          <span className="file-name">{file.name}</span>
+          {' · '}
+          <span className="file-size">{googleDriveService.constructor.formatFileSize(file.size)}</span>
+        </div>
+      </div>
+      <div className="file-actions">
+        <button
+          className="btn btn-small btn-primary"
+          onClick={() => onRestore(file.id, file.name)}
+          disabled={isLoading}
+        >
+          복원
+        </button>
+        <button
+          className="btn btn-small btn-danger"
+          onClick={() => onDelete(file.id, file.name)}
+          disabled={isLoading}
+        >
+          삭제
+        </button>
+      </div>
+    </div>
   );
 }
