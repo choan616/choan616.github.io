@@ -240,11 +240,10 @@ input:checked+.slider:before {
 
 /* Footer */
 .settings-footer {
-  padding: 16px 24px;
+  padding: 16px 0;
   border-top: 1px solid var(--border-color);
   display: flex;
   justify-content: flex-end;
-  background: var(--bg-primary);
   border-radius: 0 0 var(--border-radius-lg) var(--border-radius-lg);
 }
 

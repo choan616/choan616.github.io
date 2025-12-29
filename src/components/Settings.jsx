@@ -1,54 +1,33 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
+import { PasswordSetupModal } from './PasswordSetupModal';
+import { useUiSettings } from '../contexts/useUiSettings';
+import { syncSettings } from '../services/syncSettings';
+import { AVAILABLE_FONTS } from '../services/uiSettings';
 import './Settings.css';
-
-const SETTINGS_KEY = 'app_settings';
-
-const DEFAULT_SETTINGS = {
-  autoSyncEnabled: false,
-  syncInterval: 30,
-  wifiOnly: false,
-  syncOnSave: true,
-  fontSize: 'medium',
-  theme: 'light',
-  enableScreenLock: true,
-};
 
 /**
  * 설정 패널 컴포넌트
  */
-export function Settings({ onClose, showToast }) {
-  const [settings, setSettings] = useState(() => {
-    try {
-      const saved = localStorage.getItem(SETTINGS_KEY);
-      if (saved) {
-        return { ...DEFAULT_SETTINGS, ...JSON.parse(saved) };
-      }
-    } catch (e) {
-      console.error("Failed to load settings:", e);
-    }
-    return DEFAULT_SETTINGS;
-  });
+export function Settings({ isGuest, onClose }) {
+  const [showPinSetup, setShowPinSetup] = useState(false);
+  const { settings: uiSettings, updateSetting: updateUiSetting } = useUiSettings();
+  const [currentSyncSettings, setCurrentSyncSettings] = useState(syncSettings.getAll());
 
-  const handleSelectChange = (key, value) => {
-    // 숫자형 값은 숫자로 변환
-    const numericValue = Number(value);
-    setSettings(prev => ({ ...prev, [key]: numericValue }));
+  useEffect(() => {
+    const handleSyncSettingsChange = (newSettings) => {
+      setCurrentSyncSettings(newSettings);
+    };
+    syncSettings.addListener(handleSyncSettingsChange);
+    return () => syncSettings.removeListener(handleSyncSettingsChange);
+  }, []);
+
+  const handleSyncSettingChange = (key, value) => {
+    const newSettings = { ...currentSyncSettings, [key]: value };
+    setCurrentSyncSettings(newSettings);
+    syncSettings.set(key, value);
   };
 
-  const handleSave = async () => {
-    try {
-      localStorage.setItem(SETTINGS_KEY, JSON.stringify(settings));
-
-      // 설정이 변경되었음을 다른 컴포넌트(특히 SyncManager)에 알림
-      window.dispatchEvent(new CustomEvent('settings-updated'));
-
-      showToast('설정이 저장되었습니다.', 'success');
-      onClose();
-    } catch (error) {
-      console.error('설정 저장 실패:', error);
-      showToast('설정 저장에 실패했습니다.', 'error');
-    }
-  };
+  const handlePinSetupClick = () => setShowPinSetup(true);
 
   return (
     <div className="settings-overlay">
@@ -68,6 +47,32 @@ export function Settings({ onClose, showToast }) {
 
         <div className="settings-content">
           <div className="settings-section">
+            <h3>꾸미기</h3>
+            {/* 글꼴 설정 */}
+            <div className="setting-item">
+              <div className="setting-info">
+                <label htmlFor="fontFamily" className="setting-label">
+                  일기 글꼴
+                </label>
+                <span className="setting-desc">일기 본문의 글꼴을 변경합니다.</span>
+              </div>
+              <select
+                id="fontFamily"
+                value={uiSettings.fontFamily}
+                onChange={(e) => updateUiSetting('fontFamily', e.target.value)}
+                className="setting-select"
+              >
+                {AVAILABLE_FONTS.map(font => (
+                  <option key={font.value} value={font.value} style={{ fontFamily: font.value }}>
+                    {font.label}
+                  </option>
+                ))}
+              </select>
+            </div>
+          </div>
+
+          <div className="settings-section">
+            <h3>동기화</h3>
             {/* 자동 동기화 설정 */}
             <div className="setting-item">
               <div className="setting-info">
@@ -78,13 +83,13 @@ export function Settings({ onClose, showToast }) {
               </div>
               <Switch
                 id="autoSyncEnabled"
-                checked={settings.autoSyncEnabled}
-                onChange={() => setSettings(prev => ({ ...prev, autoSyncEnabled: !prev.autoSyncEnabled }))}
+                checked={currentSyncSettings.autoSyncEnabled}
+                onChange={() => handleSyncSettingChange('autoSyncEnabled', !currentSyncSettings.autoSyncEnabled)}
               />
             </div>
 
             {/* 동기화 주기 */}
-            {settings.autoSyncEnabled && (
+            {currentSyncSettings.autoSyncEnabled && (
               <div className="setting-item">
                 <div className="setting-info">
                   <label htmlFor="syncInterval" className="setting-label">
@@ -94,8 +99,8 @@ export function Settings({ onClose, showToast }) {
                 </div>
                 <select
                   id="syncInterval"
-                  value={settings.syncInterval}
-                  onChange={(e) => handleSelectChange('syncInterval', e.target.value)}
+                  value={currentSyncSettings.syncInterval}
+                  onChange={(e) => handleSyncSettingChange('syncInterval', Number(e.target.value))}
                   className="setting-select"
                 >
                   <option value={5}>5분</option>
@@ -116,8 +121,8 @@ export function Settings({ onClose, showToast }) {
               </div>
               <Switch
                 id="syncOnSave"
-                checked={settings.syncOnSave}
-                onChange={() => setSettings(prev => ({ ...prev, syncOnSave: !prev.syncOnSave }))}
+                checked={currentSyncSettings.syncOnSave}
+                onChange={() => handleSyncSettingChange('syncOnSave', !currentSyncSettings.syncOnSave)}
               />
             </div>
 
@@ -131,43 +136,62 @@ export function Settings({ onClose, showToast }) {
               </div>
               <Switch
                 id="wifiOnly"
-                checked={settings.wifiOnly}
-                onChange={() => setSettings(prev => ({ ...prev, wifiOnly: !prev.wifiOnly }))}
+                checked={currentSyncSettings.wifiOnly}
+                onChange={() => handleSyncSettingChange('wifiOnly', !currentSyncSettings.wifiOnly)}
               />
             </div>
           </div>
 
           <div className="settings-section">
             <h3>보안</h3>
-            {/* 화면 잠금 사용 설정 */}
+            {/* PIN 변경/설정 버튼 - 모든 사용자에게 노출 */}
             <div className="setting-item">
               <div className="setting-info">
-                <label htmlFor="enableScreenLock" className="setting-label">
-                  화면 잠금 사용
+                <label className="setting-label">
+                  PIN 변경/설정
                 </label>
-                <span className="setting-desc">PIN이 설정된 경우, 일정 시간 미사용 시 화면을 잠급니다.</span>
+                <span className="setting-desc">앱 잠금에 사용할 4자리 PIN을 설정하거나 변경합니다.</span>
               </div>
-              <Switch
-                id="enableScreenLock"
-                checked={settings.enableScreenLock}
-                onChange={() => setSettings(prev => ({ ...prev, enableScreenLock: !prev.enableScreenLock }))}
-              />
+              <button className="btn btn-secondary" onClick={handlePinSetupClick}>
+                PIN 설정
+              </button>
             </div>
+
+            {/* 화면 잠금 사용 설정 - 로그인한 사용자에게만 노출 */}
+            {!isGuest && (
+              <div className="setting-item">
+                <div className="setting-info">
+                  <label htmlFor="enableScreenLock" className="setting-label">
+                    화면 잠금 사용
+                  </label>
+                  <span className="setting-desc">PIN이 설정된 경우, 일정 시간 미사용 시 화면을 잠급니다.</span>
+                </div>
+                <Switch
+                  id="enableScreenLock"
+                  checked={uiSettings.enableScreenLock}
+                  onChange={() => updateUiSetting('enableScreenLock', !uiSettings.enableScreenLock)}
+                />
+              </div>
+            )}
           </div>
 
           <div className="settings-footer">
             <button
-              onClick={handleSave}
+              onClick={onClose}
               className="btn btn-primary"
             >
-              <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                <path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z" /><polyline points="17 21 17 13 7 13 7 21" /><polyline points="7 3 7 8 15 8" />
-              </svg>
-              저장
+              닫기
             </button>
           </div>
         </div>
       </div>
+
+      {/* PIN 설정 모달 */}
+      {showPinSetup && (
+        <PasswordSetupModal
+          onClose={() => setShowPinSetup(false)}
+        />
+      )}
     </div>
   );
 }

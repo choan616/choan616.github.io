@@ -1,41 +1,42 @@
 import React, { createContext, useState, useEffect, useMemo, useCallback } from 'react';
+import { uiSettings } from '../services/uiSettings';
 
-const ThemeContext = createContext();
+const UiSettingsContext = createContext();
 
-const THEME_KEY = 'diary-theme';
-
-export function ThemeProvider({ children }) {
-  const [theme, setTheme] = useState(() => {
-    // 1. localStorage에서 저장된 테마 확인
-    const savedTheme = localStorage.getItem(THEME_KEY);
-    if (savedTheme) return savedTheme;
-
-    // 2. 시스템 설정 확인
-    if (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) {
-      return 'dark';
-    }
-
-    // 3. 기본값은 light
-    return 'light';
-  });
+export function UiSettingsProvider({ children }) {
+  const [settings, setSettings] = useState(() => uiSettings.getAll());
 
   useEffect(() => {
-    const root = window.document.documentElement; // <html> 태그
-    if (theme === 'dark') {
-      root.classList.add('dark');
-    } else {
-      root.classList.remove('dark');
-    }
-    localStorage.setItem(THEME_KEY, theme);
-  }, [theme]);
+    const root = window.document.documentElement;
 
-  const toggleTheme = useCallback(() => {
-    setTheme((prevTheme) => (prevTheme === 'light' ? 'dark' : 'light'));
+    const applyTheme = () => {
+      let effectiveTheme = settings.theme;
+      if (settings.theme === 'system') {
+        effectiveTheme = window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+      }
+      root.classList.remove('light', 'dark');
+      root.classList.add(effectiveTheme);
+    };
+
+    applyTheme();
+
+    const mediaQuery = window.matchMedia('(prefers-color-scheme: dark)');
+    const handleChange = () => {
+      if (settings.theme === 'system') applyTheme();
+    };
+
+    mediaQuery.addEventListener('change', handleChange);
+    return () => mediaQuery.removeEventListener('change', handleChange);
+  }, [settings.theme]);
+
+  const updateSetting = useCallback((key, value) => {
+    uiSettings.set(key, value);
+    setSettings(uiSettings.getAll());
   }, []);
 
-  const value = useMemo(() => ({ theme, toggleTheme }), [theme, toggleTheme]);
+  const value = useMemo(() => ({ settings, updateSetting }), [settings, updateSetting]);
 
-  return <ThemeContext.Provider value={value}>{children}</ThemeContext.Provider>;
+  return <UiSettingsContext.Provider value={value}>{children}</UiSettingsContext.Provider>;
 }
 
-export default ThemeContext;
+export default UiSettingsContext;

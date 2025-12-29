@@ -1,0 +1,73 @@
+.onboarding-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: rgba(0, 0, 0, 0.8);
+  z-index: 13000;
+  display: flex;
+  align-items: center;
+  justify-content: center; 
+  backdrop-filter: blur(4px);
+}
+
+.onboarding-modal {
+  background-color: var(--bg-color);
+  color: var(--text-color);
+  padding: 2rem;
+  border-radius: 8px;
+  box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
+  max-width: 400px;
+  width: 90%;
+  text-align: center;
+  border: 1px solid var(--border-color);
+  position: relative;
+}
+
+.onboarding-modal h3 {
+  margin-top: 0;
+  color: var(--primary-color);
+}
+
+.onboarding-modal p {
+  line-height: 1.6;
+  margin-bottom: 1.5rem;
+  word-break: keep-all;
+}
+
+.onboarding-finish-options {
+  margin: 1rem 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+}
+
+.onboarding-actions {
+  display: flex;
+  justify-content: flex-end;
+}
+
+/* Highlighting styles (optional, simple version) */
+.onboarding-modal.highlight-target {
+  /* You can add specific styles if you want the modal to point towards an element */
+  /* For a simple implementation, we'll just keep the modal centered. */
+  /* A more complex implementation could use absolute positioning based on the target element's rect. */
+}
+
+/* Add some simple animations */
+.onboarding-modal {
+  animation: fadeIn 0.3s ease-out;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: scale(0.95);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}

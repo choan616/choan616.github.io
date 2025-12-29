@@ -6,8 +6,7 @@ import './Modal.css';
 
 export function SessionLockModal() {
   const {
-    currentUserId: sessionUserId,
-    isLocked,
+    isNewUser, // 신규 사용자인지 확인
     unlock,
     attemptsLeft,
     decrementAttempt,
@@ -15,7 +14,8 @@ export function SessionLockModal() {
     lastUnlockTime
   } = useSession();
 
-  const currentUserId = sessionUserId || getCurrentUser();
+  const { isLocked } = useSession(); // 이 줄은 아래 로직으로 대체되므로 실제로는 사용되지 않습니다.
+  const currentUserId = getCurrentUser(); // [수정] localStorage에서 직접 가져와 안정성을 높입니다.
 
   const [input, setInput] = useState('');
   const [error, setError] = useState('');
@@ -29,9 +29,6 @@ export function SessionLockModal() {
       return () => clearTimeout(id);
     }
   }, [isLocked]);
-
-  // 10분 이내면 모달 노출 생략 (Date.now() 안전하게 사용)
-  const now = typeof window !== 'undefined' && window.performance ? Math.floor(window.performance.now() + performance.timeOrigin) : Date.now();
 
   // PIN이 설정되지 않은 계정은 바로 unlock 처리
   const [pinRequired, setPinRequired] = useState(true);
@@ -66,7 +63,19 @@ export function SessionLockModal() {
     checkPin();
   }, [isLocked, currentUserId, unlock]);
 
-  if (!isLocked || (lastUnlockTime && now - lastUnlockTime < 600000) || !pinRequired) return null;
+  // [수정] 모든 훅 호출 이후에 렌더링 여부를 결정합니다.
+  const savedSettings = JSON.parse(localStorage.getItem('app_settings') || '{}');
+  const lockEnabled = savedSettings.enableScreenLock !== false; // 기본값은 true
+
+  const now = typeof window !== 'undefined' && window.performance ? Math.floor(window.performance.now() + performance.timeOrigin) : Date.now();
+  const recentlyUnlocked = lastUnlockTime && now - lastUnlockTime < 600000;
+
+  // 모달을 표시해야 하는 모든 조건을 여기서 확인합니다.
+  const shouldDisplayModal = isLocked && pinRequired && lockEnabled && !isNewUser && !recentlyUnlocked;
+
+  if (!shouldDisplayModal) {
+    return null;
+  }
 
   const handleChange = (e) => {
     const v = e.target.value.replace(/\D/g, '').slice(0, 4);

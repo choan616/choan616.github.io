@@ -1,49 +1,49 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import './EntryEditor.css';
 import { useToast } from '../hooks/useToast';
+import { useUiSettings } from '../contexts/useUiSettings';
+import { Icon } from './Icon';
 
 export function EntryEditor({ entry, onSave, isEditing, setIsEditing, onImageDelete, onDelete }) {
+  const [isAnimating, setIsAnimating] = useState(false);
   const [formData, setFormData] = useState({
     title: '',
     content: '',
     tags: ''
   });
   const [selectedFiles, setSelectedFiles] = useState([]);
-  const [fontSize, setFontSize] = useState(() => {
-    const savedSettings = JSON.parse(localStorage.getItem('app_settings') || '{}');
-    return savedSettings.fontSize || 'medium';
-  });
+  const { settings, updateSetting } = useUiSettings();
+  const { fontSize, fontFamily } = settings;
+
   const [isSaving, setIsSaving] = useState(false);
   const fileInputRef = useRef(null);
-  const touchTimer = useRef(null); // 'this.touchTimer' 대신 useRef 사용
   const { showToast } = useToast();
 
   // entry prop을 기반으로 폼 데이터를 리셋하는 함수
-  const resetFormFromEntry = (currentEntry) => {
+  const resetFormFromEntry = useCallback((currentEntry) => {
     setFormData({
       title: currentEntry?.title || '',
       content: currentEntry?.content || '',
       tags: (currentEntry?.tags || []).join(', ')
     });
     setSelectedFiles([]);
-  };
+  }, []);
 
   useEffect(() => {
     if (entry) {
+      // 새로운 entry가 로드될 때마다 fade-in 애니메이션 트리거
+      setIsAnimating(true);
       resetFormFromEntry(entry);
+
+      // 애니메이션 후 상태 리셋
+      const timer = setTimeout(() => setIsAnimating(false), 300);
+      return () => clearTimeout(timer);
     }
-  }, [entry]);
+  }, [entry, resetFormFromEntry]);
 
   // 설정 변경 감지
   const handleFontSizeChange = (size) => {
-    setFontSize(size);
-    try {
-      const savedSettings = JSON.parse(localStorage.getItem('app_settings') || '{}');
-      savedSettings.fontSize = size;
-      localStorage.setItem('app_settings', JSON.stringify(savedSettings));
-    } catch (e) {
-      console.error("Failed to save font size setting:", e);
-    }
+    updateSetting('fontSize', size);
   };
 
   // 컴포넌트 언마운트 시 생성된 Object URL 해제 (메모리 누수 방지)
@@ -74,8 +74,7 @@ export function EntryEditor({ entry, onSave, isEditing, setIsEditing, onImageDel
       setSelectedFiles([]);
     } catch (error) {
       console.error('저장 오류:', error);
-      // alert()를 사용하여 에러 메시지가 휘발되지 않도록 임시 조치
-      alert(`저장 중 오류가 발생했습니다: ${error.message || '알 수 없는 오류'}`);
+      showToast(`저장 중 오류가 발생했습니다: ${error.message || '알 수 없는 오류'}`, 'error', 5000);
     } finally {
       setIsSaving(false);
     }
@@ -150,19 +149,19 @@ export function EntryEditor({ entry, onSave, isEditing, setIsEditing, onImageDel
   const isEmptyEntry = !entry.title && !entry.content;
 
   return (
-    <div className="entry-editor flex flex-col h-full">
+    <div className={`entry-editor flex flex-col h-full ${isAnimating ? 'fade-in-up' : ''}`}>
       <div className="editor-toolbar flex justify-between items-center p-2 border-b">
         {isEditing ? (
           <div className="flex space-x-2">
             <button
-              className="btn btn-save"
+              className="btn btn-primary clickable"
               onClick={handleSave}
               disabled={isSaving}
             >
               {isSaving ? '저장 중...' : '💾 저장'}
             </button>
             <button
-              className="btn btn-cancel"
+              className="btn btn-secondary clickable"
               onClick={handleCancel}
               disabled={isSaving}
             >
@@ -172,7 +171,7 @@ export function EntryEditor({ entry, onSave, isEditing, setIsEditing, onImageDel
         ) : (
           <div className="flex items-center space-x-2">
             <button
-              className="btn btn-copy"
+              className="btn btn-secondary clickable"
               onClick={() => {
                 const textToCopy = entry.content || '';
                 if (!textToCopy) return;
@@ -185,14 +184,14 @@ export function EntryEditor({ entry, onSave, isEditing, setIsEditing, onImageDel
             >
               📋 복사
             </button>
-            <button className="btn btn-edit" onClick={() => setIsEditing(true)}>
+            <button className="btn btn-primary clickable" onClick={() => setIsEditing(true)}>
               {isEmptyEntry ? '✏️ 쓰기' : '✏️ 편집'}
             </button>
 
             {/* 삭제 버튼 추가 */}
             {entry && (entry.title || entry.content || (entry.images && entry.images.length > 0)) && (
               <button
-                className="btn btn-delete text-red-600 hover:bg-red-50 px-2 py-1 rounded"
+                className="btn btn-danger-text clickable"
                 onClick={onDelete}
               >
                 🗑️ 삭제
@@ -201,38 +200,38 @@ export function EntryEditor({ entry, onSave, isEditing, setIsEditing, onImageDel
           </div>
         )}
         {!isEditing && (
-            // 텍스트 크기 조절
-            <div className="font-size-controls">
-              <div className="font-size-labels">
-                <span className="label-small" onClick={() => handleFontSizeChange('small')}>A</span>
-                <span className="label-medium" onClick={() => handleFontSizeChange('medium')}>A</span>
-                <span className="label-large" onClick={() => handleFontSizeChange('large')}>A</span>
-              </div>
-              <input
-                type="range"
-                min="0"
-                max="2"
-                step="1"
-                value={fontSize === 'small' ? 0 : fontSize === 'medium' ? 1 : 2}
-                onChange={(e) => {
-                  const value = parseInt(e.target.value);
-                  const size = value === 0 ? 'small' : value === 1 ? 'medium' : 'large';
-                  handleFontSizeChange(size);
-                }}
-                onMouseUp={(e) => {
-                  const value = parseInt(e.target.value);
-                  const label = value === 0 ? '작게' : value === 1 ? '보통' : '크게';
-                  showToast(label, 'success', 800);
-                }}
-                onTouchEnd={(e) => {
-                  const value = parseInt(e.target.value);
-                  const label = value === 0 ? '작게' : value === 1 ? '보통' : '크게';
-                  showToast(label, 'success', 800);
-                }}
-                className="font-size-slider"
-                title="텍스트 크기 조절"
-              />
-            </div> 
+          // 텍스트 크기 조절
+          <div className="font-size-controls">
+            <div className="font-size-labels">
+              <span className="label-small" onClick={() => handleFontSizeChange('small')}>A</span>
+              <span className="label-medium" onClick={() => handleFontSizeChange('medium')}>A</span>
+              <span className="label-large" onClick={() => handleFontSizeChange('large')}>A</span>
+            </div>
+            <input
+              type="range"
+              min="0"
+              max="2"
+              step="1"
+              value={fontSize === 'small' ? 0 : fontSize === 'medium' ? 1 : 2}
+              onChange={(e) => {
+                const value = parseInt(e.target.value);
+                const size = value === 0 ? 'small' : value === 1 ? 'medium' : 'large';
+                handleFontSizeChange(size);
+              }}
+              onMouseUp={(e) => {
+                const value = parseInt(e.target.value);
+                const label = value === 0 ? '작게' : value === 1 ? '보통' : '크게';
+                showToast(label, 'success', 800);
+              }}
+              onTouchEnd={(e) => {
+                const value = parseInt(e.target.value);
+                const label = value === 0 ? '작게' : value === 1 ? '보통' : '크게';
+                showToast(label, 'success', 800);
+              }}
+              className="font-size-slider"
+              title="텍스트 크기 조절"
+            />
+          </div>
         )}
       </div>
 
@@ -251,6 +250,7 @@ export function EntryEditor({ entry, onSave, isEditing, setIsEditing, onImageDel
             placeholder="오늘 하루는 어땠나요?&#10;자유롭게 작성해보세요..."
             value={formData.content}
             onChange={(e) => setFormData(prev => ({ ...prev, content: e.target.value }))}
+            style={{ fontFamily }}
           />
 
           <input
@@ -268,7 +268,7 @@ export function EntryEditor({ entry, onSave, isEditing, setIsEditing, onImageDel
                 {((entry.images?.length || 0) + selectedFiles.length)}/10)
               </h3>
               <button
-                className="btn btn-upload"
+                className="btn btn-primary btn-small clickable"
                 onClick={() => fileInputRef.current?.click()}
                 disabled={(entry.images?.length || 0) + selectedFiles.length >= 10}
               >
@@ -295,7 +295,7 @@ export function EntryEditor({ entry, onSave, isEditing, setIsEditing, onImageDel
                     <div key={img.id} className="image-thumb">
                       <img src={img.thumbnailUrl} alt="기존 이미지" />
                       <button
-                        className="btn-delete-image"
+                        className="btn-delete-image clickable"
                         onClick={() => handleDeleteExistingImage(img.id)}
                       >
                         ×
@@ -315,7 +315,7 @@ export function EntryEditor({ entry, onSave, isEditing, setIsEditing, onImageDel
                     <div key={index} className="image-thumb">
                       <img src={file.preview} alt="새 이미지" />
                       <button
-                        className="btn-delete-image"
+                        className="btn-delete-image clickable"
                         onClick={() => handleRemoveSelectedFile(index)}
                       >
                         ×
@@ -329,48 +329,31 @@ export function EntryEditor({ entry, onSave, isEditing, setIsEditing, onImageDel
           </div>
         </div>
       ) : (
-        <div className={`viewer-content font-size-${fontSize} flex-grow overflow-y-auto p-4`}>
-          {entry.title && <h1 className="entry-title">{entry.title}</h1>}
-
-          <div className="entry-meta">
-            <span className="entry-date">📅 {entry.date}</span>
-            {entry.tags && entry.tags.length > 0 && (
-              <div className="entry-tags">
-                {entry.tags.map((tag, i) => (
-                  <span key={i} className="tag">#{tag}</span>
-                ))}
-              </div>
-            )}
+        <div className={`entry-view flex-grow font-size-${fontSize}`} style={{ fontFamily }}>
+          <div className="entry-view-header">
+            {entry.title && <h1 className="entry-view-title">{entry.title}</h1>}
+            <div className="entry-view-meta">
+              <span>{entry.date}</span>
+            </div>
           </div>
 
-          <div
-            className="entry-content"
-            onContextMenu={(e) => {
-              // 모바일에서 롱프레스 시 기본 메뉴 뜨는 것 방지 (선택적)
-              e.preventDefault(); 
-            }}
-            onTouchStart={() => {
-              touchTimer.current = setTimeout(() => {
-                navigator.clipboard.writeText(entry.content).then(() => {
-                  showToast('클립보드에 복사되었습니다', 'success');
-                });
-              }, 800); // 800ms 롱프레스
-            }}
-            onTouchEnd={() => {
-              if (touchTimer.current) clearTimeout(touchTimer.current);
-            }}
-            onTouchMove={() => {
-              if (touchTimer.current) clearTimeout(touchTimer.current);
-            }}
-          >
+          <div className="entry-view-content">
             {entry.content ? (
               entry.content.split('\n').map((line, i) => (
-                <p key={i}>{line || '\u00A0'}</p>
+                line ? <p key={i}>{line}</p> : null
               ))
             ) : (
               <p className="placeholder">내용이 없습니다...</p>
             )}
           </div>
+
+          {entry.tags && entry.tags.length > 0 && (
+            <div className="entry-view-tags">
+              {entry.tags.map((tag, i) => (
+                <span key={i} className="tag-item">#{tag}</span>
+              ))}
+            </div>
+          )}
         </div>
       )}
     </div>

@@ -1,9 +1,8 @@
 import React, { useState } from 'react';
-import { clearCurrentUser } from '../utils/auth';
+import { useUiSettings } from '../contexts/useUiSettings';
 import { useSyncContext } from '../contexts/SyncContext';
 import { SyncStatus } from '../constants';
 import { Icon } from './Icon';
-import { useTheme } from '../contexts/useTheme';
 import './UserProfileButton.css';
 import './Modal.css';
 
@@ -14,23 +13,17 @@ import './Modal.css';
 export function UserProfileButton({ user, onLogout, onSettingsClick, onBackupClick, onStatsClick }) {
   const [showMenu, setShowMenu] = useState(false);
   const { status, lastSyncTime, isOnline } = useSyncContext();
-  const { theme, toggleTheme } = useTheme();
+  const { settings, updateSetting } = useUiSettings();
+  const theme = settings.theme;
 
+  // 로그아웃은 App.jsx에서 처리하므로 여기서는 onLogout만 호출합니다.
   function handleLogout() {
-    clearCurrentUser();
     setShowMenu(false);
     onLogout();
   }
 
   const initial = (user.name?.[0] || user.email[0]).toUpperCase();
   const displayName = user.name || user.email.split('@')[0];
-
-  const themeItem = {
-    key: 'theme',
-    icon: theme === 'light' ? 'moon' : 'sun',
-    label: theme === 'light' ? '다크 모드' : '라이트 모드',
-    action: toggleTheme,
-  };
 
   const menuItems = [
     {
@@ -51,16 +44,13 @@ export function UserProfileButton({ user, onLogout, onSettingsClick, onBackupCli
       label: '설정',
       action: () => onSettingsClick && onSettingsClick(),
     },
-    themeItem,
-    { key: 'divider1', isDivider: true },
-    {
-      key: 'logout',
-      icon: 'logout',
-      label: '로그아웃',
-      action: handleLogout,
-      className: 'logout',
-    },
   ];
+
+  // 게스트가 아닐 때만 로그아웃 버튼 추가
+  if (!user.isGuest) {
+    menuItems.push({ key: 'divider1', isDivider: true });
+    menuItems.push({ key: 'logout', icon: 'logout', label: '로그아웃', action: handleLogout, className: 'logout' });
+  }
 
   const handleMenuItemClick = (action) => {
     setShowMenu(false);
@@ -70,7 +60,7 @@ export function UserProfileButton({ user, onLogout, onSettingsClick, onBackupCli
   return (
     <div className="user-profile-button">
       <button
-        className="profile-toggle"
+        className="profile-toggle clickable"
         onClick={() => setShowMenu(!showMenu)}
         title={`${displayName} (${user.email})`}
       >
@@ -113,7 +103,7 @@ export function UserProfileButton({ user, onLogout, onSettingsClick, onBackupCli
                   return (
                     <li key={item.key}>
                       <button
-                        className={`profile-menu-item ${item.className || ''}`}
+                        className={`profile-menu-item clickable ${item.className || ''}`}
                         onClick={() => handleMenuItemClick(item.action)}
                       >
                         <Icon name={item.icon} className="menu-item-icon" />
@@ -124,6 +114,36 @@ export function UserProfileButton({ user, onLogout, onSettingsClick, onBackupCli
                 })}
               </ul>
             </nav>
+
+            <div className="theme-control-section">
+              <div className="theme-control-header">
+                <label className="theme-label">테마</label>
+                <span className="theme-current-value">
+                  {theme === 'system' ? '🌗 자동' : theme === 'light' ? '☀️ 라이트' : '🌙 다크'}
+                </span>
+              </div>
+              <div className="range-selector-wrapper">
+                <div className="range-labels">
+                  <span onClick={() => updateSetting('theme', 'system')}>자동</span>
+                  <span onClick={() => updateSetting('theme', 'light')}>라이트</span>
+                  <span onClick={() => updateSetting('theme', 'dark')}>다크</span>
+                </div>
+                <input
+                  type="range"
+                  min="0"
+                  max="2"
+                  step="1"
+                  value={theme === 'system' ? 0 : theme === 'light' ? 1 : 2}
+                  onChange={(e) => {
+                    const value = parseInt(e.target.value, 10);
+                    const newTheme = value === 0 ? 'system' : value === 1 ? 'light' : 'dark';
+                    updateSetting('theme', newTheme);
+                  }}
+                  className="setting-range-slider"
+                  title="테마 설정"
+                />
+              </div>
+            </div>
           </div>
         </div>
       )}

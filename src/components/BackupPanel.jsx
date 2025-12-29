@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { googleDriveService } from '../services/googleDrive';
 import { syncManager } from '../services/syncManager';
 import { useSyncContext } from '../contexts/SyncContext';
@@ -7,7 +7,7 @@ import './BackupPanel.css';
 import './ConflictResolutionModal.css';
 import { SyncStatus } from '../constants';
 
-export function BackupPanel({ currentUser, onClose, onDataRestored }) {
+export function BackupPanel({ currentUser, onClose, onDataRestored, onAuthenticated }) {
   const [isOpen, setIsOpen] = useState(true);
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [googleUser, setGoogleUser] = useState(null);
@@ -18,14 +18,56 @@ export function BackupPanel({ currentUser, onClose, onDataRestored }) {
   const { showToast } = useToast();
   const { status, lastSyncTime, lastError, triggerSync } = useSyncContext();
 
+  useEffect(() => {
+    // googleDriveService의 인증 상태 변경을 구독합니다.
+    const unsubscribe = googleDriveService.onAuthChange(async (authStatus) => {
+      setIsAuthenticated(authStatus);
+      if (authStatus) {
+        // 인증 성공 시, 사용자 정보를 가져와 BackupPanel과 SyncManager 상태를 업데이트합니다.
+        const user = await googleDriveService.getCurrentUser();
+        setGoogleUser(user);
+        loadBackupFiles();
+      } else {
+        // 로그아웃 시 상태를 초기화합니다.
+        setGoogleUser(null);
+        setBackupFiles([]);
+      }
+    });
+
+    // 컴포넌트가 언마운트될 때 구독을 해제합니다.
+    return () => unsubscribe();
+  }, [currentUser.userId, loadBackupFiles]); // currentUser.userId가 변경될 때 이 effect를 다시 실행합니다.
+
   async function handleSignIn() {
     try {
+      // This logic is now aligned with UserAuth.jsx for consistency
       setIsLoading(true);
       await googleDriveService.signIn();
-      setIsAuthenticated(true);
-      setGoogleUser(googleDriveService.getCurrentUser());
-      showToast('Google 로그인 성공', 'success');
-      await loadBackupFiles();
+
+      const googleUser = await googleDriveService.getCurrentUser();
+      if (!googleUser) throw new Error('Google 사용자 정보를 가져올 수 없습니다.');
+
+      // Check against allowed emails if specified in .env
+      const ALLOWED_EMAILS = (import.meta.env.VITE_ALLOWED_EMAILS || '').split(',').map(e => e.trim()).filter(Boolean);
+      if (ALLOWED_EMAILS.length > 0 && !ALLOWED_EMAILS.includes(googleUser.email)) {
+        await googleDriveService.signOut();
+        throw new Error(`접근 권한이 없는 계정입니다: ${googleUser.email}`);
+      }
+
+      const { createUser, getUser } = await import('../db/adapter');
+      const userId = await createUser(
+        { email: googleUser.email, name: googleUser.name },
+        { imageUrl: googleUser.imageUrl }
+      );
+
+      const user = await getUser(userId);
+
+      // Call the onAuthenticated prop from App.jsx to update the global state
+      if (onAuthenticated) {
+        onAuthenticated(user);
+      }
+
+      showToast('로그인 성공!', 'success');
     } catch (error) {
       console.error('로그인 오류:', error);
       showToast('로그인 실패', 'error');
@@ -46,7 +88,7 @@ export function BackupPanel({ currentUser, onClose, onDataRestored }) {
     }
   }
 
-  async function loadBackupFiles() {
+  const loadBackupFiles = useCallback(async () => {
     try {
       setIsLoading(true);
       let files = await googleDriveService.listBackupFiles();
@@ -59,7 +101,7 @@ export function BackupPanel({ currentUser, onClose, onDataRestored }) {
     } finally {
       setIsLoading(false);
     }
-  }
+  }, [showToast]);
 
   async function handleBackup() {
     try {
@@ -291,19 +333,33 @@ export function BackupPanel({ currentUser, onClose, onDataRestored }) {
             <h2>💾 백업 및 동기화</h2>
             <p className="backup-user-info">사용자: {currentUser.name || currentUser.email}</p>
           </div>
-          <button className="close-btn" onClick={handleClose}>✕</button>
+          <button className="close-btn clickable" onClick={handleClose}>✕</button>
         </div>
 
         <div className="backup-content">
           {/* Google Drive 섹션 */}
           <section className="backup-section">
+            {currentUser.isGuest && !isAuthenticated ? (
+              <div className="auth-section guest-prompt">
+                <h3>☁️ 클라우드 동기화</h3>
+                <p>Google 계정으로 로그인하여 데이터를 안전하게 백업하고, 여러 기기에서 일기를 동기화하세요.</p>
+                <button
+                  className="btn btn-primary clickable"
+                  onClick={handleSignIn}
+                  disabled={isLoading}
+                >
+                  🔐 Google 계정으로 시작하기
+                </button>
+              </div>
+            ) : (
+              <>
             <h3>☁️ Google Drive</h3>
 
             {!isAuthenticated ? (
               <div className="auth-section">
                 <p>Google Drive에 로그인하여 일기를 안전하게 백업하세요.</p>
                 <button
-                  className="btn btn-primary"
+                  className="btn btn-primary clickable"
                   onClick={handleSignIn}
                   disabled={isLoading}
                 >
@@ -324,21 +380,21 @@ export function BackupPanel({ currentUser, onClose, onDataRestored }) {
                       </div>
                     </>
                   )}
-                  <button className="btn btn-small" onClick={handleSignOut}>
+                  <button className="btn btn-small clickable" onClick={handleSignOut}>
                     로그아웃
                   </button>
                 </div>
 
                 <div className="backup-actions">
                   <button
-                    className="btn btn-success"
+                    className="btn btn-success clickable"
                     onClick={handleBackup}
                     disabled={isLoading}
                   >
                     📤 지금 백업하기 (수동)
                   </button>
                   <button
-                    className="btn btn-primary"
+                    className="btn btn-primary clickable"
                     onClick={() => triggerSync({ silent: false, isManual: true })
                       .then(() => {
                         loadBackupFiles(); // 동기화 후 목록 새로고침
@@ -351,7 +407,7 @@ export function BackupPanel({ currentUser, onClose, onDataRestored }) {
                     {status === SyncStatus.SYNCING ? '🔄 동기화 중...' : '🔄 지금 동기화'}
                   </button>
                   <button
-                    className="btn btn-secondary"
+                    className="btn btn-secondary clickable"
                     onClick={loadBackupFiles}
                     disabled={isLoading}
                   >
@@ -366,7 +422,7 @@ export function BackupPanel({ currentUser, onClose, onDataRestored }) {
                       <p>{lastError || '다른 기기와 데이터 충돌이 발생했습니다.'}</p>
                     </div>
                     <button
-                      className="btn btn-danger"
+                      className="btn btn-danger clickable"
                       onClick={() => showToast('충돌 해결 모달이 이미 열려있습니다.')}
                     >
                       충돌 해결하기
@@ -418,6 +474,8 @@ export function BackupPanel({ currentUser, onClose, onDataRestored }) {
                 )}
               </div>
             )}
+              </>
+            )}
           </section>
 
           {/* 수동 백업 섹션 */}
@@ -426,12 +484,12 @@ export function BackupPanel({ currentUser, onClose, onDataRestored }) {
             <p>일기 데이터를 ZIP 파일로 컴퓨터에 저장하거나, 저장된 파일을 복원합니다.</p>
             <div className="manual-backup-actions">
               <button
-                className="btn btn-secondary"
+                className="btn btn-secondary clickable"
                 onClick={handleExportZip}
               >
                 📥 ZIP으로 내보내기
               </button>
-              <label className="btn btn-secondary">
+              <label className="btn btn-secondary clickable">
                 📤 ZIP 가져오기
                 <input
                   type="file"
@@ -440,7 +498,7 @@ export function BackupPanel({ currentUser, onClose, onDataRestored }) {
                   onChange={handleImportZip}
                 />
               </label>
-              <label className="btn btn-secondary">
+              <label className="btn btn-secondary clickable">
                 📄 TXT 가져오기
                 <input
                   type="file"
@@ -477,14 +535,14 @@ function BackupListItem({ file, isLatest, isLoading, onRestore, onDelete }) {
       </div>
       <div className="file-actions">
         <button
-          className="btn btn-small btn-primary"
+          className="btn btn-small btn-primary clickable"
           onClick={() => onRestore(file.id, file.name)}
           disabled={isLoading}
         >
           복원
         </button>
         <button
-          className="btn btn-small btn-danger"
+          className="btn btn-small btn-danger clickable"
           onClick={() => onDelete(file.id, file.name)}
           disabled={isLoading}
         >

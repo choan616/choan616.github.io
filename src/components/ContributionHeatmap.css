@@ -1,0 +1,63 @@
+.heatmap-container {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  margin-top: 1rem;
+}
+
+.heatmap-grid {
+  display: grid;
+  grid-template-columns: repeat(53, 1fr); /* 52-53 weeks in a year */
+  grid-template-rows: repeat(7, 1fr);
+  grid-auto-flow: column;
+  gap: 3px;
+  width: 100%;
+  max-width: 800px; /* Limit max width for large screens */
+}
+
+.heatmap-cell {
+  width: 100%;
+  padding-bottom: 100%; /* Creates a square aspect ratio */
+  border-radius: 2px;
+  background-color: var(--bg-color-offset);
+  transition: transform 0.1s ease-in-out;
+}
+
+.heatmap-cell:not(.blank):hover {
+  transform: scale(1.2);
+  box-shadow: 0 0 5px rgba(0, 0, 0, 0.5);
+}
+
+.heatmap-cell.blank {
+  background-color: transparent;
+}
+
+/* Color Scale */
+.heatmap-cell.color-empty { background-color: var(--bg-color-offset); }
+.heatmap-cell.color-scale-1 { background-color: #9be9a8; }
+.heatmap-cell.color-scale-2 { background-color: #40c463; }
+.heatmap-cell.color-scale-3 { background-color: #30a14e; }
+.heatmap-cell.color-scale-4 { background-color: #216e39; }
+
+/* Dark theme overrides */
+[data-theme='dark'] .heatmap-cell.color-scale-1 { background-color: #0e4429; }
+[data-theme='dark'] .heatmap-cell.color-scale-2 { background-color: #006d32; }
+[data-theme='dark'] .heatmap-cell.color-scale-3 { background-color: #26a641; }
+[data-theme='dark'] .heatmap-cell.color-scale-4 { background-color: #39d353; }
+
+
+.heatmap-legend {
+  margin-top: 1rem;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  color: var(--text-secondary);
+  font-size: 0.8rem;
+}
+
+.heatmap-legend .heatmap-cell {
+  width: 12px;
+  height: 12px;
+  padding-bottom: 0;
+}

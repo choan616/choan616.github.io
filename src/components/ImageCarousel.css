@@ -131,13 +131,14 @@
   .image-grid-container {
     /* No fixed height, size by padding and content */
     padding: 12px;
-  }
+  }  
   .image-grid {
+    grid-template-columns: repeat(auto-fill, minmax(70px, 1fr)) !important;
     column-count: 2;
-    gap: 6px;
+    gap: 6px !important;
   }
   .grid-item {
-    margin-bottom: 6px;
+    margin-bottom: 0;
   }
   .image-counter {
     top: 12px;

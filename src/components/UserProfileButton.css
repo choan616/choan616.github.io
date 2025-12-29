@@ -131,6 +131,89 @@
   animation: spin 1.5s linear infinite;
 }
 
+/* --- Theme Control Section --- */
+.theme-control-section {
+  padding: 16px;
+  border-top: 1px solid var(--border-color);
+}
+
+.theme-control-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 12px;
+}
+
+.theme-label {
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.theme-current-value {
+  font-size: 14px;
+  color: var(--text-secondary);
+  background-color: var(--bg-secondary);
+  padding: 2px 8px;
+  border-radius: var(--border-radius-sm);
+}
+
+/* --- Range Slider Styles --- */
+.range-selector-wrapper {
+  position: relative;
+}
+
+.range-labels {
+  display: flex;
+  justify-content: space-between;
+  padding: 0 2px;
+  margin-bottom: 4px;
+}
+
+.range-labels span {
+  font-size: 12px;
+  color: var(--text-muted);
+  cursor: pointer;
+  transition: color 0.2s;
+}
+
+.range-labels span:hover {
+  color: var(--accent-primary);
+}
+
+.setting-range-slider {
+  width: 100%;
+  height: 6px;
+  -webkit-appearance: none;
+  appearance: none;
+  background: var(--bg-secondary);
+  border-radius: 3px;
+  outline: none;
+  cursor: pointer;
+}
+
+.setting-range-slider::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 18px;
+  height: 18px;
+  background: var(--accent-primary);
+  border-radius: 50%;
+  cursor: pointer;
+  transition: all 0.2s;
+  border: 3px solid var(--card-bg);
+  box-shadow: var(--shadow-sm);
+}
+
+.setting-range-slider::-webkit-slider-thumb:hover {
+  transform: scale(1.1);
+}
+
+/* --- Menu Item Polish --- */
+.profile-menu-nav ul {
+  padding: 16px; /* 메뉴 아이템 목록의 전체적인 여백 확보 */
+}
+
 @keyframes spin {
   from { transform: rotate(0deg); }
   to { transform: rotate(360deg); }
@@ -150,7 +233,7 @@
   background: transparent;
   text-align: left;
   cursor: pointer;
-  transition: background-color 0.15s ease;
+  transition: all 0.2s ease; /* 트랜지션 효과 개선 */
   display: flex;
   align-items: center;
   gap: 16px;
@@ -160,7 +243,7 @@
 }
 
 .profile-menu-item:hover {
-  background-color: var(--bg-secondary);
+  background-color: var(--bg-secondary-hover); /* 호버 색상 변경 */
   color: var(--text-primary);
 }
 

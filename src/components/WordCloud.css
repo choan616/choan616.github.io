@@ -1,0 +1,32 @@
+.wordcloud-container {
+  width: 100%;
+  min-height: 150px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: 1rem;
+  border-radius: 8px;
+}
+
+.wordcloud {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  align-items: center;
+  gap: 0.5rem;
+  width: 100%;
+}
+
+.wordcloud-word {
+  cursor: default;
+  transition: transform 0.2s ease, opacity 0.2s ease;
+  padding: 2px 4px;
+  user-select: none;
+  line-height: 1.2;
+}
+
+.wordcloud-word:hover {
+  transform: scale(1.2);
+  z-index: 10;
+  opacity: 0.8;
+}

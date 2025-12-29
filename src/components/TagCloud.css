@@ -4,7 +4,6 @@
   border-radius: var(--border-radius-lg);
   border: 1px solid var(--border-color);
   box-shadow: var(--shadow-md);
-  margin: 16px 0;
 }
 
 .tag-cloud-header {

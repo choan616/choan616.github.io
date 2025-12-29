@@ -28,6 +28,7 @@ class GoogleDriveService {
     this.tokenExpiresAt = null; // 토큰 만료 시간
     this.gapiInited = false;
     this.gisInited = false;
+    this.initPromise = null; // 초기화 Promise를 저장하여 중복 실행 방지
 
     // 이벤트 리스너를 위한 콜백 배열
     this.authListeners = [];
@@ -38,15 +39,23 @@ class GoogleDriveService {
    * @returns {Promise<void>}
    */
   async initClient() {
+    // 이미 초기화가 진행 중이거나 완료되었다면, 해당 Promise를 재사용
+    if (this.initPromise) {
+      return this.initPromise;
+    }
+
     try {
-      await Promise.all([
+      // Promise를 this.initPromise에 할당하여 중복 실행을 막음
+      this.initPromise = Promise.all([
         this.loadGapiScript(),
         this.loadGisScript()
       ]);
 
+      await this.initPromise;
       console.log('Google API scripts loaded');
     } catch (error) {
       console.error('Failed to load Google API scripts:', error);
+      this.initPromise = null; // 실패 시 다시 시도할 수 있도록 초기화
       throw error;
     }
   }
@@ -170,12 +179,20 @@ class GoogleDriveService {
 
   /**
    * 인증 상태 변경 리스너 등록
-   * @param {Function} callback 
+   * @param {Function} callback
+   * @returns {Function} An unsubscribe function
    */
   onAuthChange(callback) {
     this.authListeners.push(callback);
     // 현재 상태 즉시 전달
     callback(this.isAuthenticated);
+
+    // 구독 취소 함수를 반환합니다.
+    return () => {
+      this.authListeners = this.authListeners.filter(
+        (listener) => listener !== callback
+      );
+    };
   }
 
   notifyAuthListeners(status) {
@@ -187,10 +204,11 @@ class GoogleDriveService {
    * @returns {Promise<void>}
    */
   async signIn() {
-    if (!this.gapiInited || !this.gisInited) {
-      await this.initClient();
-    }
+    // [디버깅] signIn이 어디서 호출되는지 추적합니다.
+    console.trace('signIn() called from:');
 
+    // signIn이 호출되면 무조건 초기화가 선행되어야 함
+    await this.initClient();
     // GIS 모델에서는 팝업이 뜹니다.
     return new Promise((resolve, reject) => {
       try {
@@ -216,6 +234,9 @@ class GoogleDriveService {
    * @returns {Promise<void>}
    */
   async signOut() {
+    // 로그아웃 전 gapi 클라이언트가 초기화되었는지 확인합니다.
+    await this.initClient();
+
     if (this.accessToken) {
       window.google.accounts.oauth2.revoke(this.accessToken, () => {
         console.log('Token revoked');
@@ -234,6 +255,8 @@ class GoogleDriveService {
    * @returns {Promise<Object|null>}
    */
   async getCurrentUser() {
+    // initClient가 아직 호출되지 않았다면 여기서 호출
+    await this.initClient();
     if (!this.isAuthenticated) return null;
 
     try {
@@ -258,8 +281,10 @@ class GoogleDriveService {
    * @returns {Promise<string>} 폴더 ID
    */
   async findOrCreateFolder() {
+    // initClient가 아직 호출되지 않았다면 여기서 호출
+    await this.initClient();
     if (!this.isAuthenticated) {
-      await this.signIn();
+      throw new Error('로그인이 필요합니다.');
     }
 
     // 기존 폴더 검색
@@ -292,6 +317,8 @@ class GoogleDriveService {
    * @returns {Promise<Object|null>} 파일 메타데이터 또는 null
    */
   async getSyncFileMetadata() {
+    // initClient가 아직 호출되지 않았다면 여기서 호출
+    await this.initClient();
     // 가장 최신 백업 파일을 찾아 메타데이터를 반환합니다.
     const files = await this.listBackupFiles();
     if (files.length > 0) {
@@ -308,8 +335,10 @@ class GoogleDriveService {
    * @returns {Promise<{file: Object, status: string}>} 업로드 결과 (updated, skipped, created)
    */
   async syncToGoogleDrive(zipBlob, appProperties = {}, onProgress = null) {
+    // initClient가 아직 호출되지 않았다면 여기서 호출
+    await this.initClient();
     if (!this.isAuthenticated) {
-      await this.signIn();
+      throw new Error('로그인이 필요합니다.');
     }
 
     if (!this.folderId) {
@@ -379,6 +408,8 @@ class GoogleDriveService {
    * @returns {Promise<ArrayBuffer|null>} 동기화 데이터 ZIP 파일의 ArrayBuffer 또는 null
    */
   async getSyncData() {
+    // initClient가 아직 호출되지 않았다면 여기서 호출
+    await this.initClient();
     if (!this.isAuthenticated) {
       throw new Error('로그인이 필요합니다.');
     }
@@ -405,7 +436,7 @@ class GoogleDriveService {
 
     // ZIP 파일을 Blob으로 받아옴 (JSON 파싱하지 않음)
     const blob = await response.blob();
-    return { blob };
+    return { ...syncFile, blob }; // [수정] blob과 함께 파일 메타데이터 전체를 반환
   }
 
   /**
@@ -413,6 +444,8 @@ class GoogleDriveService {
    * @returns {Promise<Array>}
    */
   async listBackupFiles() {
+    // initClient가 아직 호출되지 않았다면 여기서 호출
+    await this.initClient();
     if (!this.isAuthenticated) {
       throw new Error('로그인이 필요합니다.');
     }
@@ -437,6 +470,8 @@ class GoogleDriveService {
    * @returns {Promise<Object>} 복원할 데이터
    */
   async restoreFromGoogleDrive(fileId, onProgress = null) {
+    // initClient가 아직 호출되지 않았다면 여기서 호출
+    await this.initClient();
     if (!this.isAuthenticated) {
       throw new Error('로그인이 필요합니다.');
     }
@@ -471,6 +506,8 @@ class GoogleDriveService {
    * @returns {Promise<void>}
    */
   async deleteBackupFile(fileId) {
+    // initClient가 아직 호출되지 않았다면 여기서 호출
+    await this.initClient();
     if (!this.isAuthenticated) {
       throw new Error('로그인이 필요합니다.');
     }

@@ -13,6 +13,10 @@ import { Bar, Doughnut } from 'react-chartjs-2';
 import { format, subMonths, startOfMonth } from 'date-fns';
 import './StatsDashboard.css';
 
+// 확장된 통계 컴포넌트들을 가져옵니다.
+import OnThisDay from './OnThisDay';
+import { WordCloud } from './WordCloud';
+
 ChartJS.register(
   CategoryScale,
   LinearScale,
@@ -23,7 +27,7 @@ ChartJS.register(
   Legend
 );
 
-export function StatsDashboard({ entries }) {
+export function StatsDashboard({ entries, onSelectEntry }) {
   // Use state to store colors, and useEffect to update them on theme change.
   // Initialize state with a function to read computed styles on mount.
   // The component will be re-mounted when the theme changes via the `key` prop.
@@ -116,6 +120,18 @@ export function StatsDashboard({ entries }) {
 
   return (
     <div className="stats-dashboard">
+      {/* --- 확장된 통계 위젯 --- */}
+      <div className="stats-card">
+        {/* '과거의 오늘' 클릭 시 해당 일기로 이동하기 위해 onSelectEntry를 전달합니다. */}
+        <OnThisDay entries={entries} onSelectEntry={onSelectEntry} />
+      </div>
+      <div className="stats-card">
+        {/* WordCloud 컴포넌트는 자체 제목이 없으므로 여기서 추가해줍니다. */}
+        <h3>주요 키워드</h3>
+        <WordCloud entries={entries} chartColors={chartColors} />
+      </div>
+
+      {/* --- 기존 통계 차트 --- */}
       <div className="stats-card">
         <h3>최근 12개월 작성 현황</h3>
         <div className="chart-container"><Bar options={chartOptions} data={monthlyData} /></div>

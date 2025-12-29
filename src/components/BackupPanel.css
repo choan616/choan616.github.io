@@ -150,59 +150,7 @@
   color: var(--text-secondary);
 }
 
-/* General Button styles */
-.btn {
-  border: 1px solid transparent;
-  border-radius: var(--border-radius-md);
-  cursor: pointer;
-  transition: all 0.2s;
-  font-family: inherit;
-  font-weight: 600;
-  padding: 10px 16px;
-  font-size: 14px;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  gap: 8px;
-}
 
-.btn:disabled {
-  opacity: 0.6;
-  cursor: not-allowed;
-}
-
-/* Primary buttons for sync */
-.btn-primary {
-  background: var(--accent-primary);
-  color: white;
-  border-color: var(--accent-primary);
-}
-
-.btn-primary:hover:not(:disabled) {
-  background: var(--accent-primary-hover);
-}
-
-/* Secondary for less important actions */
-.btn-secondary {
-  background: var(--bg-secondary);
-  color: var(--text-primary);
-  border-color: var(--border-color);
-}
-
-.btn-secondary:hover:not(:disabled) {
-  background: var(--border-color);
-}
-
-.btn-danger {
-  background: color-mix(in srgb, var(--color-danger) 15%, transparent);
-  color: var(--color-danger);
-  border-color: color-mix(in srgb, var(--color-danger) 30%, transparent);
-}
-
-.btn-danger:hover:not(:disabled) {
-  background: color-mix(in srgb, var(--color-danger) 25%, transparent);
-  color: var(--color-danger-hover);
-}
 
 /* Backup Actions */
 .backup-actions,
@@ -295,9 +243,6 @@
 
 .file-name {
   max-width: 200px;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
 }
 
 .file-actions {

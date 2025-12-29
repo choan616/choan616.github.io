@@ -69,7 +69,7 @@ db.version(3).stores({
 // 스키마 버전 4 (변경 추적 및 백업 시간 추가)
 db.version(4).stores({
   // users 테이블에 마지막 백업 시간 추가
-  users: 'userId, email, createdAt, lastBackupAt',
+  users: 'userId, email, createdAt, lastBackupAt, pinHash, pinSalt', // pinHash, pinSalt 추가
   // entries 테이블에 생성/수정 시간 추가
   entries: '[userId+date], userId, date, title, *tags, createdAt, updatedAt'
 }).upgrade(async tx => {

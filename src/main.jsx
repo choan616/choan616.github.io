@@ -4,16 +4,16 @@ import './index.css'
 import App from './App.jsx'
 import { SessionProvider } from './contexts/SessionContext'
 import { SessionWatcher } from './components/SessionWatcher'
-import { ThemeProvider } from './contexts/ThemeContext'
+import { UiSettingsProvider } from './contexts/ThemeContext'
 
 createRoot(document.getElementById('root')).render(
   <StrictMode>
-    <ThemeProvider>
+    <UiSettingsProvider>
       <SessionProvider>
         <SessionWatcher>
           <App />
         </SessionWatcher>
       </SessionProvider>
-    </ThemeProvider>
+    </UiSettingsProvider>
   </StrictMode>,
 )

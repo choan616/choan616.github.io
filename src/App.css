@@ -71,3 +71,27 @@ body {
   border-radius: 5px;
   cursor: pointer;
 }
+
+.main-placeholder {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  height: 100%;
+  padding: 20px;
+  text-align: center;
+  color: var(--text-secondary);
+  background-color: var(--bg-secondary);
+  border-radius: 12px;
+}
+
+.main-placeholder-icon {
+  font-size: 48px;
+  margin-bottom: 16px;
+}
+
+/* When onboarding is active, hide image areas to avoid visual clutter */
+.onboarding-active .content-top,
+.onboarding-active .image-upload-section {
+  visibility: hidden;
+}

@@ -30,16 +30,15 @@ export function ConflictResolutionModal({ remoteMetadata, localModifiedTime, loc
   );
 
   return (
-    <>
-      <div className="backup-panel-overlay" onClick={onClose} />
-      <div className="conflict-resolution-modal">
-        <div className="conflict-header">
-          <h2>⚠️ 동기화 충돌 해결</h2>
-          <button className="close-btn" onClick={onClose}>✕</button>
+    <div className="modal-overlay" onClick={onClose}>
+      {/* 모달 내부 클릭 시 닫히지 않도록 이벤트 전파 중단 */}
+      <div className="conflict-resolution-modal" onClick={(e) => e.stopPropagation()}>
+        <div className="modal-header">
+          ⚠️ 동기화 충돌 해결
         </div>
-        <div className="conflict-body">
-          <p className="conflict-guide">
-            로컬 데이터와 클라우드 데이터가 모두 변경되었습니다.
+        <div className="modal-body">
+          <p>
+            현재 기기의 데이터와 클라우드 데이터가 서로 다릅니다.
             아래 내용을 비교하고 유지할 버전을 선택하세요.
           </p>
 
@@ -48,21 +47,21 @@ export function ConflictResolutionModal({ remoteMetadata, localModifiedTime, loc
             {renderContent('☁️ 클라우드 데이터', remoteMetadata?.appProperties, remoteMetadata?.modifiedTime)}
           </div>
         </div>
-        <div className="conflict-footer">
+        <div className="modal-footer">
           <button
-            className="btn btn-primary"
+            className="modal-button primary"
             onClick={() => handleResolve('push')}
           >
             💻 로컬 데이터 유지 (클라우드에 덮어쓰기)
           </button>
           <button
-            className="btn btn-success"
+            className="modal-button"
             onClick={() => handleResolve('pull')}
           >
             ☁️ 클라우드 데이터 사용 (로컬에 덮어쓰기)
           </button>
         </div>
       </div>
-    </>
+    </div>
   );
 }

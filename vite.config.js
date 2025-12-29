@@ -9,7 +9,7 @@ export default defineConfig(({ command }) => {
       react(),
       VitePWA({
         // 개발 모드('serve')에서는 PWA 비활성화, 빌드 모드('build')에서만 활성화
-        disable: command === 'serve',
+        disable: command === 'serve', // Keep PWA disabled in dev mode to prevent caching issues
         registerType: 'autoUpdate',
         includeAssets: ['favicon.ico', 'robots.txt', 'apple-touch-icon.png'],
         manifest: {
@@ -68,12 +68,13 @@ export default defineConfig(({ command }) => {
       host: true
     },
     build: {
+      chunkSizeWarningLimit: 1000,
       rollupOptions: {
         output: {
           manualChunks: {
             'vendor-react': ['react', 'react-dom'],
-            'vendor-ui': ['swiper', 'react-day-picker'],
-            'vendor-db': ['dexie'],
+            'vendor-ui': ['react-day-picker'],
+            'vendor-db': ['dexie', 'dexie-react-hooks'],
             'vendor-utils': ['date-fns']
           }
         }

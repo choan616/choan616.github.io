@@ -94,8 +94,20 @@
   position: relative;
   border: 1px solid transparent;
 }
-
 .rdp-day:hover:not(.rdp-day_disabled):not(.rdp-day_selected) {
+  position: relative;
+}
+.rdp-day:hover:not(.rdp-day_disabled):not(.rdp-day_selected)::before {
+  content:'';
+  display: block;
+  position: absolute;
+  top: 0;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 0;
+  width: var(--rdp-day_button-width);
+  height: var(--rdp-day_button-height);
+  border-radius: var(--rdp-day_button-border-radius);
   background-color: var(--bg-secondary);
 }
 
@@ -143,6 +155,7 @@
 .rdp-outside {
   color: var(--text-muted);
   opacity: 0.5;
+  visibility: hidden;
 }
 
 .rdp-day_disabled {
@@ -153,6 +166,17 @@
 
 .rdp-months { 
   margin: 0 auto;
+  width: 100%;
+  max-width: 100%;
+}
+
+.rdp-month_grid {
+  width: 100%;
+}
+.rdp-day_button {
+  margin: 0 auto;
+  position: relative;
+  z-index: 1;
 }
 
 @media (max-width: 640px) {

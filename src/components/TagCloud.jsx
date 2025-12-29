@@ -43,7 +43,7 @@ export function TagCloud({ entries, onTagSelect, activeTag }) {
 
       <div className={`tag-list ${isExpanded ? 'expanded' : ''}`}>
         <button
-          className={`tag-item ${!activeTag ? 'active' : ''}`}
+          className={`tag-item clickable${!activeTag ? 'active' : ''}`}
           onClick={() => onTagSelect(null)}
         >
           모든 태그
@@ -51,7 +51,7 @@ export function TagCloud({ entries, onTagSelect, activeTag }) {
         {tags.map(({ tag, count }) => (
           <button
             key={tag}
-            className={`tag-item ${activeTag === tag ? 'active' : ''}`}
+            className={`tag-item clickable${activeTag === tag ? 'active' : ''}`}
             onClick={() => onTagSelect(tag)}
             title={`${count}개의 일기`}
           >

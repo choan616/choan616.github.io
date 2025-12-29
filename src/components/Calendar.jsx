@@ -46,9 +46,15 @@ export function Calendar({ selectedDate, onSelect, entryDates = [], currentUser 
 
   // DayPicker의 onSelect 핸들러
   // react-day-picker v8은 여러 인자를 전달할 수 있으므로, 첫 번째 인자인 Date 객체만 사용합니다.
+  // 같은 날짜를 다시 클릭하면 DayPicker가 선택 해제하려고 하므로 date가 undefined가 될 수 있습니다.
+  // 이 경우 현재 선택된 날짜를 다시 전달하여 컨텐츠가 표시되도록 합니다.
   const handleDaySelect = (date) => {
-    if (date instanceof Date && typeof onSelect === 'function') {
-      onSelect(date);
+    if (typeof onSelect === 'function') {
+      // date가 undefined인 경우 (같은 날짜 재클릭) 현재 선택된 날짜를 사용
+      const dateToSelect = date instanceof Date ? date : internalSelectedDate;
+      if (dateToSelect instanceof Date) {
+        onSelect(dateToSelect);
+      }
     }
   };
 

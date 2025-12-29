@@ -1,11 +1,13 @@
 import React from 'react';
 import './Layout.css';
+import { useSession } from '../contexts/useSession';
 
 export function Layout({ sidebar, main, carousel, userProfileButton }) {
   const showCarousel = !!carousel;
+  const { isLocked } = useSession();
 
   return (
-    <div className="app-layout">
+    <div className={`app-layout ${isLocked ? 'locked' : ''}`}>
       {/* Mobile Header */}
       <header className="mobile-header">
         <h1>My Diary</h1>

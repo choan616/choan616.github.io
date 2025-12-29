@@ -3,6 +3,19 @@ import { compressImage, createThumbnail, blobToBase64, base64ToBlob } from '../u
 import JSZip from 'jszip';
 
 /**
+ * Ensures the database is open and returns the instance.
+ * @returns {Promise<import('./db').MyDiaryDB>} A promise that resolves with the open database instance.
+ */
+export async function getOpenDb() {
+  if (!db.isOpen()) {
+    // Dexie's open() returns a promise that resolves when the database is open and ready.
+    // It handles the creation and migration of the database schema.
+    await db.open();
+  }
+  return db;
+}
+
+/**
  * 일기 데이터 저장소
  * IndexedDB CRUD 작업과 Blob 이미지 관리
  */
@@ -272,12 +285,6 @@ export async function getEntryWithImages(userId, date) {
     const blobObject = isFromMemory ? record.blob : base64ToBlob(record.blob);
     const thumbnailUrlObject = isFromMemory ? record.thumbnail : base64ToBlob(record.thumbnail);
 
-    console.log(`getEntryWithImages: Processing image ID ${record.id}`);
-    console.log(`  record.blob (raw):`, typeof record.blob, record.blob ? (typeof record.blob === 'string' ? record.blob.substring(0, 50) + '...' : `Blob { size: ${record.blob.size}, type: '${record.blob.type}' }`) : record.blob);
-    console.log(`  blobObject from logic:`, blobObject?.type, blobObject?.size);
-    console.log(`  record.thumbnail (raw):`, typeof record.thumbnail, record.thumbnail ? (typeof record.thumbnail === 'string' ? record.thumbnail.substring(0, 50) + '...' : `Blob { size: ${record.thumbnail.size}, type: '${record.thumbnail.type}' }`) : record.thumbnail);
-    console.log(`  thumbnailUrlObject from logic:`, thumbnailUrlObject?.type, thumbnailUrlObject?.size);
-
     return {
       id: record.id,
       url: URL.createObjectURL(blobObject),
@@ -394,17 +401,47 @@ export async function getAvailableYearsAndMonths(userId) {
  * 제목, 내용, 태그에서 키워드로 일기를 검색합니다.
  * @param {string} userId - 사용자 ID
  * @param {string} query - 검색어
+ * @param {string} [startDate] - 검색 시작 날짜 (YYYY-MM-DD)
+ * @param {string} [endDate] - 검색 종료 날짜 (YYYY-MM-DD)
  * @returns {Promise<Array>} 검색된 일기 객체 배열
  */
-export async function searchEntries(userId, query) {
+export async function searchEntries(userId, query, startDate, endDate) {
   if (!query || !userId) {
     return [];
   }
   const lowerCaseQuery = query.toLowerCase();
 
   // 제목, 내용, 태그에서 대소문자 구분 없이 검색
-  const results = await db.entries
-    .where('userId').equals(userId)
+  const collection = db.entries
+    .where('userId').equals(userId);
+
+  // 날짜 범위 필터링이 있는 경우
+  if (startDate || endDate) {
+    // Dexie collection은 chainable하므로 and() 내에서 날짜 체크
+    const results = await collection
+      .and(entry => {
+        // 1. 삭제되지 않은 항목
+        if (entry.deletedAt) return false;
+
+        // 2. 날짜 필터링
+        if (startDate && entry.date < startDate) return false;
+        if (endDate && entry.date > endDate) return false;
+
+        // 3. 키워드 매칭
+        return (
+          (entry.title && entry.title.toLowerCase().includes(lowerCaseQuery)) ||
+          (entry.content && entry.content.toLowerCase().includes(lowerCaseQuery)) ||
+          (entry.tags && entry.tags.some(tag => tag.toLowerCase().includes(lowerCaseQuery)))
+        );
+      })
+      .reverse()
+      .toArray();
+
+    return results;
+  }
+
+  // 기존 로직: 날짜 필터 없음
+  const results = await collection
     .and(entry =>
       !entry.deletedAt && (
         (entry.title && entry.title.toLowerCase().includes(lowerCaseQuery)) ||
@@ -1274,7 +1311,7 @@ export async function exportChangelog(userId, since) {
       changelog.deleted.images.push(img.id);
       continue;
     }
-    
+
     // Convert blobs to base64 for transport
     const imageForTransport = {
       ...img,
@@ -1373,3 +1410,30 @@ export async function getLatestLocalTimestamp(userId) {
 
   return latestTimestamp;
 }
+
+/**
+ * 동기화 메타데이터를 안전하게 가져옵니다.
+ * 메타데이터가 없으면 기본값을 생성하여 반환합니다.
+ * @returns {Promise<{id: number, lastSyncAt: string | null, remoteFileId: string | null, lastSyncDeviceId: string | null}>}
+ */
+export const getSyncMetadataFromAdapter = async () => {
+  const db = await getOpenDb(); // DB가 완전히 열릴 때까지 대기
+  const METADATA_ID = 1;
+
+  let metadata = await db.syncMetadata.get(METADATA_ID);
+  if (!metadata) {
+    const defaultMetadata = {
+      id: METADATA_ID,
+      lastSyncAt: null,
+      remoteFileId: null,
+      lastSyncDeviceId: null,
+    };
+    try {
+      await db.syncMetadata.add(defaultMetadata);
+      metadata = defaultMetadata;
+    } catch {
+      metadata = await db.syncMetadata.get(METADATA_ID);
+    }
+  }
+  return metadata;
+};

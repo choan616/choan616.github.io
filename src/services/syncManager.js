@@ -1,6 +1,6 @@
 import { googleDriveService } from './googleDrive';
-import { getLatestLocalTimestamp, exportUserDataAsZip, importUserData, getLocalDataSummary, getUser } from '../db/adapter';
-import { getSyncMetadata, updateSyncMetadata, getDeviceId } from '../db/syncMetadata';
+import { getLatestLocalTimestamp, exportUserDataAsZip, importUserData, getLocalDataSummary, getUser, getOpenDb } from '../db/adapter';
+import { updateSyncMetadata, getDeviceId } from '../db/syncMetadata';
 import { SyncStatus } from '../constants';
 
 import { syncSettings } from './syncSettings'; // syncSettings 모듈 import
@@ -29,7 +29,18 @@ class SyncManager {
    * SyncManager 초기화. 비동기 데이터를 로드합니다.
    */
   async init() {
-    const metadata = await getSyncMetadata();
+    // [수정] getOpenDb를 사용하여 완전히 초기화된 DB 인스턴스를 가져옵니다.
+    const db = await getOpenDb();
+
+    // id: 1 인 레코드가 없으면 기본값으로 생성합니다.
+    let metadata = await db.syncMetadata.get(1);
+    if (!metadata) {
+      console.log('SyncManager.init: 메타데이터가 없어 새로 생성합니다.');
+      const defaultMetadata = { id: 1, lastSyncAt: null, remoteFileId: null, lastSyncDeviceId: null };
+      await db.syncMetadata.add(defaultMetadata);
+      metadata = defaultMetadata;
+    }
+
     this.lastSyncTime = metadata.lastSyncAt;
     this.remoteFileId = metadata.remoteFileId;
     console.log('SyncManager initialized with metadata:', metadata);
@@ -404,6 +415,32 @@ class SyncManager {
    * @returns {Promise<void>}
    */
   async autoSync({ silent = false, isManual = false, resolution = null } = {}) {
+    // [수정] 게스트 사용자는 동기화를 수행하지 않습니다.
+    if (this.userId === 'guest-user') {
+      console.log('게스트 모드에서는 동기화를 건너뜁니다.');
+      return;
+    }
+
+    // [수정] userId가 설정되지 않은 경우 동기화를 시도하지 않도록 방어합니다.
+    if (!this.userId) {
+      console.warn('SyncManager: userId가 설정되지 않아 동기화를 건너뜁니다.');
+      return;
+    }
+
+    // [수정] 동기화 시작 전, userId가 있고 메타데이터 레코드가 존재하는지 최종 확인
+    if (this.userId) {
+      const db = await getOpenDb(); // DB가 준비될 때까지 대기
+      const existingMetadata = await db.syncMetadata.get(1);
+      if (!existingMetadata) {
+        console.warn('동기화 메타데이터 레코드가 없어 새로 생성합니다. (autoSync guard)');
+        await db.syncMetadata.add({
+          id: 1,
+          lastSyncAt: null,
+          remoteFileId: null,
+        });
+      }
+    }
+
     // 1. 설정 확인
     const enabled = syncSettings.get('autoSyncEnabled');
     if (!enabled && !isManual && silent) {
@@ -475,13 +512,21 @@ class SyncManager {
       const isRemoteNewer = remoteModifiedTime > lastSyncTimestamp;
       const isLocalNewer = localModifiedTime > lastSyncTimestamp;
 
+      // [수정] 최초 동기화 시나리오 (양쪽 모두 데이터가 없는 경우)
+      if (remoteModifiedTime === 0 && localModifiedTime === 0) {
+        console.log('최초 동기화: 원격과 로컬 모두 데이터가 없어 동기화를 건너뜁니다.');
+        this.setStatus(SyncStatus.SUCCESS);
+        this.notifyListeners();
+        return;
+      }
+
       // 2a. 충돌 해결 모드인 경우, 지정된 방향으로 강제 실행
       if (resolution) {
         console.log(`충돌 해결 모드: '${resolution}' 실행`);
         if (resolution === 'push') {
-          await this.performPush();
+          await this.performPush(remoteMetadata);
         } else if (resolution === 'pull') {
-          await this.performPull(remoteMetadata);
+          await this.performPull(remoteMetadata); // remoteMetadata 전달
         }
         // 충돌 해결 후에는 아래의 일반 동기화 로직을 건너뜁니다.
         this.setStatus(SyncStatus.SUCCESS);
@@ -540,6 +585,13 @@ class SyncManager {
     const remoteSyncData = await this.pullSync(); // pullSync는 { blob, id, modifiedTime } 객체를 반환
     if (remoteSyncData && remoteSyncData.blob) {
       console.log('Applying remote data to local DB (merging)...');
+
+      // [수정] 원격 데이터가 비어있는 경우(예: 최초 계정 생성) 병합을 건너뜁니다.
+      if (remoteSyncData.blob.size < 22) { // 22바이트는 비어있는 ZIP 파일의 최소 크기
+        console.log('원격 데이터가 비어있어 Pull 동작을 건너뜁니다.');
+        return;
+      }
+
       // Blob을 ArrayBuffer로 변환하여 importUserData에 전달
       const zipArrayBuffer = await remoteSyncData.blob.arrayBuffer();
 
@@ -548,15 +600,20 @@ class SyncManager {
 
       console.log('Remote changelog applied successfully.');
 
-      // 메타데이터 업데이트
-      const newSyncTime = new Date(remoteMetadata.modifiedTime).toISOString();
-      await updateSyncMetadata({
-        lastSyncAt: newSyncTime,
-        remoteFileId: remoteMetadata.id,
-        lastSyncDeviceId: this.deviceId,
-      });
-      this.lastSyncTime = newSyncTime;
-      this.remoteFileId = remoteMetadata.id;
+      // [수정] remoteMetadata가 유효한 경우에만 메타데이터를 업데이트합니다.
+      // autoSync에서 전달된 remoteMetadata가 null일 수 있는 엣지 케이스를 방어합니다.
+      if (remoteMetadata && remoteMetadata.id && remoteMetadata.modifiedTime) {
+        const newSyncTime = new Date(remoteMetadata.modifiedTime).toISOString();
+        await updateSyncMetadata({
+          lastSyncAt: newSyncTime,
+          remoteFileId: remoteMetadata.id,
+          lastSyncDeviceId: this.deviceId,
+        });
+        this.lastSyncTime = newSyncTime;
+        this.remoteFileId = remoteMetadata.id;
+      } else {
+        console.warn('performPull: remoteMetadata가 유효하지 않아 메타데이터 업데이트를 건너뜁니다.');
+      }
     }
   }
 
@@ -566,8 +623,9 @@ class SyncManager {
   async performPush() {
     console.log('Pushing local changes to remote...');
     const uploadedFile = await this.pushSync();
-    // uploadedFile은 이제 { file, status, skipped? } 형태의 객체입니다.
-    if (uploadedFile && uploadedFile.file && !uploadedFile.skipped) {
+
+    // [수정] uploadedFile과 file.modifiedTime이 유효한지 확인하여 RangeError를 방지합니다.
+    if (uploadedFile?.file?.modifiedTime && !uploadedFile.skipped) {
       console.log('Local changes pushed successfully.');
 
       // 메타데이터 업데이트
