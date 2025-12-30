@@ -1437,3 +1437,44 @@ export const getSyncMetadataFromAdapter = async () => {
   }
   return metadata;
 };
+// ==================== WebAuthn (Passkeys) 관리 ====================
+
+/**
+ * 사용자의 WebAuthn 자격 증명 추가
+ * @param {string} userId 
+ * @param {Object} credential 
+ */
+export async function addWebAuthnCredential(userId, credential) {
+  await db.webauthnCredentials.add({
+    ...credential,
+    userId,
+    createdAt: new Date().toISOString()
+  });
+}
+
+/**
+ * 사용자의 모든 WebAuthn 자격 증명 조회
+ * @param {string} userId 
+ * @returns {Promise<Array>}
+ */
+export async function getWebAuthnCredentials(userId) {
+  return await db.webauthnCredentials.where('userId').equals(userId).toArray();
+}
+
+/**
+ * 자격 증명 ID로 사용자 조회
+ * @param {string} credentialId 
+ * @returns {Promise<string|null>} userId
+ */
+export async function getUserIdByCredentialId(credentialId) {
+  const cred = await db.webauthnCredentials.get(credentialId);
+  return cred ? cred.userId : null;
+}
+
+/**
+ * WebAuthn 자격 증명 삭제
+ * @param {string} credentialId 
+ */
+export async function deleteWebAuthnCredential(credentialId) {
+  await db.webauthnCredentials.delete(credentialId);
+}

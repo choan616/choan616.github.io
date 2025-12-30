@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { googleDriveService } from '../services/googleDrive';
-import { syncManager } from '../services/syncManager';
+// syncManager import removed to avoid circular dependency
 import { useSyncContext } from '../contexts/SyncContext';
 import { useToast } from '../hooks/useToast';
 import './BackupPanel.css';
@@ -16,7 +16,23 @@ export function BackupPanel({ currentUser, onClose, onDataRestored, onAuthentica
   const [backupProgress, setBackupProgress] = useState(0);
   const [restoreProgress, setRestoreProgress] = useState(0);
   const { showToast } = useToast();
-  const { status, lastSyncTime, lastError, triggerSync } = useSyncContext();
+  // notifySyncSuccess를 context에서 가져옴
+  const { status, lastSyncTime, lastError, triggerSync, notifySyncSuccess } = useSyncContext();
+
+  const loadBackupFiles = useCallback(async () => {
+    try {
+      setIsLoading(true);
+      let files = await googleDriveService.listBackupFiles();
+      // 파일을 최신순으로 정렬
+      files.sort((a, b) => new Date(b.createdTime) - new Date(a.createdTime));
+      setBackupFiles(files);
+    } catch (error) {
+      console.error('파일 목록 로드 오류:', error);
+      showToast('백업 파일 목록을 불러올 수 없습니다', 'error');
+    } finally {
+      setIsLoading(false);
+    }
+  }, [showToast]);
 
   useEffect(() => {
     // googleDriveService의 인증 상태 변경을 구독합니다.
@@ -88,21 +104,6 @@ export function BackupPanel({ currentUser, onClose, onDataRestored, onAuthentica
     }
   }
 
-  const loadBackupFiles = useCallback(async () => {
-    try {
-      setIsLoading(true);
-      let files = await googleDriveService.listBackupFiles();
-      // 파일을 최신순으로 정렬
-      files.sort((a, b) => new Date(b.createdTime) - new Date(a.createdTime));
-      setBackupFiles(files);
-    } catch (error) {
-      console.error('파일 목록 로드 오류:', error);
-      showToast('백업 파일 목록을 불러올 수 없습니다', 'error');
-    } finally {
-      setIsLoading(false);
-    }
-  }, [showToast]);
-
   async function handleBackup() {
     try {
       setIsLoading(true);
@@ -151,8 +152,8 @@ export function BackupPanel({ currentUser, onClose, onDataRestored, onAuthentica
       setBackupProgress(100);
       showToast(`백업 완료: ${result.file.name}`, 'success');
 
-      // SyncManager에게 성공 알림 (상태 업데이트 및 에러 클리어)
-      await syncManager.notifySyncSuccess(result);
+      // SyncManager에게 성공 알림 (SyncContext를 통해 전달)
+      await notifySyncSuccess(result);
 
       // 파일 목록 새로고침
       await loadBackupFiles();
@@ -353,127 +354,127 @@ export function BackupPanel({ currentUser, onClose, onDataRestored, onAuthentica
               </div>
             ) : (
               <>
-            <h3>☁️ Google Drive</h3>
+                <h3>☁️ Google Drive</h3>
 
-            {!isAuthenticated ? (
-              <div className="auth-section">
-                <p>Google Drive에 로그인하여 일기를 안전하게 백업하세요.</p>
-                <button
-                  className="btn btn-primary clickable"
-                  onClick={handleSignIn}
-                  disabled={isLoading}
-                >
-                  🔐 Google 로그인
-                </button>
-              </div>
-            ) : (
-              <div className="authenticated-section">
-                <div className="user-info">
-                  {googleUser && (
-                    <>
-                      {googleUser.imageUrl && (
-                        <img src={googleUser.imageUrl} alt="프로필" />
-                      )}
-                      <div>
-                        <div className="user-name">{googleUser.name}</div>
-                        <div className="user-email">{googleUser.email}</div>
-                      </div>
-                    </>
-                  )}
-                  <button className="btn btn-small clickable" onClick={handleSignOut}>
-                    로그아웃
-                  </button>
-                </div>
-
-                <div className="backup-actions">
-                  <button
-                    className="btn btn-success clickable"
-                    onClick={handleBackup}
-                    disabled={isLoading}
-                  >
-                    📤 지금 백업하기 (수동)
-                  </button>
-                  <button
-                    className="btn btn-primary clickable"
-                    onClick={() => triggerSync({ silent: false, isManual: true })
-                      .then(() => {
-                        loadBackupFiles(); // 동기화 후 목록 새로고침
-                      }).catch(err => {
-                        console.error("수동 동기화 실패:", err);
-                        // 토스트는 SyncProvider에서 이미 표시됨
-                      })}
-                    disabled={status === SyncStatus.SYNCING}
-                  >
-                    {status === SyncStatus.SYNCING ? '🔄 동기화 중...' : '🔄 지금 동기화'}
-                  </button>
-                  <button
-                    className="btn btn-secondary clickable"
-                    onClick={loadBackupFiles}
-                    disabled={isLoading}
-                  >
-                    🔄 목록 새로고침
-                  </button>
-                </div>
-
-                {status === SyncStatus.CONFLICT && (
-                  <div className="sync-status-info conflict">
-                    <div className="conflict-header-info">
-                      <h4>⚠️ 동기화 충돌</h4>
-                      <p>{lastError || '다른 기기와 데이터 충돌이 발생했습니다.'}</p>
-                    </div>
+                {!isAuthenticated ? (
+                  <div className="auth-section">
+                    <p>Google Drive에 로그인하여 일기를 안전하게 백업하세요.</p>
                     <button
-                      className="btn btn-danger clickable"
-                      onClick={() => showToast('충돌 해결 모달이 이미 열려있습니다.')}
+                      className="btn btn-primary clickable"
+                      onClick={handleSignIn}
+                      disabled={isLoading}
                     >
-                      충돌 해결하기
+                      🔐 Google 로그인
                     </button>
                   </div>
-                )}
-
-                <div className="sync-status-info">
-                  <strong>동기화 상태:</strong> <span className={`status-${status.toLowerCase()}`}>{status}</span> <br />
-                  <strong>마지막 동기화:</strong> {lastSyncTime ? new Date(lastSyncTime).toLocaleString() : '없음'}
-                </div>
-
-                {backupProgress > 0 && (
-                  <div className="progress-bar">
-                    <div
-                      className="progress-fill"
-                      style={{ width: `${backupProgress}%` }}
-                    />
-                    <span className="progress-text">{Math.round(backupProgress)}%</span>
-                  </div>
-                )}
-
-                {restoreProgress > 0 && (
-                  <div className="progress-bar">
-                    <div
-                      className="progress-fill restore"
-                      style={{ width: `${restoreProgress}%` }}
-                    />
-                    <span className="progress-text">복원 중... {Math.round(restoreProgress)}%</span>
-                  </div>
-                )}
-
-                {backupFiles.length > 0 && (
-                  <div className="backup-files">
-                    <h4>백업 파일 목록</h4>
-                    <div className="file-list">
-                      {backupFiles.map((file, index) => (
-                        <BackupListItem
-                          key={file.id}
-                          file={file}
-                          isLatest={index === 0}
-                          isLoading={isLoading}
-                          onRestore={handleRestore}
-                          onDelete={handleDeleteBackup}
-                        />
-                      ))}
+                ) : (
+                  <div className="authenticated-section">
+                    <div className="user-info">
+                      {googleUser && (
+                        <>
+                          {googleUser.imageUrl && (
+                            <img src={googleUser.imageUrl} alt="프로필" />
+                          )}
+                          <div>
+                            <div className="user-name">{googleUser.name}</div>
+                            <div className="user-email">{googleUser.email}</div>
+                          </div>
+                        </>
+                      )}
+                      <button className="btn btn-small clickable" onClick={handleSignOut}>
+                        로그아웃
+                      </button>
                     </div>
+
+                    <div className="backup-actions">
+                      <button
+                        className="btn btn-success clickable"
+                        onClick={handleBackup}
+                        disabled={isLoading}
+                      >
+                        📤 지금 백업하기 (수동)
+                      </button>
+                      <button
+                        className="btn btn-primary clickable"
+                        onClick={() => triggerSync({ silent: false, isManual: true })
+                          .then(() => {
+                            loadBackupFiles(); // 동기화 후 목록 새로고침
+                          }).catch(err => {
+                            console.error("수동 동기화 실패:", err);
+                            // 토스트는 SyncProvider에서 이미 표시됨
+                          })}
+                        disabled={status === SyncStatus.SYNCING}
+                      >
+                        {status === SyncStatus.SYNCING ? '🔄 동기화 중...' : '🔄 지금 동기화'}
+                      </button>
+                      <button
+                        className="btn btn-secondary clickable"
+                        onClick={loadBackupFiles}
+                        disabled={isLoading}
+                      >
+                        🔄 목록 새로고침
+                      </button>
+                    </div>
+
+                    {status === SyncStatus.CONFLICT && (
+                      <div className="sync-status-info conflict">
+                        <div className="conflict-header-info">
+                          <h4>⚠️ 동기화 충돌</h4>
+                          <p>{lastError || '다른 기기와 데이터 충돌이 발생했습니다.'}</p>
+                        </div>
+                        <button
+                          className="btn btn-danger clickable"
+                          onClick={() => showToast('충돌 해결 모달이 이미 열려있습니다.')}
+                        >
+                          충돌 해결하기
+                        </button>
+                      </div>
+                    )}
+
+                    <div className="sync-status-info">
+                      <strong>동기화 상태:</strong> <span className={`status-${status.toLowerCase()}`}>{status}</span> <br />
+                      <strong>마지막 동기화:</strong> {lastSyncTime ? new Date(lastSyncTime).toLocaleString() : '없음'}
+                    </div>
+
+                    {backupProgress > 0 && (
+                      <div className="progress-bar">
+                        <div
+                          className="progress-fill"
+                          style={{ width: `${backupProgress}%` }}
+                        />
+                        <span className="progress-text">{Math.round(backupProgress)}%</span>
+                      </div>
+                    )}
+
+                    {restoreProgress > 0 && (
+                      <div className="progress-bar">
+                        <div
+                          className="progress-fill restore"
+                          style={{ width: `${restoreProgress}%` }}
+                        />
+                        <span className="progress-text">복원 중... {Math.round(restoreProgress)}%</span>
+                      </div>
+                    )}
+
+                    {backupFiles.length > 0 && (
+                      <div className="backup-files">
+                        <h4>백업 파일 목록</h4>
+                        <div className="file-list">
+                          {backupFiles.map((file, index) => (
+                            <BackupListItem
+                              key={file.id}
+                              file={file}
+                              isLatest={index === 0}
+                              isLoading={isLoading}
+                              onRestore={handleRestore}
+                              onDelete={handleDeleteBackup}
+                            />
+                          ))}
+                        </div>
+                      </div>
+                    )}
                   </div>
                 )}
-              </div>
-            )}
               </>
             )}
           </section>
@@ -515,13 +516,35 @@ export function BackupPanel({ currentUser, onClose, onDataRestored, onAuthentica
   );
 }
 
+// Helper functions
+function formatFileSize(bytes) {
+  if (!bytes) return '0 B';
+
+  const k = 1024;
+  const sizes = ['B', 'KB', 'MB', 'GB'];
+  const i = Math.floor(Math.log(bytes) / Math.log(k));
+
+  return `${parseFloat((bytes / Math.pow(k, i)).toFixed(2))} ${sizes[i]}`;
+}
+
+function formatDate(isoString) {
+  const date = new Date(isoString);
+  return date.toLocaleString('ko-KR', {
+    year: 'numeric',
+    month: '2-digit',
+    day: '2-digit',
+    hour: '2-digit',
+    minute: '2-digit'
+  });
+}
+
 function BackupListItem({ file, isLatest, isLoading, onRestore, onDelete }) {
   return (
     <div className="file-item">
       <div className="file-info">
         <div className="file-main-text">
           <span className="file-date">
-            {googleDriveService.constructor.formatDate(file.createdTime)}
+            {formatDate(file.createdTime)}
           </span>
           {isLatest && (
             <span className="latest-backup-badge">가장 최근</span>
@@ -530,7 +553,7 @@ function BackupListItem({ file, isLatest, isLoading, onRestore, onDelete }) {
         <div className="file-sub-text">
           <span className="file-name">{file.name}</span>
           {' · '}
-          <span className="file-size">{googleDriveService.constructor.formatFileSize(file.size)}</span>
+          <span className="file-size">{formatFileSize(file.size)}</span>
         </div>
       </div>
       <div className="file-actions">

@@ -11,6 +11,7 @@ export const SyncContext = createContext({
   isOnline: true,
   triggerSync: async () => { },
   triggerDebouncedSync: () => { },
+  notifySyncSuccess: async () => { }, // BackupPanel에서 동기화 성공 알림용
 });
 
 /**

@@ -114,14 +114,14 @@ db.version(7).stores({
   });
 });
 
-// 스키마 버전 8 (자동 동기화 메타데이터 추가)
-db.version(8).stores({
-  // 자동 동기화 상태를 추적하기 위한 메타데이터 테이블
-  // &id: 유니크하고 자동 증가하는 PK
-  // lastSyncAt: 마지막 동기화가 성공한 시간
-  // remoteFileId: Google Drive에 저장된 백업 파일의 ID
-  // lastSyncDeviceId: 마지막으로 동기화를 수행한 기기의 고유 ID
-  syncMetadata: '&id, lastSyncAt, remoteFileId, lastSyncDeviceId'
+// 스키마 버전 9 (WebAuthn 지원)
+db.version(9).stores({
+  webauthnCredentials: 'credentialId, userId'
+});
+
+// 스키마 버전 10 (누락된 syncMetadata 복구)
+db.version(10).stores({
+  syncMetadata: 'id, lastSyncAt, remoteFileId, lastSyncDeviceId'
 });
 
 /**

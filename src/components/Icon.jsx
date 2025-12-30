@@ -72,10 +72,17 @@ const themeIcons = {
 
 const allIcons = { ...icons, ...themeIcons };
 
-export function Icon({ name, className = '' }) {
+export function Icon({ name, className = '', size }) {
   const icon = allIcons[name];
   if (!icon) {
     return null;
   }
-  return React.cloneElement(icon, { className: `icon ${className}` });
+
+  const props = { className: `icon ${className}`.trim() };
+  if (size) {
+    props.width = size;
+    props.height = size;
+  }
+
+  return React.cloneElement(icon, props);
 }

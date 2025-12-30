@@ -1,8 +1,12 @@
 import React, { useState, useEffect } from 'react';
 import { PasswordSetupModal } from './PasswordSetupModal';
 import { useUiSettings } from '../contexts/useUiSettings';
+import { useToast } from '../hooks/useToast';
 import { syncSettings } from '../services/syncSettings';
 import { AVAILABLE_FONTS } from '../services/uiSettings';
+import { registerPasskey } from '../utils/webauthn';
+import { getUser, addWebAuthnCredential } from '../db/adapter';
+import { getCurrentUser } from '../utils/auth';
 import './Settings.css';
 
 /**
@@ -28,6 +32,30 @@ export function Settings({ isGuest, onClose }) {
   };
 
   const handlePinSetupClick = () => setShowPinSetup(true);
+
+  const { showToast } = useToast();
+
+  const handleRegisterPasskey = async () => {
+    try {
+      const userId = getCurrentUser();
+      if (!userId) return;
+
+      const user = await getUser(userId);
+      if (!user) throw new Error('사용자 정보를 찾을 수 없습니다.');
+
+      const credential = await registerPasskey({
+        userId: user.userId,
+        name: user.name,
+        email: user.email
+      });
+
+      await addWebAuthnCredential(user.userId, credential);
+      showToast('패스키가 성공적으로 등록되었습니다.', 'success');
+    } catch (err) {
+      console.error('Passkey registration failed:', err);
+      showToast(err.message || '패스키 등록 중 오류가 발생했습니다.', 'error');
+    }
+  };
 
   return (
     <div className="settings-overlay">
@@ -156,6 +184,21 @@ export function Settings({ isGuest, onClose }) {
                 PIN 설정
               </button>
             </div>
+
+            {/* 패스키(WebAuthn) 등록 */}
+            {!isGuest && (
+              <div className="setting-item">
+                <div className="setting-info">
+                  <label className="setting-label">
+                    간편 로그인 등록
+                  </label>
+                  <span className="setting-desc">현재 기기의 생체 인식(지문/얼굴)을 사용하여 빠르게 로그인하세요.</span>
+                </div>
+                <button className="btn btn-secondary" onClick={handleRegisterPasskey}>
+                  기기 등록
+                </button>
+              </div>
+            )}
 
             {/* 화면 잠금 사용 설정 - 로그인한 사용자에게만 노출 */}
             {!isGuest && (

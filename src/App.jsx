@@ -24,7 +24,8 @@ import { Search, SearchResultList } from './components/Search';
 import { StatsDashboard } from './components/StatsDashboard';
 import { ImageGallery } from './components/ImageGallery';
 import { ImageCarousel } from './components/ImageCarousel';
-import { BackupPanel } from './components/BackupPanel';
+// BackupPanel lazy load 적용
+const BackupPanel = React.lazy(() => import('./components/BackupPanel').then(module => ({ default: module.BackupPanel })));
 import { Settings } from './components/Settings';
 import { SessionLockModal } from './components/SessionLockModal';
 import { OnboardingGuide } from './components/OnboardingGuide';
@@ -387,7 +388,11 @@ function AppContent() {
     }
   }
 
-  async function handleAuthenticated(user, isInitialLoad = false) {
+  async function handleAuthenticated(user, isInitialLoadOrOptions = false) {
+    // 하위 호환성을 위해 두 번째 인자가 boolean이면 isInitialLoad로, 객체이면 options로 처리합니다.
+    const isInitialLoad = typeof isInitialLoadOrOptions === 'boolean' ? isInitialLoadOrOptions : (isInitialLoadOrOptions?.isInitialLoad || false);
+    const options = typeof isInitialLoadOrOptions === 'object' ? isInitialLoadOrOptions : {};
+
     setCurrentUser(user);
     setAuthUser(user.userId); // auth.js를 통해 localStorage에 사용자 ID를 설정합니다.
 
@@ -406,7 +411,9 @@ function AppContent() {
     // 최초 접속 또는 게스트 모드에서는 자동 동기화 실행 안 함
     // 수동 로그인 시에만 자동 동기화 실행
     if (!isInitialLoad && !user.isGuest) {
-      triggerSync({ silent: false }).catch(err => {
+      // 간편 로그인(passkey)인 경우, 구글 인증이 없을 수 있으므로 silent: true로 실행하여 팝업을 방지합니다.
+      const isPasskey = options.method === 'passkey';
+      triggerSync({ silent: isPasskey }).catch(err => {
         console.log('로그인 후 동기화 실패:', err);
         // 토스트는 SyncProvider에서 이미 표시됨
       });
@@ -505,7 +512,7 @@ function AppContent() {
               {!searchResults && (
                 <>
                   <Calendar selectedDate={selectedDate} onSelect={handleDateSelect} entryDates={entriesDateList} currentUser={currentUser} />
-                  <div style={{  }}>
+                  <div style={{}}>
                     <button className="btn btn-secondary" style={{ width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px' }} onClick={() => setShowGallery(true)}>
                       <span>🖼️</span> 사진 모아보기
                     </button>

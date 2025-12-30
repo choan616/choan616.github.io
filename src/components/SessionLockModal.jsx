@@ -2,6 +2,9 @@ import React, { useState, useEffect } from 'react';
 import { useSession } from '../contexts/useSession';
 import { googleDriveService } from '../services/googleDrive';
 import { getCurrentUser } from '../utils/auth';
+import { authenticatePasskey } from '../utils/webauthn';
+import { getWebAuthnCredentials } from '../db/adapter';
+import { Icon } from './Icon';
 import './Modal.css';
 
 export function SessionLockModal() {
@@ -32,9 +35,19 @@ export function SessionLockModal() {
 
   // PIN이 설정되지 않은 계정은 바로 unlock 처리
   const [pinRequired, setPinRequired] = useState(true);
+  const [hasPasskey, setHasPasskey] = useState(false);
+
   useEffect(() => {
-    async function checkPin() {
+    async function checkSecurity() {
       if (isLocked && currentUserId) {
+        // 패스키 존재 여부 확인
+        try {
+          const credentials = await getWebAuthnCredentials(currentUserId);
+          setHasPasskey(credentials.length > 0);
+        } catch (e) {
+          console.error("Failed to check passkeys", e);
+        }
+
         // 설정 확인
         try {
           const savedSettings = localStorage.getItem('app_settings');
@@ -60,7 +73,7 @@ export function SessionLockModal() {
         }
       }
     }
-    checkPin();
+    checkSecurity();
   }, [isLocked, currentUserId, unlock]);
 
   // [수정] 모든 훅 호출 이후에 렌더링 여부를 결정합니다.
@@ -111,20 +124,68 @@ export function SessionLockModal() {
     }
   };
 
+  const handlePasskeyUnlock = async () => {
+    setError('');
+    try {
+      const assertion = await authenticatePasskey();
+      const credentials = await getWebAuthnCredentials(currentUserId);
+      const isValid = credentials.some(c => c.credentialId === assertion.credentialId);
+
+      if (isValid) {
+        unlock();
+        setInput('');
+      } else {
+        setError('등록되지 않은 기기입니다.');
+      }
+    } catch (err) {
+      if (err.name !== 'NotAllowedError') {
+        setError('생체 인식에 실패했습니다.');
+      }
+    }
+  };
+
   return (
     <div className="modal-overlay">
       <div className="modal">
         <h3>PIN 입력</h3>
         <p>보안을 위해 PIN을 입력해주세요.</p>
         <form onSubmit={handleSubmit}>
-          <input
-            inputMode="numeric"
-            pattern="\d{4}"
-            value={input}
-            onChange={handleChange}
-            placeholder="0000"
-            autoFocus
-          />
+          <div className="pin-input-wrapper" style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
+            <input
+              inputMode="numeric"
+              pattern="\d{4}"
+              value={input}
+              onChange={handleChange}
+              placeholder="0000"
+              autoFocus
+              style={{ flex: 1 }}
+            />
+            {hasPasskey && (
+              <button
+                type="button"
+                className="btn-biometric"
+                onClick={handlePasskeyUnlock}
+                title="간편 로그인으로 잠금 해제"
+                style={{
+                  padding: '0 12px',
+                  background: 'var(--accent-bg-light)',
+                  border: '1px solid var(--accent-color)',
+                  borderRadius: '8px',
+                  color: 'var(--accent-color)',
+                  cursor: 'pointer',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  height: '46px',
+                  fontSize: '13px',
+                  fontWeight: '600',
+                  whiteSpace: 'nowrap'
+                }}
+              >
+                생체 인증
+              </button>
+            )}
+          </div>
           {error && (
             <div className="error styled-error">
               {error}

@@ -98,11 +98,17 @@ export function SyncProvider({ children }) {
     syncManager.setStatus(SyncStatus.IDLE);
   }, []);
 
+  // BackupPanel에서 호출할 성공 알림 함수
+  const notifySyncSuccess = useCallback(async (result) => {
+    await syncManager.notifySyncSuccess(result);
+  }, []);
+
   const contextValue = useMemo(() => ({
     ...syncState,
     triggerSync,
-    triggerDebouncedSync
-  }), [syncState, triggerSync, triggerDebouncedSync]);
+    triggerDebouncedSync,
+    notifySyncSuccess
+  }), [syncState, triggerSync, triggerDebouncedSync, notifySyncSuccess]);
 
   // 모달 표시 여부를 상태가 아닌, 렌더링 시점에 파생된 값으로 계산합니다.
   const showConflictModal = syncState.status === SyncStatus.CONFLICT && !!syncState.conflictDetails;

@@ -2,6 +2,8 @@ import React, { useState } from 'react';
 import { googleDriveService } from '../services/googleDrive';
 import { useSession } from '../contexts/useSession';
 import { Icon } from './Icon'; // Icon 컴포넌트 사용
+import { authenticatePasskey } from '../utils/webauthn';
+import { getUserIdByCredentialId, getUser } from '../db/adapter';
 import './UserAuth.css';
 
 export function UserAuth({ onAuthenticated }) {
@@ -37,13 +39,13 @@ export function UserAuth({ onAuthenticated }) {
       if (!googleUser) throw new Error('Google 사용자 정보를 가져올 수 없습니다.');
 
       // 3. 허용된 이메일인지 확인합니다.
-      if (ALLOWED_EMAILS.length > 0 && !ALLOWED_EMAILS.includes(googleUser.email)) { 
+      if (ALLOWED_EMAILS.length > 0 && !ALLOWED_EMAILS.includes(googleUser.email)) {
         await googleDriveService.signOut();
         throw new Error(`접근 권한이 없는 계정입니다: ${googleUser.email}`);
       }
 
       // 4. 로컬 DB에 사용자를 생성하거나 프로필 정보를 업데이트합니다.
-      const { createUser, getUser } = await import('../db/adapter');
+      const { createUser } = await import('../db/adapter');
       const userId = await createUser(
         { email: googleUser.email, name: googleUser.name },
         { imageUrl: googleUser.imageUrl } // googleData에 imageUrl을 전달합니다.
@@ -67,9 +69,38 @@ export function UserAuth({ onAuthenticated }) {
       session.setCurrentUser(user.userId);
       session.setIsNewUser(!user.pinHash); // PIN 설정 여부에 따라 신규 사용자 판별
 
-      onAuthenticated(user);
+      await onAuthenticated(user, { method: 'google' });
     } catch (err) {
       setError(err.message || 'Google 로그인 중 오류가 발생했습니다.');
+    } finally {
+      setIsLoading(false);
+    }
+  }
+  async function handlePasskeyLogin() {
+    setIsLoading(true);
+    setError('');
+    try {
+      const assertion = await authenticatePasskey();
+      const userId = await getUserIdByCredentialId(assertion.credentialId);
+
+      if (!userId) {
+        throw new Error('등록된 기기를 찾을 수 없습니다. 먼저 Google로 로그인하여 간편 로그인을 등록해 주세요.');
+      }
+
+      const user = await getUser(userId);
+      if (!user) throw new Error('사용자 정보를 찾을 수 없습니다.');
+
+      // 사용자 정보를 세션에 설정
+      const { setCurrentUser } = await import('../utils/auth');
+      setCurrentUser(user.userId);
+      session.setCurrentUser(user.userId);
+      session.setIsNewUser(!user.pinHash);
+
+      await onAuthenticated(user, { method: 'passkey' });
+    } catch (err) {
+      if (err.name !== 'NotAllowedError') { // 사용자가 취소한 경우는 에러 표시 안 함
+        setError(err.message || '패스키 로그인 중 오류가 발생했습니다.');
+      }
     } finally {
       setIsLoading(false);
     }
@@ -85,13 +116,21 @@ export function UserAuth({ onAuthenticated }) {
         <div className="login-card">
           <div className="login-card-body">
             <p className="login-intro-text">
-              Google 계정으로 로그인하여<br />
-              모든 기기에서 일기를 안전하게 동기화하세요.
+              생체 인식 또는 Google 계정으로 로그인하여<br />
+              일기를 안전하게 관리하세요.
             </p>
             <div className="login-actions">
+              <button className="btn-passkey-login" onClick={handlePasskeyLogin} disabled={isLoading}>
+                <span>간편 로그인</span>
+              </button>
+
+              <div className="login-divider">
+                <span>또는</span>
+              </div>
+
               <button className="btn-google-login" onClick={handleGoogleLoginAndCheck} disabled={isLoading}>
                 {isLoading ? <Icon name="sync" className="login-icon animate-spin" /> : <GoogleIcon className="login-icon" />}
-                <span>{isLoading ? '로그인 중...' : 'Google 계정으로 로그인'}</span>
+                <span>Google 계정으로 로그인</span>
               </button>
             </div>
             {error && <div className="error styled-error">{error}</div>}
