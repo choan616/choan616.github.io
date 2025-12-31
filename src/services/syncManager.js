@@ -1,4 +1,4 @@
-import { googleDriveService } from './googleDrive';
+import { CloudStorageFactory } from './cloudStorage/CloudStorageFactory';
 import { getLatestLocalTimestamp, exportUserDataAsZip, importUserData, getLocalDataSummary, getUser, getOpenDb } from '../db/adapter';
 import { updateSyncMetadata, getDeviceId } from '../db/syncMetadata';
 import { SyncStatus } from '../constants';
@@ -64,6 +64,15 @@ class SyncManager {
    */
   getUserId() {
     return this.userId;
+  }
+
+  /**
+   * 현재 선택된 클라우드 스토리지 서비스 인스턴스를 반환합니다.
+   * @returns {Promise<import('./cloudStorage/CloudStorageInterface').CloudStorageInterface>}
+   */
+  async getCurrentService() {
+    const provider = localStorage.getItem('preferredCloudProvider') || 'google';
+    return await CloudStorageFactory.getService(provider);
   }
 
   /**
@@ -330,14 +339,15 @@ class SyncManager {
       throw new Error('오프라인 상태입니다');
     }
 
-    if (!googleDriveService.isAuthenticated) {
-      throw new Error('Google Drive에 로그인이 필요합니다');
+    const service = await this.getCurrentService();
+    if (!service.isAuthenticated) {
+      throw new Error(`${service.providerName}에 로그인이 필요합니다`);
     }
 
     return this.retryWithBackoff(async () => {
       try {
-        // Google Drive에서 동기화 파일 다운로드
-        const remoteData = await googleDriveService.getSyncData();
+        // 클라우드 저장소에서 동기화 파일 다운로드
+        const remoteData = await service.getSyncData();
 
         if (!remoteData) {
           // 원격에 파일이 없으면 Pull 할 것이 없음
@@ -363,8 +373,9 @@ class SyncManager {
       throw new Error('오프라인 상태입니다');
     }
 
-    if (!googleDriveService.isAuthenticated) {
-      throw new Error('Google Drive에 로그인이 필요합니다');
+    const service = await this.getCurrentService();
+    if (!service.isAuthenticated) {
+      throw new Error(`${service.providerName}에 로그인이 필요합니다`);
     }
 
     if (!this.userId) {
@@ -390,13 +401,13 @@ class SyncManager {
         const hashArray = Array.from(new Uint8Array(hashBuffer));
         const contentHash = hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
 
-        // 3. Google Drive에 업로드할 때 appProperties에 요약 정보와 해시를 포함
+        // 3. 클라우드에 업로드할 때 appProperties에 요약 정보와 해시를 포함
         const appProperties = {
           ...localSummary, // entryCount, imageCount
           contentHash,
         };
 
-        const result = await googleDriveService.syncToGoogleDrive(snapshotBlob, appProperties, () => {}); // Provide an empty progress callback
+        const result = await service.uploadBackup(snapshotBlob, appProperties, () => { }); // Provide an empty progress callback
         console.log('Push 동기화 완료');
         return result; // { file, status } 객체 전체를 반환하도록 수정
       } catch (error) {
@@ -477,19 +488,21 @@ class SyncManager {
       return;
     }
 
+    const service = await this.getCurrentService();
+
     // 인증되지 않았으면 중단 또는 로그인 시도
-    if (!googleDriveService.isAuthenticated) {
+    if (!service.isAuthenticated) {
       if (silent) {
-        console.log('Google Drive 인증 필요 - 자동 동기화 건너뜀');
+        console.log(`${service.providerName} 인증 필요 - 자동 동기화 건너뜀`);
         return;
       } else {
         // silent가 false이면(예: 로그인 직후) 인증 시도
         try {
-          console.log('동기화를 위해 Google Drive 로그인 시도...');
-          await googleDriveService.signIn();
+          console.log(`동기화를 위해 ${service.providerName} 로그인 시도...`);
+          await service.signIn();
         } catch (error) {
-          console.error('Google Drive 로그인 실패:', error);
-          throw new Error('Google Drive 로그인이 필요합니다.');
+          console.error(`${service.providerName} 로그인 실패:`, error);
+          throw new Error(`${service.providerName} 로그인이 필요합니다.`);
         }
       }
     }
@@ -499,7 +512,7 @@ class SyncManager {
     // Last-Write-Wins (최신 데이터가 이기는) 전략 기반 동기화
     try {
       // 1. 원격 파일 메타데이터와 로컬 최신 변경 시간 가져오기
-      const remoteMetadata = await googleDriveService.getSyncFileMetadata();
+      const remoteMetadata = await service.getSyncFileMetadata();
       const latestLocalTimestamp = await getLatestLocalTimestamp(this.userId);
 
       const remoteModifiedTime = remoteMetadata ? new Date(remoteMetadata.modifiedTime).getTime() : 0;

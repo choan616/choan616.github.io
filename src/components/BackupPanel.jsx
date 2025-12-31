@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { googleDriveService } from '../services/googleDrive';
+import { CloudStorageFactory } from '../services/cloudStorage/CloudStorageFactory';
 // syncManager import removed to avoid circular dependency
 import { useSyncContext } from '../contexts/SyncContext';
 import { useToast } from '../hooks/useToast';
@@ -9,20 +10,52 @@ import { SyncStatus } from '../constants';
 
 export function BackupPanel({ currentUser, onClose, onDataRestored, onAuthenticated }) {
   const [isOpen, setIsOpen] = useState(true);
+
+  // 저장소 선택 상태
+  const [selectedProvider, setSelectedProvider] = useState(() => {
+    return localStorage.getItem('preferredCloudProvider') || 'google';
+  });
+  const [cloudService, setCloudService] = useState(googleDriveService);
+
+  // 인증 및 파일 상태
   const [isAuthenticated, setIsAuthenticated] = useState(false);
-  const [googleUser, setGoogleUser] = useState(null);
+  const [cloudUser, setCloudUser] = useState(null);
   const [backupFiles, setBackupFiles] = useState([]);
   const [isLoading, setIsLoading] = useState(false);
   const [backupProgress, setBackupProgress] = useState(0);
   const [restoreProgress, setRestoreProgress] = useState(0);
+
   const { showToast } = useToast();
   // notifySyncSuccess를 context에서 가져옴
   const { status, lastSyncTime, lastError, triggerSync, notifySyncSuccess } = useSyncContext();
 
+  // 저장소 전환 핸들러
+  const handleProviderChange = async (newProvider) => {
+    try {
+      setIsLoading(true);
+      setSelectedProvider(newProvider);
+      localStorage.setItem('preferredCloudProvider', newProvider);
+
+      // 새로운 서비스 로드
+      const service = await CloudStorageFactory.getService(newProvider);
+      setCloudService(service);
+
+      // 상태 초기화
+      setIsAuthenticated(false);
+      setCloudUser(null);
+      setBackupFiles([]);
+    } catch (error) {
+      console.error('Failed to switch provider:', error);
+      showToast('저장소 전환 실패', 'error');
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
   const loadBackupFiles = useCallback(async () => {
     try {
       setIsLoading(true);
-      let files = await googleDriveService.listBackupFiles();
+      let files = await cloudService.listBackupFiles();
       // 파일을 최신순으로 정렬
       files.sort((a, b) => new Date(b.createdTime) - new Date(a.createdTime));
       setBackupFiles(files);
@@ -32,55 +65,73 @@ export function BackupPanel({ currentUser, onClose, onDataRestored, onAuthentica
     } finally {
       setIsLoading(false);
     }
-  }, [showToast]);
+  }, [cloudService, showToast]);
 
+  // 저장소 서비스 초기화
   useEffect(() => {
-    // googleDriveService의 인증 상태 변경을 구독합니다.
-    const unsubscribe = googleDriveService.onAuthChange(async (authStatus) => {
+    const initService = async () => {
+      const service = await CloudStorageFactory.getService(selectedProvider);
+      setCloudService(service);
+    };
+    initService();
+  }, [selectedProvider]);
+
+  // 인증 상태 구독
+  useEffect(() => {
+    if (!cloudService) return;
+
+    const unsubscribe = cloudService.onAuthChange(async (authStatus) => {
       setIsAuthenticated(authStatus);
       if (authStatus) {
-        // 인증 성공 시, 사용자 정보를 가져와 BackupPanel과 SyncManager 상태를 업데이트합니다.
-        const user = await googleDriveService.getCurrentUser();
-        setGoogleUser(user);
+        const user = await cloudService.getCurrentUser();
+        setCloudUser(user);
         loadBackupFiles();
       } else {
-        // 로그아웃 시 상태를 초기화합니다.
-        setGoogleUser(null);
+        setCloudUser(null);
         setBackupFiles([]);
       }
     });
 
-    // 컴포넌트가 언마운트될 때 구독을 해제합니다.
+    // Silent Sign-in 시도
+    if (!cloudService.isAuthenticated && currentUser?.email && !currentUser.isGuest) {
+      cloudService.restoreSession(currentUser.email).then(success => {
+        if (success) {
+          console.log(`Silent sign-in successful for ${cloudService.providerName}`);
+        } else {
+          console.log(`Silent sign-in failed for ${cloudService.providerName}`);
+        }
+      });
+    }
+
     return () => unsubscribe();
-  }, [currentUser.userId, loadBackupFiles]); // currentUser.userId가 변경될 때 이 effect를 다시 실행합니다.
+  }, [cloudService, currentUser.userId, currentUser.email, currentUser.isGuest, loadBackupFiles]);
 
   async function handleSignIn() {
     try {
-      // This logic is now aligned with UserAuth.jsx for consistency
       setIsLoading(true);
-      await googleDriveService.signIn();
+      await cloudService.signIn();
 
-      const googleUser = await googleDriveService.getCurrentUser();
-      if (!googleUser) throw new Error('Google 사용자 정보를 가져올 수 없습니다.');
+      const user = await cloudService.getCurrentUser();
+      if (!user) throw new Error('사용자 정보를 가져올 수 없습니다.');
 
-      // Check against allowed emails if specified in .env
-      const ALLOWED_EMAILS = (import.meta.env.VITE_ALLOWED_EMAILS || '').split(',').map(e => e.trim()).filter(Boolean);
-      if (ALLOWED_EMAILS.length > 0 && !ALLOWED_EMAILS.includes(googleUser.email)) {
-        await googleDriveService.signOut();
-        throw new Error(`접근 권한이 없는 계정입니다: ${googleUser.email}`);
-      }
+      // Google Drive의 경우에만 이메일 확인 및 사용자 생성
+      if (selectedProvider === 'google') {
+        const ALLOWED_EMAILS = (import.meta.env.VITE_ALLOWED_EMAILS || '').split(',').map(e => e.trim()).filter(Boolean);
+        if (ALLOWED_EMAILS.length > 0 && !ALLOWED_EMAILS.includes(user.email)) {
+          await cloudService.signOut();
+          throw new Error(`접근 권한이 없는 계정입니다: ${user.email}`);
+        }
 
-      const { createUser, getUser } = await import('../db/adapter');
-      const userId = await createUser(
-        { email: googleUser.email, name: googleUser.name },
-        { imageUrl: googleUser.imageUrl }
-      );
+        const { createUser, getUser } = await import('../db/adapter');
+        const userId = await createUser(
+          { email: user.email, name: user.name },
+          { imageUrl: user.imageUrl }
+        );
 
-      const user = await getUser(userId);
-
-      // Call the onAuthenticated prop from App.jsx to update the global state
-      if (onAuthenticated) {
-        onAuthenticated(user);
+        const dbUser = await getUser(userId);
+        if (onAuthenticated) {
+          onAuthenticated(dbUser);
+        }
       }
 
       showToast('로그인 성공!', 'success');
@@ -94,9 +145,9 @@ export function BackupPanel({ currentUser, onClose, onDataRestored, onAuthentica
 
   async function handleSignOut() {
     try {
-      await googleDriveService.signOut();
+      await cloudService.signOut();
       setIsAuthenticated(false);
-      setGoogleUser(null);
+      setCloudUser(null);
       setBackupFiles([]);
       showToast('로그아웃 되었습니다', 'info');
     } catch (error) {
@@ -142,8 +193,8 @@ export function BackupPanel({ currentUser, onClose, onDataRestored, onAuthentica
         contentHash,
       };
 
-      // 3. Google Drive에 ZIP 파일과 메타데이터 업로드
-      const result = await googleDriveService.syncToGoogleDrive(
+      // 3. 클라우드 저장소에 ZIP 파일과 메타데이터 업로드
+      const result = await cloudService.uploadBackup(
         zipBlob,
         appProperties,
         (percent) => setBackupProgress(percent)
@@ -178,8 +229,8 @@ export function BackupPanel({ currentUser, onClose, onDataRestored, onAuthentica
 
       showToast('복원을 시작합니다...', 'info');
 
-      // 1. Google Drive에서 ZIP 파일 다운로드 (ArrayBuffer)
-      const restoredData = await googleDriveService.restoreFromGoogleDrive(fileId);
+      // 1. 클라우드 저장소에서 ZIP 파일 다운로드
+      const restoredData = await cloudService.downloadBackup(fileId);
 
       if (!restoredData || !restoredData.blob) {
         throw new Error('Google Drive에서 파일을 다운로드하지 못했습니다.');
@@ -221,7 +272,7 @@ export function BackupPanel({ currentUser, onClose, onDataRestored, onAuthentica
 
     setIsLoading(true);
     try {
-      await googleDriveService.deleteBackupFile(fileId);
+      await cloudService.deleteBackup(fileId);
       showToast('백업 파일이 삭제되었습니다', 'success');
       await loadBackupFiles();
     } catch (error) {
@@ -338,46 +389,64 @@ export function BackupPanel({ currentUser, onClose, onDataRestored, onAuthentica
         </div>
 
         <div className="backup-content">
-          {/* Google Drive 섹션 */}
+          {/* 저장소 선택 */}
+          <div className="provider-selector">
+            <label htmlFor="cloud-provider">백업 저장소</label>
+            <select
+              id="cloud-provider"
+              value={selectedProvider}
+              onChange={(e) => handleProviderChange(e.target.value)}
+              disabled={isLoading}
+              className="provider-select"
+            >
+              {CloudStorageFactory.getAvailableProviders().map(provider => (
+                <option key={provider.value} value={provider.value}>
+                  {provider.icon} {provider.label}
+                </option>
+              ))}
+            </select>
+          </div>
+
+          {/* 클라우드 저장소 섹션 */}
           <section className="backup-section">
             {currentUser.isGuest && !isAuthenticated ? (
               <div className="auth-section guest-prompt">
                 <h3>☁️ 클라우드 동기화</h3>
-                <p>Google 계정으로 로그인하여 데이터를 안전하게 백업하고, 여러 기기에서 일기를 동기화하세요.</p>
+                <p>{cloudService?.providerName || '클라우드 저장소'}에 로그인하여 데이터를 안전하게 백업하고, 여러 기기에서 일기를 동기화하세요.</p>
                 <button
                   className="btn btn-primary clickable"
                   onClick={handleSignIn}
                   disabled={isLoading}
                 >
-                  🔐 Google 계정으로 시작하기
+                  🔐 {cloudService?.providerName || '클라우드'} 계정으로 시작하기
                 </button>
               </div>
             ) : (
               <>
-                <h3>☁️ Google Drive</h3>
+                <h3>☁️ {cloudService?.providerName || '클라우드 저장소'}</h3>
 
                 {!isAuthenticated ? (
                   <div className="auth-section">
-                    <p>Google Drive에 로그인하여 일기를 안전하게 백업하세요.</p>
+                    <p>{cloudService?.providerName || '클라우드 저장소'}에 로그인하여 일기를 안전하게 백업하세요.</p>
                     <button
                       className="btn btn-primary clickable"
                       onClick={handleSignIn}
                       disabled={isLoading}
                     >
-                      🔐 Google 로그인
+                      🔐 {cloudService?.providerName || '클라우드'} 로그인
                     </button>
                   </div>
                 ) : (
                   <div className="authenticated-section">
                     <div className="user-info">
-                      {googleUser && (
+                      {cloudUser && (
                         <>
-                          {googleUser.imageUrl && (
-                            <img src={googleUser.imageUrl} alt="프로필" />
+                          {cloudUser.imageUrl && (
+                            <img src={cloudUser.imageUrl} alt="프로필" />
                           )}
                           <div>
-                            <div className="user-name">{googleUser.name}</div>
-                            <div className="user-email">{googleUser.email}</div>
+                            <div className="user-name">{cloudUser.name}</div>
+                            <div className="user-email">{cloudUser.email}</div>
                           </div>
                         </>
                       )}
@@ -390,7 +459,6 @@ export function BackupPanel({ currentUser, onClose, onDataRestored, onAuthentica
                       <button
                         className="btn btn-success clickable"
                         onClick={handleBackup}
-                        disabled={isLoading}
                       >
                         📤 지금 백업하기 (수동)
                       </button>

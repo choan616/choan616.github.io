@@ -1,7 +1,8 @@
 import React, { useState } from 'react';
 import { googleDriveService } from '../services/googleDrive';
+import { CloudStorageFactory } from '../services/cloudStorage/CloudStorageFactory';
 import { useSession } from '../contexts/useSession';
-import { Icon } from './Icon'; // Icon 컴포넌트 사용
+import { Icon } from './Icon';
 import { authenticatePasskey } from '../utils/webauthn';
 import { getUserIdByCredentialId, getUser } from '../db/adapter';
 import './UserAuth.css';
@@ -21,42 +22,57 @@ export function UserAuth({ onAuthenticated }) {
     </svg>
   );
 
+  // Dropbox 아이콘 SVG
+  const DropboxIcon = (props) => (
+    <svg viewBox="0 0 48 48" {...props}>
+      <path fill="#0061FF" d="M12 2L0 10l12 8 12-8-12-8zm0 16l-12 8 12 8 12-8-12-8zm24-8L24 2l12 8 12-8-12-8zm0 16l-12 8 12 8 12-8-12-8z" />
+    </svg>
+  );
+
   // .env 파일에서 허용된 이메일 목록을 가져옵니다.
   const ALLOWED_EMAILS = (import.meta.env.VITE_ALLOWED_EMAILS || '')
     .split(',')
     .map(email => email.trim())
     .filter(Boolean);
 
-  async function handleGoogleLoginAndCheck() {
+  async function handleCloudLogin(provider = 'google') {
     setIsLoading(true);
     setError('');
+
     try {
-      // 1. Google 로그인
-      await googleDriveService.signIn();
+      // 0. 서비스 가져오기
+      const cloudService = await CloudStorageFactory.getService(provider);
 
-      // 2. Google 사용자 정보 가져오기
-      const googleUser = await googleDriveService.getCurrentUser();
-      if (!googleUser) throw new Error('Google 사용자 정보를 가져올 수 없습니다.');
+      // 1. 클라우드 로그인
+      await cloudService.signIn();
 
-      // 3. 허용된 이메일인지 확인합니다.
-      if (ALLOWED_EMAILS.length > 0 && !ALLOWED_EMAILS.includes(googleUser.email)) {
-        await googleDriveService.signOut();
-        throw new Error(`접근 권한이 없는 계정입니다: ${googleUser.email}`);
+      // 2. 사용자 정보 가져오기
+      const cloudUser = await cloudService.getCurrentUser();
+      if (!cloudUser) throw new Error('사용자 정보를 가져올 수 없습니다.');
+
+      // 3. Google Drive의 경우, 허용된 이메일인지 확인합니다.
+      // (Dropbox는 개인 백업 용도가 강하므로 일단 제한을 두지 않거나 필요시 추가)
+      if (provider === 'google' && ALLOWED_EMAILS.length > 0 && !ALLOWED_EMAILS.includes(cloudUser.email)) {
+        await cloudService.signOut();
+        throw new Error(`접근 권한이 없는 계정입니다: ${cloudUser.email}`);
       }
 
       // 4. 로컬 DB에 사용자를 생성하거나 프로필 정보를 업데이트합니다.
       const { createUser } = await import('../db/adapter');
       const userId = await createUser(
-        { email: googleUser.email, name: googleUser.name },
-        { imageUrl: googleUser.imageUrl } // googleData에 imageUrl을 전달합니다.
+        { email: cloudUser.email, name: cloudUser.name },
+        { imageUrl: cloudUser.imageUrl }
       );
+
+      // 5. 기본 클라우드 제공자로 설정
+      localStorage.setItem('preferredCloudProvider', provider);
 
       let user = await getUser(userId);
 
       if (!user) { // 만약을 대비한 방어 코드
         const userData = {
-          email: googleUser.email,
-          name: googleUser.name,
+          email: cloudUser.email,
+          name: cloudUser.name,
           password: ''
         };
         const newUserId = await createUser(userData);
@@ -69,13 +85,15 @@ export function UserAuth({ onAuthenticated }) {
       session.setCurrentUser(user.userId);
       session.setIsNewUser(!user.pinHash); // PIN 설정 여부에 따라 신규 사용자 판별
 
-      await onAuthenticated(user, { method: 'google' });
+      await onAuthenticated(user, { method: provider });
     } catch (err) {
-      setError(err.message || 'Google 로그인 중 오류가 발생했습니다.');
+      console.error(err);
+      setError(err.message || `${provider === 'google' ? 'Google' : 'Dropbox'} 로그인 중 오류가 발생했습니다.`);
     } finally {
       setIsLoading(false);
     }
   }
+
   async function handlePasskeyLogin() {
     setIsLoading(true);
     setError('');
@@ -84,7 +102,7 @@ export function UserAuth({ onAuthenticated }) {
       const userId = await getUserIdByCredentialId(assertion.credentialId);
 
       if (!userId) {
-        throw new Error('등록된 기기를 찾을 수 없습니다. 먼저 Google로 로그인하여 간편 로그인을 등록해 주세요.');
+        throw new Error('등록된 기기를 찾을 수 없습니다. 먼저 클라우드 계정으로 로그인하여 간편 로그인을 등록해 주세요.');
       }
 
       const user = await getUser(userId);
@@ -116,7 +134,7 @@ export function UserAuth({ onAuthenticated }) {
         <div className="login-card">
           <div className="login-card-body">
             <p className="login-intro-text">
-              생체 인식 또는 Google 계정으로 로그인하여<br />
+              생체 인식 또는 클라우드 계정으로 로그인하여<br />
               일기를 안전하게 관리하세요.
             </p>
             <div className="login-actions">
@@ -128,10 +146,17 @@ export function UserAuth({ onAuthenticated }) {
                 <span>또는</span>
               </div>
 
-              <button className="btn-google-login" onClick={handleGoogleLoginAndCheck} disabled={isLoading}>
-                {isLoading ? <Icon name="sync" className="login-icon animate-spin" /> : <GoogleIcon className="login-icon" />}
-                <span>Google 계정으로 로그인</span>
-              </button>
+              <div className="cloud-login-buttons">
+                <button className="btn-google-login" onClick={() => handleCloudLogin('google')} disabled={isLoading}>
+                  {isLoading ? <Icon name="sync" className="login-icon animate-spin" /> : <GoogleIcon className="login-icon" />}
+                  <span>Google 계정으로 로그인</span>
+                </button>
+
+                <button className="btn-dropbox-login" onClick={() => handleCloudLogin('dropbox')} disabled={isLoading}>
+                  {isLoading ? <Icon name="sync" className="login-icon animate-spin" /> : <DropboxIcon className="login-icon" />}
+                  <span>Dropbox 계정으로 로그인</span>
+                </button>
+              </div>
             </div>
             {error && <div className="error styled-error">{error}</div>}
           </div>
