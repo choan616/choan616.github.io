@@ -65,7 +65,7 @@
 }
 
 .login-header {
-  margin-bottom: 20px;
+  margin-bottom: 0;
 }
 
 .login-logo {
@@ -107,6 +107,7 @@
   text-align: center;
   line-height: 1.6;
   margin: 0 0 24px 0;
+  word-break: keep-all;
 }
 
 .login-actions {

@@ -144,7 +144,7 @@ export function UserAuth({ onAuthenticated }) {
         <div className="login-card">
           <div className="login-card-body">
             <p className="login-intro-text">
-              생체 인식 또는 클라우드 계정으로 로그인하여<br />
+              생체 인식 또는 클라우드 계정으로 로그인하여
               일기를 안전하게 관리하세요.
             </p>
             <div className="login-actions">
