@@ -19,8 +19,8 @@ if (!CLIENT_ID) {
 
 const DISCOVERY_DOCS = ['https://www.googleapis.com/discovery/v1/apis/drive/v3/rest'];
 const SCOPES = 'https://www.googleapis.com/auth/drive.file';
-const FOLDER_NAME = 'Diary2Backup';
-const BACKUP_FILE_PREFIX = 'diary_backup_';
+const FOLDER_NAME = 'MmtmBackup';
+const BACKUP_FILE_PREFIX = 'Mmtm_backup_';
 const MAX_BACKUPS_TO_KEEP = 20; // 유지할 최대 백업 개수
 
 class GoogleDriveService extends CloudStorageInterface {
