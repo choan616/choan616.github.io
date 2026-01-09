@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { createPortal } from 'react-dom';
 import { useUiSettings } from '../contexts/useUiSettings';
 import { useSyncContext } from '../contexts/SyncContext';
 import { SyncStatus } from '../constants';
@@ -73,7 +74,7 @@ export function UserProfileButton({ user, onLogout, onSettingsClick, onBackupCli
         </div>
       </button>
 
-      {showMenu && (
+      {showMenu && createPortal(
         <div className="modal-overlay" onClick={() => setShowMenu(false)}>
           <div className="profile-menu modal" onClick={(e) => e.stopPropagation()}>
             <div className="profile-menu-header">
@@ -145,7 +146,8 @@ export function UserProfileButton({ user, onLogout, onSettingsClick, onBackupCli
               </div>
             </div>
           </div>
-        </div>
+        </div>,
+        document.body
       )}
     </div>
   );

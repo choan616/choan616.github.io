@@ -45,7 +45,7 @@ export async function registerPasskey(user) {
   const publicKeyCredentialCreationOptions = {
     challenge: challenge,
     rp: {
-      name: "My Diary",
+      name: "Mmtm",
       id: window.location.hostname,
     },
     user: {

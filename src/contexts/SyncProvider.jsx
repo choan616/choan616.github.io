@@ -65,6 +65,8 @@ export function SyncProvider({ children }) {
         showToast('동기화 실패: Wi-Fi 연결이 필요합니다 (설정에서 변경 가능)', 'error');
       } else if (errorMsg.includes('로그인')) {
         showToast('동기화 실패: Google Drive 로그인이 필요합니다', 'error');
+      } else if (error.code === 'PASSWORD_REQUIRED') {
+        showToast('동기화 실패: 암호화된 백업입니다. 설정에서 비밀번호를 입력해주세요.', 'error');
       } else {
         showToast(`동기화 실패: ${errorMsg}`, 'error');
       }

@@ -4,7 +4,16 @@ import { SessionContext } from './sessionContextObject';
 
 export function SessionProvider({ children }) {
   const [currentUserId, setCurrentUserId] = useState(null);
-  const [isLocked, setIsLocked] = useState(false);
+  const [isLocked, setIsLocked] = useState(() => {
+    // 초기 로딩 시 잠금 상태 결정 (새로고침 시 보안 강화)
+    if (typeof window === 'undefined') return false;
+
+    const savedSettings = JSON.parse(localStorage.getItem('app_settings') || '{}');
+    const lockEnabled = savedSettings.enableScreenLock !== false; // 기본값 true
+    const hasUser = !!sessionStorage.getItem('diary_current_user');
+
+    return hasUser && lockEnabled;
+  });
   const [attemptsLeft, setAttemptsLeft] = useState(MAX_ATTEMPTS);
   const [isNewUser, setIsNewUser] = useState(false);
   const [unlockTimer, setUnlockTimer] = useState(null);

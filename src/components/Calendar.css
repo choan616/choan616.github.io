@@ -19,24 +19,36 @@
 }
 
 .calendar-container {
-  padding: 20px;
-  background: var(--card-bg);
+  padding: 12px;
+  background: var(--glass-bg);
+  backdrop-filter: var(--backdrop-blur);
+  -webkit-backdrop-filter: var(--backdrop-blur);
   border-radius: var(--border-radius-lg);
-  border: 1px solid var(--border-color);
-  box-shadow: var(--shadow-md);
+  border: 1px solid var(--glass-border);
+  box-shadow: var(--glass-shadow);
+
+  /* Prevent overflow in sidebar */
+  width: 100%;
+  max-width: 100%;
+  flex-shrink: 0;
+  box-sizing: border-box;
 }
 
 /* DayPicker Customization */
 .rdp-root {
   --rdp-accent-color: var(--accent-primary);
-  --rdp-background-color: var(--accent-primary-hover); /* Selected day background */
-  --rdp-selected-color: #fff; /* Selected day text color */
+  --rdp-background-color: var(--accent-primary-hover);
+  /* Selected day background */
+  --rdp-selected-color: #fff;
+  /* Selected day text color */
   --rdp-today-color: var(--accent-primary);
   margin: 0;
 }
 
 .rdp-month {
   width: 100%;
+  max-width: 100%;
+  margin: 0 auto;
 }
 
 .rdp-caption {
@@ -94,11 +106,13 @@
   position: relative;
   border: 1px solid transparent;
 }
+
 .rdp-day:hover:not(.rdp-day_disabled):not(.rdp-day_selected) {
   position: relative;
 }
+
 .rdp-day:hover:not(.rdp-day_disabled):not(.rdp-day_selected)::before {
-  content:'';
+  content: '';
   display: block;
   position: absolute;
   top: 0;
@@ -116,6 +130,7 @@
   color: var(--rdp-selected-color);
   font-weight: 600;
 }
+
 .rdp-day_selected:hover {
   background-color: var(--rdp-background-color);
 }
@@ -164,7 +179,7 @@
   cursor: not-allowed;
 }
 
-.rdp-months { 
+.rdp-months {
   margin: 0 auto;
   width: 100%;
   max-width: 100%;
@@ -173,6 +188,7 @@
 .rdp-month_grid {
   width: 100%;
 }
+
 .rdp-day_button {
   margin: 0 auto;
   position: relative;
@@ -209,6 +225,22 @@
   .rdp-nav_button {
     width: 28px;
     height: 28px;
+  }
+}
+
+@media (max-width: 375px) {
+  .calendar-container {
+    padding: 8px;
+  }
+
+  .rdp {
+    --rdp-cell-size: 36px;
+  }
+
+  .rdp-day {
+    width: 36px;
+    height: 36px;
+    font-size: 12px;
   }
 }
 

@@ -5,7 +5,9 @@ import { useSession } from '../contexts/useSession';
 import { Icon } from './Icon';
 import { authenticatePasskey } from '../utils/webauthn';
 import { getUserIdByCredentialId, getUser } from '../db/adapter';
+import { Logo } from './Logo';
 import './UserAuth.css';
+
 
 export function UserAuth({ onAuthenticated }) {
   const [error, setError] = useState('');
@@ -128,7 +130,15 @@ export function UserAuth({ onAuthenticated }) {
     <div className="user-auth-container">
       <div className="login-wrapper">
         <div className="login-header">
-          <a href="/" className="login-logo">My Diary</a>
+          <a href="/" className="login-logo">
+            <div className="desktop-auth-logo">
+              <Logo size="200" />
+            </div>
+            <div className="mobile-auth-logo">
+              <Logo size="100" />
+            </div>
+          </a>
+
         </div>
 
         <div className="login-card">

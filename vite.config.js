@@ -13,9 +13,9 @@ export default defineConfig(({ command }) => {
         registerType: 'autoUpdate',
         includeAssets: ['favicon.ico', 'robots.txt', 'apple-touch-icon.png'],
         manifest: {
-          name: 'My Diary',
-          short_name: 'My Diary',
-          description: '내 소중한 일상을 기록하는 다이어리 앱',
+          name: 'Mmtm: Your Daily Momentum',
+          short_name: 'Mmtm',
+          description: 'Mmtm: Keep Your Momentum - 서버 없는 평생 일기장',
           theme_color: '#3b82f6',
           background_color: '#ffffff',
           display: 'standalone',

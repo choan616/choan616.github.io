@@ -77,6 +77,14 @@
   letter-spacing: -1px;
 }
 
+.desktop-auth-logo {
+  display: block;
+}
+
+.mobile-auth-logo {
+  display: none;
+}
+
 .login-card {
   width: 100%;
   background: var(--card-bg);
@@ -468,6 +476,14 @@
 
 /* 반응형 */
 @media (max-width: 768px) {
+  .desktop-auth-logo {
+    display: none;
+  }
+
+  .mobile-auth-logo {
+    display: block;
+  }
+
   .user-auth-modal {
     padding: 24px;
   }

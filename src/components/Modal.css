@@ -10,6 +10,7 @@
   text-align: center;
   box-shadow: 0 2px 8px var(--shadow-color);
 }
+
 .styled-meta {
   margin: 8px 0 16px 0;
   padding: 6px 12px;
@@ -20,15 +21,16 @@
   text-align: center;
   font-weight: 400;
 }
+
 /* Global modal styles used by PIN setup and lock modals */
 .modal-overlay {
   position: fixed;
   inset: 0;
-  background: rgba(0,0,0,0.45);
+  background: rgba(0, 0, 0, 0.45);
   display: flex;
   align-items: center;
   justify-content: center;
-  z-index: 11000;
+  z-index: 99999;
   backdrop-filter: blur(4px);
 }
 
@@ -38,12 +40,19 @@
   padding: 20px 20px 24px 20px;
   width: min(420px, calc(100vw - 40px));
   box-shadow: var(--shadow-lg);
-  animation: modalIn 220ms cubic-bezier(.2,.9,.2,1);
+  animation: modalIn 220ms cubic-bezier(.2, .9, .2, 1);
 }
 
 @keyframes modalIn {
-  from { transform: translateY(-8px) scale(.995); opacity: 0 } 
-  to { transform: translateY(0) scale(1); opacity: 1 }
+  from {
+    transform: translateY(-8px) scale(.995);
+    opacity: 0
+  }
+
+  to {
+    transform: translateY(0) scale(1);
+    opacity: 1
+  }
 }
 
 .modal h3 {
@@ -58,9 +67,15 @@
   font-size: 13px;
 }
 
-.modal form { display:flex; flex-direction:column; gap:12px }
+.modal form {
+  display: flex;
+  flex-direction: column;
+  gap: 12px
+}
 
-.modal input[type="text"], .modal input[type="password"] , .modal input[placeholder] {
+.modal input[type="text"],
+.modal input[type="password"],
+.modal input[placeholder] {
   padding: 12px 14px;
   border-radius: 10px;
   border: 1px solid var(--border-color);
@@ -78,9 +93,31 @@
   box-shadow: 0 0 0 2px var(--accent-primary-alpha);
 }
 
-.modal button { padding:10px 14px; border-radius:10px; font-weight:600; cursor:pointer }
-.modal button[type="submit"] { background: var(--accent-primary); color:white; border:none }
-.modal button:disabled { opacity:0.6; cursor:not-allowed }
+.modal button {
+  padding: 10px 14px;
+  border-radius: 10px;
+  font-weight: 600;
+  cursor: pointer
+}
 
-.pin-controls { display:flex; gap:8px; align-items:center }
-.pin-controls input { width:90px; text-align:center }
+.modal button[type="submit"] {
+  background: var(--accent-primary);
+  color: white;
+  border: none
+}
+
+.modal button:disabled {
+  opacity: 0.6;
+  cursor: not-allowed
+}
+
+.pin-controls {
+  display: flex;
+  gap: 8px;
+  align-items: center
+}
+
+.pin-controls input {
+  width: 90px;
+  text-align: center
+}

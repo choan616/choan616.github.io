@@ -1,26 +1,31 @@
 .app-layout {
   width: 100vw;
-  height: 100vh;
+  min-height: 100vh;
   display: flex;
   flex-direction: column;
-  background: var(--bg-primary);
+  background: transparent;
+  /* Use body background */
 }
 
 .mobile-header {
   display: none;
   align-items: center;
+  justify-content: space-between;
   gap: 16px;
-  padding: 12px 16px;
-  background: var(--card-bg);
-  border-bottom: 1px solid var(--border-color);
-  box-shadow: var(--shadow-sm);
+  padding: 8px 16px;
+  background: var(--glass-bg);
+  backdrop-filter: var(--backdrop-blur);
+  -webkit-backdrop-filter: var(--backdrop-blur);
+  border-bottom: 1px solid var(--glass-border);
+  box-shadow: var(--glass-shadow);
+  z-index: 100;
+  position: sticky;
+  top: 0;
 }
 
-.mobile-header h1 {
-  margin: 0;
-  font-size: 18px;
-  color: var(--text-primary);
-  flex: 1;
+.mobile-logo {
+  display: flex;
+  align-items: center;
 }
 
 .header-profile {
@@ -28,22 +33,9 @@
   align-items: center;
 }
 
+/* Hide hamburger menu button */
 .mobile-menu-btn {
-  width: 40px;
-  height: 40px;
-  border: 1px solid var(--border-color);
-  background: var(--card-bg);
-  border-radius: var(--border-radius-md);
-  font-size: 20px;
-  cursor: pointer;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  transition: all 0.2s;
-}
-
-.mobile-menu-btn:hover {
-  background: var(--bg-secondary);
+  display: none;
 }
 
 .sidebar-overlay {
@@ -53,54 +45,78 @@
   left: 0;
   right: 0;
   bottom: 0;
-  background: rgba(0, 0, 0, 0.5);
+  background: rgba(0, 0, 0, 0.3);
+  /* Softer overlay */
+  backdrop-filter: blur(4px);
   z-index: 998;
 }
 
 .main-container {
   flex: 1;
   display: flex;
-  gap: 24px;
-  padding: 24px;
+  gap: 32px;
+  /* Increased gap for airy feel */
+  padding: 32px;
+  max-width: 1600px;
+  /* Limit width on super large screens */
+  margin: 0 auto;
+  width: 100%;
 }
 
 /* Sidebar */
 .sidebar {
-  width: 360px;
+  width: 400px;
   flex-shrink: 0;
   display: flex;
   flex-direction: column;
-  /* gap을 제거하고, 자식 요소에서 직접 마진/패딩을 관리하도록 변경 */
-  /* overflow-y: hidden을 추가하여 사이드바 자체가 스크롤되는 것을 방지 */
-  overflow-y: hidden;
+
+  /* Glassmorphism Sidebar */
+  background: var(--glass-bg);
+  backdrop-filter: var(--backdrop-blur);
+  -webkit-backdrop-filter: var(--backdrop-blur);
+  border: 1px solid var(--glass-border);
+  border-radius: var(--border-radius-lg);
+  box-shadow: var(--glass-shadow);
+  padding: 16px;
+
+  /* Transition only for mobile or when needed, avoid on desktop to prevent stacking context issues for fixed children */
+  transition: opacity 0.3s ease;
 }
 
 .sidebar-main-content {
-  flex-shrink: 0; /* 헤더는 줄어들지 않도록 설정 */
+  flex-shrink: 0;
 }
 
 .content-sidebar {
-  flex-grow: 1; /* 남은 공간을 모두 차지 */
-  overflow-y: auto; /* 내용이 넘칠 경우 스크롤 */
+  flex-grow: 1;
   display: flex;
   flex-direction: column;
-  gap: 16px;
+  gap: 8px;
+  padding-right: 0;
+  /* 내부 스크롤 제거하여 페이지 전체 스크롤과 통합 */
+  overflow: visible;
+  min-height: 0;
 }
 
 .desktop-sidebar-header {
   display: flex;
-  align-items: flex-start;
+  align-items: center;
   justify-content: space-between;
   padding-bottom: 16px;
   border-bottom: 1px solid var(--border-color);
-  margin-bottom: 8px;
-  gap: 16px;
+  margin-bottom: 16px;
 }
 
 .desktop-sidebar-header h1 {
   margin: 0;
-  font-size: 20px;
-  color: var(--text-primary);
+  font-size: 22px;
+  font-weight: 700;
+  background: var(--accent-primary-gradient);
+  background-clip: text;
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  /* Gradient Text */
+  letter-spacing: -0.02em;
 }
 
 .sidebar-profile {
@@ -113,24 +129,31 @@
   flex: 1;
   display: flex;
   flex-direction: column;
-  /* min-height: 0 추가하여 flex 자식 요소의 높이 계산 오류 방지 */
   min-height: 0;
+  /* Glassmorphism Content Area (Optional, or keep transparent) */
+  /* background: var(--glass-bg); */
+  /* backdrop-filter: var(--backdrop-blur); */
+  /* border-radius: var(--border-radius-lg); */
+  /* border: 1px solid var(--glass-border); */
+  /* padding: 24px; */
+  /* Keeping content area transparent allows 'cards' to float */
 }
 
 .content-top {
   flex-shrink: 0;
+  margin-bottom: 24px;
 }
 
 .content-bottom {
   flex: 1;
   min-height: 0;
+  /* Ensure cards inside here have the glass effect */
 }
 
 .content-bottom.full-height {
   flex: 1;
 }
 
-/* Mobile Menu Actions (No longer used, can be removed) */
 .mobile-menu-actions {
   display: none;
 }
@@ -138,20 +161,27 @@
 /* 태블릿 */
 @media (max-width: 1024px) {
   .sidebar {
-    width: 300px;
+    width: 320px;
+    height: auto;
   }
+
   .main-container {
-    padding: 16px;
-    gap: 16px;
+    padding: 24px;
+    gap: 24px;
   }
 }
 
 /* 모바일 */
 @media (max-width: 768px) {
-  body { overflow: auto;}
   .mobile-header {
     display: flex;
-    z-index: 1000;
+  }
+
+  body,
+  html {
+    overflow-x: hidden;
+    overflow-y: auto;
+    height: auto;
   }
 
   .desktop-sidebar-header {
@@ -159,23 +189,34 @@
   }
 
   .main-container {
-    padding: 12px;
-    gap: 12px;
+    padding: 8px;
+    gap: 8px;
     flex-direction: column;
-    overflow: auto;
+    /* 내부 스크롤 제거하여 이중 스크롤바 방지 */
+    overflow: visible;
+    height: auto;
   }
 
   .sidebar {
+    /* Remove fixed positioning - make it part of normal flow */
     position: static;
     width: 100%;
     max-width: 100%;
-    padding: 0;
-    gap: 0;    
-    overflow-y: visible;
+    height: auto;
+    transform: none;
+    border-radius: var(--border-radius-lg);
+    padding: 16px;
+    flex-shrink: 0;
+  }
+
+  /* Remove sidebar overlay functionality on mobile */
+  .sidebar-overlay {
+    display: none !important;
   }
 
   .content-area {
     gap: 12px;
+    flex-shrink: 0;
   }
 
   .content-bottom {
@@ -184,43 +225,67 @@
   }
 }
 
-/* 작은 모바일 */
+/* 작은 모바일 (375px 이하) */
 @media (max-width: 480px) {
   .main-container {
     padding: 8px;
     gap: 8px;
   }
+
+  .sidebar {
+    padding: 12px;
+    border-radius: var(--border-radius-md);
+  }
+
+  .content-sidebar {
+    gap: 8px;
+  }
 }
 
-/* 스크롤바 스타일 */
+/* Scrollbar Refinement: Slim, Glassy, and Reactive */
 .sidebar::-webkit-scrollbar,
+.content-sidebar::-webkit-scrollbar,
 .content-bottom::-webkit-scrollbar,
 .content-area::-webkit-scrollbar {
-  width: 6px;
+  width: 5px;
+  height: 5px;
 }
 
 .sidebar::-webkit-scrollbar-track,
+.content-sidebar::-webkit-scrollbar-track,
 .content-bottom::-webkit-scrollbar-track,
 .content-area::-webkit-scrollbar-track {
   background: transparent;
 }
 
 .sidebar::-webkit-scrollbar-thumb,
+.content-sidebar::-webkit-scrollbar-thumb,
 .content-bottom::-webkit-scrollbar-thumb,
 .content-area::-webkit-scrollbar-thumb {
-  background: var(--border-color);
-  border-radius: 3px;
+  background: rgba(var(--accent-primary-rgb), 0.1);
+  border-radius: 10px;
+  transition: background 0.3s ease;
+}
+
+/* Show only on hover */
+.sidebar:hover::-webkit-scrollbar-thumb,
+.content-sidebar:hover::-webkit-scrollbar-thumb,
+.content-bottom:hover::-webkit-scrollbar-thumb,
+.content-area:hover::-webkit-scrollbar-thumb {
+  background: rgba(var(--accent-primary-rgb), 0.3);
 }
 
 .sidebar::-webkit-scrollbar-thumb:hover,
+.content-sidebar::-webkit-scrollbar-thumb:hover,
 .content-bottom::-webkit-scrollbar-thumb:hover,
 .content-area::-webkit-scrollbar-thumb:hover {
-  background: var(--text-muted);
+  background: rgba(var(--accent-primary-rgb), 0.5);
 }
 
 /* Styles for locked state */
 .app-layout.locked .content-main {
-  filter: blur(5px);
+  filter: blur(8px);
   pointer-events: none;
   user-select: none;
+  transition: filter 0.3s ease;
 }

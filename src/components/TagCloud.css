@@ -1,24 +1,39 @@
 .tag-cloud-container {
-  padding: 16px;
-  background: var(--card-bg);
+  padding: 12px 16px;
+  /* 닫혔을 때 더 얇게 시작 */
+  background: var(--glass-bg);
+  backdrop-filter: var(--backdrop-blur);
+  -webkit-backdrop-filter: var(--backdrop-blur);
   border-radius: var(--border-radius-lg);
-  border: 1px solid var(--border-color);
-  box-shadow: var(--shadow-md);
+  border: 1px solid var(--glass-border);
+  box-shadow: var(--glass-shadow);
+
+  /* Compact layout by default */
+  margin-bottom: 8px;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* 펼쳐졌을 때 패딩 확보 */
+.tag-cloud-container:has(.tag-list.expanded) {
+  padding: 16px;
 }
 
 .tag-cloud-header {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  margin: 0 0 0 0;
-  padding-bottom: 12px;
+  margin: 0;
+  padding: 0;
+  /* 닫혔을 때 내부 여백 제거 */
   cursor: pointer;
   border-bottom: 1px solid transparent;
-  transition: all 0.2s;
+  transition: all 0.3s ease;
 }
 
-.tag-cloud-container:has(.tag-list) .tag-cloud-header {
+/* 펼쳐졌을 때만 헤더 하단 여백과 선 표시 */
+.tag-cloud-container:has(.tag-list.expanded) .tag-cloud-header {
   border-bottom-color: var(--border-color);
+  padding-bottom: 12px;
   margin-bottom: 12px;
 }
 
@@ -60,66 +75,50 @@
   height: 16px;
 }
 
-/* 기본(데스크탑): 항상 펼쳐짐, 토글 버튼 숨김 */
 .tag-toggle-btn {
-  display: none;
+  display: block;
+  /* Always show toggle button */
+  background: transparent;
+  border: none;
+  font-size: 12px;
+  color: var(--text-secondary);
+  transition: transform 0.2s;
+  cursor: pointer;
+  padding: 4px;
 }
 
 .tag-cloud-header {
-  cursor: default;
-  /* 데스크탑에서는 클릭 불가 */
+  cursor: pointer;
 }
 
+/* 기본: 토글 가능하도록 설정 */
 .tag-list {
-  display: flex !important;
-  /* 데스크탑에서는 항상 보임 */
+  display: none;
+  /* 기본적으로 접힘 */
   flex-wrap: wrap;
   gap: 8px;
+  margin-top: 12px;
 }
 
-/* 모바일: 토글 가능 */
+.tag-list.expanded {
+  display: flex !important;
+  /* 내부 스크롤 제거하여 이중 스크롤바 방지 (전체 스크롤 공유) */
+  max-height: none;
+  overflow-y: visible;
+  padding-right: 0;
+}
+
+/* 모바일 전용 스타일 조정 */
 @media (max-width: 768px) {
-  .tag-toggle-btn {
-    display: block;
-    /* 모바일에서만 토글 버튼 표시 */
-    background: transparent;
-    border: none;
-    font-size: 12px;
-    color: var(--text-secondary);
-    transition: transform 0.2s;
-    cursor: pointer;
-    padding: 4px;
-  }
-
-  .tag-toggle-btn.expanded {
-    transform: rotate(180deg);
-  }
-
   .tag-cloud-header {
-    cursor: pointer;
-    border-bottom-color: var(--border-color);
-    /* 모바일에서는 헤더 구분선 유지 */
-    margin-bottom: 12px;
+    margin-bottom: 0;
+    padding-bottom: 0;
   }
 
-  /* 모바일에서 header border-bottom 제어 (접혔을 때/펼쳤을 때) */
   .tag-cloud-container:has(.tag-list.expanded) .tag-cloud-header {
     border-bottom-color: var(--border-color);
-  }
-
-  .tag-cloud-container:not(:has(.tag-list.expanded)) .tag-cloud-header {
-    border-bottom-color: transparent;
-    margin-bottom: -12px;
-  }
-
-  .tag-list {
-    display: none !important;
-    /* 기본적으로 숨김 */
-  }
-
-  .tag-list.expanded {
-    display: flex !important;
-    /* 펼쳐졌을 때만 보임 */
+    padding-bottom: 12px;
+    margin-bottom: 12px;
   }
 }
 

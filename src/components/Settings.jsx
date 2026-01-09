@@ -7,6 +7,7 @@ import { AVAILABLE_FONTS } from '../services/uiSettings';
 import { registerPasskey } from '../utils/webauthn';
 import { getUser, addWebAuthnCredential } from '../db/adapter';
 import { getCurrentUser } from '../utils/auth';
+import EncryptionSettings from './EncryptionSettings';
 import './Settings.css';
 
 /**
@@ -215,6 +216,11 @@ export function Settings({ isGuest, onClose }) {
                   onChange={() => updateUiSetting('enableScreenLock', !uiSettings.enableScreenLock)}
                 />
               </div>
+            )}
+
+            {/* 데이터 암호화 설정 - 로그인한 사용자에게만 노출 */}
+            {!isGuest && (
+              <EncryptionSettings showToast={showToast} />
             )}
           </div>
 

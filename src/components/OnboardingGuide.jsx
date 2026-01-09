@@ -4,7 +4,7 @@ import './OnboardingGuide.css';
 const steps = [
   {
     title: '환영합니다!',
-    content: 'MY Diary에 오신 것을 환영합니다. 몇 가지 주요 기능을 안내해 드릴게요.',
+    content: 'Mmtm 에 오신 것을 환영합니다. 몇 가지 주요 기능을 안내해 드릴게요.',
     targetClass: ''
   },
   {

@@ -4,16 +4,17 @@
  */
 import JSZip from 'jszip';
 import { CloudStorageInterface } from './CloudStorageInterface';
+import { encryptData, decryptData } from '../../utils/crypto';
 
 // 환경 변수에서 Google API 자격증명 로드
 const CLIENT_ID = import.meta.env.VITE_GOOGLE_CLIENT_ID;
 const API_KEY = import.meta.env.VITE_GOOGLE_API_KEY;
 
 // 환경 변수가 설정되지 않은 경우 명확한 에러 메시지 표시
-if (!CLIENT_ID || !API_KEY) {
-  console.error('Google API credentials are missing!');
-  console.error('Please create a .env file with VITE_GOOGLE_CLIENT_ID and VITE_GOOGLE_API_KEY');
-  console.error('See .env.example for template');
+// v1.1: API_KEY는 이제 선택 사항입니다.
+if (!CLIENT_ID) {
+  console.error('Google Client ID is missing!');
+  console.error('Please create a .env file with VITE_GOOGLE_CLIENT_ID');
 }
 
 const DISCOVERY_DOCS = ['https://www.googleapis.com/discovery/v1/apis/drive/v3/rest'];
@@ -35,6 +36,9 @@ class GoogleDriveService extends CloudStorageInterface {
 
     // 이벤트 리스너를 위한 콜백 배열
     this.authListeners = [];
+
+    // 암호화 관련 설정
+    this.encryptionPassword = null;
   }
 
   /**
@@ -43,6 +47,14 @@ class GoogleDriveService extends CloudStorageInterface {
    */
   get providerName() {
     return 'Google Drive';
+  }
+
+  /**
+   * 암호화 비밀번호 설정
+   * @param {string|null} password
+   */
+  setEncryptionPassword(password) {
+    this.encryptionPassword = password;
   }
 
   /**
@@ -105,10 +117,15 @@ class GoogleDriveService extends CloudStorageInterface {
     return new Promise((resolve, reject) => {
       window.gapi.load('client', async () => {
         try {
-          await window.gapi.client.init({
-            apiKey: API_KEY,
+          const config = {
             discoveryDocs: DISCOVERY_DOCS,
-          });
+          };
+          // API Key가 있는 경우에만 포함
+          if (API_KEY) {
+            config.apiKey = API_KEY;
+          }
+
+          await window.gapi.client.init(config);
           this.gapiInited = true;
           resolve();
         } catch (err) {
@@ -390,13 +407,12 @@ class GoogleDriveService extends CloudStorageInterface {
 
   /**
    * 새 백업 파일을 Google Drive에 업로드합니다.
-   * @param {Blob} blob - 업로드할 파일 Blob
+   * @param {Blob} zipBlob - 업로드할 파일 Blob
    * @param {Object} appProperties - 파일에 저장할 메타데이터 (버전 정보 등)
    * @param {function(number): void} onProgress - 진행률 콜백 (0-100)
    * @returns {Promise<{file: Object, status: string}>} 업로드 결과 (updated, skipped, created)
    */
   async syncToGoogleDrive(zipBlob, appProperties = {}, onProgress = null) {
-    // initClient가 아직 호출되지 않았다면 여기서 호출
     await this.initClient();
     if (!this.isAuthenticated) {
       throw new Error('로그인이 필요합니다.');
@@ -406,18 +422,37 @@ class GoogleDriveService extends CloudStorageInterface {
       await this.findOrCreateFolder();
     }
 
-    // fetch API는 업로드 진행률을 제공하지 않으므로 XMLHttpRequest 사용
-    return new Promise((resolve, reject) => {
+    return new Promise(async (resolve, reject) => {
       try {
         const now = new Date();
         const timestamp = now.toISOString().replace(/[:.]/g, '-');
-        const fileName = `${BACKUP_FILE_PREFIX}${timestamp}.zip`;
+        let uploadBlob = zipBlob;
+        let finalAppProperties = { ...appProperties };
+        let fileExtension = 'zip';
+
+        // 암호화가 활성화된 경우
+        if (this.encryptionPassword) {
+          try {
+            // Blob -> ArrayBuffer
+            const arrayBuffer = await zipBlob.arrayBuffer();
+            const encryptedBuffer = await encryptData(arrayBuffer, this.encryptionPassword);
+            uploadBlob = new Blob([encryptedBuffer], { type: 'application/octet-stream' });
+
+            finalAppProperties.isEncrypted = 'true';
+            fileExtension = 'enc';
+            console.log('데이터가 암호화되어 업로드됩니다.');
+          } catch (err) {
+            return reject(new Error('백업 암호화 중 오류 발생: ' + err.message));
+          }
+        }
+
+        const fileName = `${BACKUP_FILE_PREFIX}${timestamp}.${fileExtension}`;
 
         const metadata = {
           name: fileName,
-          mimeType: 'application/zip',
+          mimeType: this.encryptionPassword ? 'application/octet-stream' : 'application/zip',
           parents: [this.folderId],
-          appProperties,
+          appProperties: finalAppProperties,
         };
 
         const path = 'https://www.googleapis.com/upload/drive/v3/files?uploadType=multipart';
@@ -425,7 +460,7 @@ class GoogleDriveService extends CloudStorageInterface {
 
         const form = new FormData();
         form.append('metadata', new Blob([JSON.stringify(metadata)], { type: 'application/json' }));
-        form.append('file', zipBlob, fileName);
+        form.append('file', uploadBlob, fileName);
 
         const xhr = new XMLHttpRequest();
         xhr.open(method, path);
@@ -465,11 +500,10 @@ class GoogleDriveService extends CloudStorageInterface {
   }
 
   /**
-   * 동기화 파일 데이터 가져오기
+   * 동기화 파일 데이터 가져오기 (복호화 포함)
    * @returns {Promise<ArrayBuffer|null>} 동기화 데이터 ZIP 파일의 ArrayBuffer 또는 null
    */
   async getSyncData() {
-    // initClient가 아직 호출되지 않았다면 여기서 호출
     await this.initClient();
     if (!this.isAuthenticated) {
       throw new Error('로그인이 필요합니다.');
@@ -484,20 +518,38 @@ class GoogleDriveService extends CloudStorageInterface {
     // 파일 다운로드
     const response = await fetch(
       `https://www.googleapis.com/drive/v3/files/${syncFile.id}?alt=media`,
-      {
-        headers: {
-          Authorization: `Bearer ${this.accessToken}`,
-        },
-      }
+      { headers: { Authorization: `Bearer ${this.accessToken}` } }
     );
 
     if (!response.ok) {
       throw new Error('파일 다운로드 실패');
     }
 
-    // ZIP 파일을 Blob으로 받아옴 (JSON 파싱하지 않음)
-    const blob = await response.blob();
-    return { ...syncFile, blob }; // [수정] blob과 함께 파일 메타데이터 전체를 반환
+    let blob = await response.blob();
+
+    // 암호화된 파일인지 확인 및 복호화
+    if (syncFile.appProperties && syncFile.appProperties.isEncrypted === 'true') {
+      if (!this.encryptionPassword) {
+        // 비밀번호가 없으면 UI에서 처리할 수 있도록 특정 에러 객체 반환
+        const error = new Error('암호화된 백업입니다. 설정에서 비밀번호를 입력해주세요.');
+        error.code = 'PASSWORD_REQUIRED';
+        error.fileId = syncFile.id;
+        throw error;
+      }
+
+      try {
+        console.log('암호화된 백업을 복호화합니다...');
+        const arrayBuffer = await blob.arrayBuffer();
+        const decryptedBuffer = await decryptData(arrayBuffer, this.encryptionPassword);
+        blob = new Blob([decryptedBuffer], { type: 'application/zip' });
+      } catch (err) {
+        const error = new Error('복호화 실패: 비밀번호가 틀렸거나 파일이 손상되었습니다.');
+        error.code = 'DECRYPTION_FAILED';
+        throw error;
+      }
+    }
+
+    return { ...syncFile, blob };
   }
 
   /**
@@ -554,7 +606,45 @@ class GoogleDriveService extends CloudStorageInterface {
       throw new Error('파일 다운로드 실패');
     }
 
-    const blob = await response.blob();
+    // 복원 시에는 getSyncData 로직을 사용할 수도 있지만, restoreFromGoogleDrive는 특정 파일 ID를 지정할 수 있음.
+    // 암호화 복호화 로직을 여기에도 적용해야 함.
+    let blob = await response.blob();
+
+    // 파일 메타데이터 확인을 위해 listBackupFiles 또는 get 호출 필요하지만, 
+    // 여기서는 파일을 다운로드만 먼저 함. 
+    // 하지만 암호화 여부를 확인하려면 메타데이터가 필요함.
+    // 성능을 위해 파일 정보를 먼저 가져오는 것이 좋음.
+
+    // 이 메서드는 주로 특정 파일 복원에 사용되므로, 복호화 로직을 추가해야 함.
+    // 하지만 appProperties를 인자로 받지 않음. 
+    // 따라서 파일을 get 요청으로 메타데이터를 먼저 가져와야 합니까?
+    // fetch response headers에는 appProperties가 없음.
+
+    // 단순화를 위해: restoreFromGoogleDrive 호출 전에 file object(metadata 포함)를 가지고 있다고 가정하거나,
+    // 여기서 메타데이터를 다시 조회해야 함.
+
+    try {
+      const metadataResp = await window.gapi.client.drive.files.get({
+        fileId: fileId,
+        fields: 'appProperties'
+      });
+      const appProperties = metadataResp.result.appProperties;
+
+      if (appProperties && appProperties.isEncrypted === 'true') {
+        if (!this.encryptionPassword) {
+          const error = new Error('암호화된 백업입니다. 설정에서 비밀번호를 입력해주세요.');
+          error.code = 'PASSWORD_REQUIRED';
+          error.fileId = fileId;
+          throw error;
+        }
+        const arrayBuffer = await blob.arrayBuffer();
+        const decryptedBuffer = await decryptData(arrayBuffer, this.encryptionPassword);
+        blob = new Blob([decryptedBuffer], { type: 'application/zip' });
+      }
+    } catch (e) {
+      if (e.code === 'PASSWORD_REQUIRED') throw e;
+      console.warn('복호화 확인 중 오류 (일반 파일로 처리):', e);
+    }
 
     if (onProgress) onProgress(100);
 

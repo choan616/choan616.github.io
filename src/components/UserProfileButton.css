@@ -1,7 +1,8 @@
 /* Using global modal styles defined in Modal.css, this file contains specific styles for the profile menu content. */
 .user-profile-button {
   position: relative;
-  z-index: 100; /* Ensure it's above other elements */
+  z-index: 100;
+  /* Ensure it's above other elements */
 }
 
 /* --- Toggle Button (Avatar) --- */
@@ -38,6 +39,7 @@
   text-transform: uppercase;
   user-select: none;
 }
+
 .profile-avatar img {
   width: 100%;
   height: 100%;
@@ -47,11 +49,29 @@
 /* --- Dropdown Menu (Now styled as a modal) --- */
 /* The .modal-overlay and base .modal styles from Modal.css are used */
 .profile-menu {
-  /* Inherits modal properties but we can override width, etc. */
-  width: min(380px, calc(100vw - 40px));
-  padding: 0; /* Remove padding to have full-width sections */
+  /* Apply glassmorphism */
+  background: var(--glass-bg);
+  backdrop-filter: var(--backdrop-blur);
+  -webkit-backdrop-filter: var(--backdrop-blur);
+  border: 1px solid var(--glass-border);
+  box-shadow: var(--glass-shadow);
+  border-radius: var(--border-radius-lg);
+
+  width: min(400px, calc(100vw - 40px));
+  max-width: 90vw;
+  padding: 0;
   display: flex;
   flex-direction: column;
+  max-height: 90vh;
+  overflow-y: auto;
+  z-index: 1000;
+}
+
+@media (max-width: 768px) {
+  .profile-menu {
+    max-height: 80vh;
+    margin: 20px;
+  }
 }
 
 /* Menu Header */
@@ -77,6 +97,7 @@
   font-weight: 500;
   text-transform: uppercase;
 }
+
 .profile-avatar-large img {
   width: 100%;
   height: 100%;
@@ -119,14 +140,17 @@
   height: 20px;
   flex-shrink: 0;
 }
+
 .sync-status.success {
   color: var(--accent-secondary);
   background-color: color-mix(in srgb, var(--accent-secondary) 20%, transparent);
 }
+
 .sync-status.error {
   color: var(--color-danger);
   background-color: color-mix(in srgb, var(--color-danger) 20%, transparent);
 }
+
 .sync-status.syncing .icon {
   animation: spin 1.5s linear infinite;
 }
@@ -183,11 +207,12 @@
 
 .setting-range-slider {
   width: 100%;
-  height: 6px;
+  height: 8px;
   -webkit-appearance: none;
   appearance: none;
   background: var(--bg-secondary);
-  border-radius: 3px;
+  border: 1px solid var(--border-color);
+  border-radius: 4px;
   outline: none;
   cursor: pointer;
 }
@@ -195,28 +220,51 @@
 .setting-range-slider::-webkit-slider-thumb {
   -webkit-appearance: none;
   appearance: none;
-  width: 18px;
-  height: 18px;
+  width: 20px;
+  height: 20px;
   background: var(--accent-primary);
   border-radius: 50%;
   cursor: pointer;
   transition: all 0.2s;
   border: 3px solid var(--card-bg);
-  box-shadow: var(--shadow-sm);
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.2);
 }
 
 .setting-range-slider::-webkit-slider-thumb:hover {
-  transform: scale(1.1);
+  transform: scale(1.15);
+  box-shadow: 0 3px 8px rgba(0, 0, 0, 0.3);
+}
+
+.setting-range-slider::-moz-range-thumb {
+  width: 20px;
+  height: 20px;
+  background: var(--accent-primary);
+  border: 3px solid var(--card-bg);
+  border-radius: 50%;
+  cursor: pointer;
+  transition: all 0.2s;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.2);
+}
+
+.setting-range-slider::-moz-range-thumb:hover {
+  transform: scale(1.15);
+  box-shadow: 0 3px 8px rgba(0, 0, 0, 0.3);
 }
 
 /* --- Menu Item Polish --- */
 .profile-menu-nav ul {
-  padding: 16px; /* 메뉴 아이템 목록의 전체적인 여백 확보 */
+  padding: 16px;
+  /* 메뉴 아이템 목록의 전체적인 여백 확보 */
 }
 
 @keyframes spin {
-  from { transform: rotate(0deg); }
-  to { transform: rotate(360deg); }
+  from {
+    transform: rotate(0deg);
+  }
+
+  to {
+    transform: rotate(360deg);
+  }
 }
 
 /* Menu Navigation */
@@ -233,7 +281,8 @@
   background: transparent;
   text-align: left;
   cursor: pointer;
-  transition: all 0.2s ease; /* 트랜지션 효과 개선 */
+  transition: all 0.2s ease;
+  /* 트랜지션 효과 개선 */
   display: flex;
   align-items: center;
   gap: 16px;
@@ -243,7 +292,8 @@
 }
 
 .profile-menu-item:hover {
-  background-color: var(--bg-secondary-hover); /* 호버 색상 변경 */
+  background-color: var(--bg-secondary-hover);
+  /* 호버 색상 변경 */
   color: var(--text-primary);
 }
 
@@ -252,16 +302,19 @@
   height: 20px;
   color: var(--text-muted);
 }
+
 .profile-menu-item:hover .menu-item-icon {
-    color: var(--text-primary);
+  color: var(--text-primary);
 }
 
 .profile-menu-item.logout {
   color: var(--color-danger);
 }
+
 .profile-menu-item.logout .menu-item-icon {
   color: var(--color-danger);
 }
+
 .profile-menu-item.logout:hover {
   background-color: color-mix(in srgb, var(--color-danger) 10%, transparent);
   color: var(--color-danger-hover);

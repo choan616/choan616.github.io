@@ -1,10 +1,12 @@
 .entry-editor {
   display: flex;
   flex-direction: column;
-  background: var(--card-bg);
+  background: var(--glass-bg);
+  backdrop-filter: var(--backdrop-blur);
+  -webkit-backdrop-filter: var(--backdrop-blur);
   border-radius: var(--border-radius-lg);
-  border: 1px solid var(--border-color);
-  box-shadow: var(--shadow-md);
+  border: 1px solid var(--glass-border);
+  box-shadow: var(--glass-shadow);
   overflow: hidden;
 }
 
@@ -426,12 +428,13 @@
 
 .font-size-slider {
   width: 80px;
-  height: 4px;
+  height: 6px;
   margin-top: 10px;
   -webkit-appearance: none;
   appearance: none;
-  background: var(--border-color);
-  border-radius: 2px;
+  background: var(--bg-secondary);
+  border: 1px solid var(--border-color);
+  border-radius: 3px;
   outline: none;
   cursor: pointer;
 }
@@ -439,32 +442,36 @@
 .font-size-slider::-webkit-slider-thumb {
   -webkit-appearance: none;
   appearance: none;
-  width: 16px;
-  height: 16px;
+  width: 18px;
+  height: 18px;
   background: var(--accent-primary);
   border-radius: 50%;
   cursor: pointer;
   transition: all 0.2s;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
 }
 
 .font-size-slider::-webkit-slider-thumb:hover {
   background: var(--accent-primary-hover);
   transform: scale(1.2);
+  box-shadow: 0 3px 6px rgba(0, 0, 0, 0.3);
 }
 
 .font-size-slider::-moz-range-thumb {
-  width: 16px;
-  height: 16px;
+  width: 18px;
+  height: 18px;
   background: var(--accent-primary);
   border: none;
   border-radius: 50%;
   cursor: pointer;
   transition: all 0.2s;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
 }
 
 .font-size-slider::-moz-range-thumb:hover {
   background: var(--accent-primary-hover);
   transform: scale(1.2);
+  box-shadow: 0 3px 6px rgba(0, 0, 0, 0.3);
 }
 
 .font-size-labels {
