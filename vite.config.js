@@ -14,7 +14,7 @@ export default defineConfig(({ command }) => {
         includeAssets: ['favicon.ico', 'robots.txt', 'apple-touch-icon.png'],
         manifest: {
           name: 'Mmtm: Your Daily Momentum',
-          short_name: 'Mmtm',
+          short_name: 'Momentum',
           description: 'Mmtm: Keep Your Momentum - 서버 없는 평생 일기장',
           theme_color: '#3b82f6',
           background_color: '#ffffff',
