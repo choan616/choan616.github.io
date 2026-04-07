@@ -10,11 +10,8 @@ const GalleryImage = ({ blob, alt }) => {
   useEffect(() => {
     if (!blob) return;
     const url = URL.createObjectURL(blob);
-    const timer = setTimeout(() => setSrc(url), 0);
-    return () => {
-      clearTimeout(timer);
-      URL.revokeObjectURL(url);
-    };
+    setSrc(url);
+    return () => URL.revokeObjectURL(url);
   }, [blob]);
 
   if (!src) return <div className="gallery-image-placeholder" />;

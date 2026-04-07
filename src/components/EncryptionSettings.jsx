@@ -47,13 +47,12 @@ export default function EncryptionSettings({ showToast }) {
   const [savedPassword, setSavedPassword] = useState(''); // 현재 적용된 비밀번호
 
   useEffect(() => {
-    // 초기 로드 시 세션 스토리지 등에서 상태 확인 (현재는 메모리 및 세션 스토리지 사용)
-    const storedPwd = sessionStorage.getItem('diary_encryption_password');
-    if (storedPwd) {
+    // 보안상 비밀번호는 메모리에만 유지합니다. 페이지 새로고침 시 재입력이 필요합니다.
+    const inMemoryPwd = googleDriveService.getEncryptionPassword();
+    if (inMemoryPwd) {
       setIsEnabled(true);
-      setPassword(storedPwd);
-      setSavedPassword(storedPwd);
-      googleDriveService.setEncryptionPassword(storedPwd);
+      setPassword(inMemoryPwd);
+      setSavedPassword(inMemoryPwd);
     }
   }, []);
 
@@ -64,7 +63,6 @@ export default function EncryptionSettings({ showToast }) {
         setIsEnabled(false);
         setPassword('');
         setSavedPassword('');
-        sessionStorage.removeItem('diary_encryption_password');
         googleDriveService.setEncryptionPassword(null);
         showToast('암호화가 해제되었습니다.');
       }
@@ -79,7 +77,6 @@ export default function EncryptionSettings({ showToast }) {
       return;
     }
 
-    sessionStorage.setItem('diary_encryption_password', password);
     googleDriveService.setEncryptionPassword(password);
     setSavedPassword(password);
     showToast('암호화 비밀번호가 설정되었습니다.');
@@ -118,7 +115,7 @@ export default function EncryptionSettings({ showToast }) {
           </div>
           {savedPassword && (
             <p style={{ fontSize: '0.8rem', color: 'var(--accent-color)', marginTop: '0.3rem' }}>
-              ✓ 암호화 활성화됨
+              ✓ 암호화 활성화됨 (페이지 새로고침 시 재입력 필요)
             </p>
           )}
         </div>

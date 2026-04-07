@@ -2,7 +2,6 @@
  * Google Drive 동기화 서비스
  * Google Identity Services (GIS) 및 Google Drive API v3 사용
  */
-import JSZip from 'jszip';
 import { CloudStorageInterface } from './CloudStorageInterface';
 import { encryptData, decryptData } from '../../utils/crypto';
 
@@ -10,12 +9,7 @@ import { encryptData, decryptData } from '../../utils/crypto';
 const CLIENT_ID = import.meta.env.VITE_GOOGLE_CLIENT_ID;
 const API_KEY = import.meta.env.VITE_GOOGLE_API_KEY;
 
-// 환경 변수가 설정되지 않은 경우 명확한 에러 메시지 표시
-// v1.1: API_KEY는 이제 선택 사항입니다.
-if (!CLIENT_ID) {
-  console.error('Google Client ID is missing!');
-  console.error('Please create a .env file with VITE_GOOGLE_CLIENT_ID');
-}
+// v1.1: API_KEY는 선택 사항입니다.
 
 const DISCOVERY_DOCS = ['https://www.googleapis.com/discovery/v1/apis/drive/v3/rest'];
 const SCOPES = 'https://www.googleapis.com/auth/drive.file';
@@ -58,10 +52,22 @@ class GoogleDriveService extends CloudStorageInterface {
   }
 
   /**
+   * 현재 설정된 암호화 비밀번호 조회
+   * @returns {string|null}
+   */
+  getEncryptionPassword() {
+    return this.encryptionPassword;
+  }
+
+  /**
    * Google API 및 GIS 클라이언트 초기화
    * @returns {Promise<void>}
    */
   async initClient() {
+    if (!CLIENT_ID) {
+      throw new Error('[GoogleDriveService] VITE_GOOGLE_CLIENT_ID 환경변수가 설정되지 않았습니다. .env 파일을 확인해주세요.');
+    }
+
     // 이미 초기화가 진행 중이거나 완료되었다면, 해당 Promise를 재사용
     if (this.initPromise) {
       return this.initPromise;
@@ -232,9 +238,6 @@ class GoogleDriveService extends CloudStorageInterface {
    * @returns {Promise<void>}
    */
   async signIn() {
-    // [디버깅] signIn이 어디서 호출되는지 추적합니다.
-    console.trace('signIn() called from:');
-
     // signIn이 호출되면 무조건 초기화가 선행되어야 함
     await this.initClient();
     // GIS 모델에서는 팝업이 뜹니다.
@@ -515,14 +518,17 @@ class GoogleDriveService extends CloudStorageInterface {
       return null;
     }
 
-    // 파일 다운로드
+    // [수정] 서비스 워커 간섭을 피하기 위해 fetch 사용 (cache: 'no-store' 추가)
     const response = await fetch(
       `https://www.googleapis.com/drive/v3/files/${syncFile.id}?alt=media`,
-      { headers: { Authorization: `Bearer ${this.accessToken}` } }
+      {
+        headers: { Authorization: `Bearer ${this.accessToken}` },
+        cache: 'no-store'
+      }
     );
 
     if (!response.ok) {
-      throw new Error('파일 다운로드 실패');
+      throw new Error('파일 다운로드 실패 (Fetch): ' + response.statusText);
     }
 
     let blob = await response.blob();
@@ -591,59 +597,48 @@ class GoogleDriveService extends CloudStorageInterface {
 
     if (onProgress) onProgress(10);
 
-    const response = await fetch(
-      `https://www.googleapis.com/drive/v3/files/${fileId}?alt=media`,
-      {
-        headers: {
-          Authorization: `Bearer ${this.accessToken}`,
-        },
-      }
-    );
-
-    if (onProgress) onProgress(50);
-
-    if (!response.ok) {
-      throw new Error('파일 다운로드 실패');
-    }
-
-    // 복원 시에는 getSyncData 로직을 사용할 수도 있지만, restoreFromGoogleDrive는 특정 파일 ID를 지정할 수 있음.
-    // 암호화 복호화 로직을 여기에도 적용해야 함.
-    let blob = await response.blob();
-
-    // 파일 메타데이터 확인을 위해 listBackupFiles 또는 get 호출 필요하지만, 
-    // 여기서는 파일을 다운로드만 먼저 함. 
-    // 하지만 암호화 여부를 확인하려면 메타데이터가 필요함.
-    // 성능을 위해 파일 정보를 먼저 가져오는 것이 좋음.
-
-    // 이 메서드는 주로 특정 파일 복원에 사용되므로, 복호화 로직을 추가해야 함.
-    // 하지만 appProperties를 인자로 받지 않음. 
-    // 따라서 파일을 get 요청으로 메타데이터를 먼저 가져와야 합니까?
-    // fetch response headers에는 appProperties가 없음.
-
-    // 단순화를 위해: restoreFromGoogleDrive 호출 전에 file object(metadata 포함)를 가지고 있다고 가정하거나,
-    // 여기서 메타데이터를 다시 조회해야 함.
-
+    // 암호화 여부 확인을 위해 메타데이터 먼저 조회 (불필요한 다운로드 방지)
+    let appProperties = null;
     try {
       const metadataResp = await window.gapi.client.drive.files.get({
         fileId: fileId,
         fields: 'appProperties'
       });
-      const appProperties = metadataResp.result.appProperties;
-
-      if (appProperties && appProperties.isEncrypted === 'true') {
-        if (!this.encryptionPassword) {
-          const error = new Error('암호화된 백업입니다. 설정에서 비밀번호를 입력해주세요.');
-          error.code = 'PASSWORD_REQUIRED';
-          error.fileId = fileId;
-          throw error;
-        }
-        const arrayBuffer = await blob.arrayBuffer();
-        const decryptedBuffer = await decryptData(arrayBuffer, this.encryptionPassword);
-        blob = new Blob([decryptedBuffer], { type: 'application/zip' });
-      }
+      appProperties = metadataResp.result.appProperties;
     } catch (e) {
-      if (e.code === 'PASSWORD_REQUIRED') throw e;
-      console.warn('복호화 확인 중 오류 (일반 파일로 처리):', e);
+      console.warn('메타데이터 조회 실패, 일반 파일로 처리합니다:', e);
+    }
+
+    if (appProperties && appProperties.isEncrypted === 'true' && !this.encryptionPassword) {
+      const error = new Error('암호화된 백업입니다. 설정에서 비밀번호를 입력해주세요.');
+      error.code = 'PASSWORD_REQUIRED';
+      error.fileId = fileId;
+      throw error;
+    }
+
+    if (onProgress) onProgress(30);
+
+    // fetch를 사용하여 다운로드 (cache: 'no-store' 옵션으로 서비스 워커 및 브라우저 캐시 우회)
+    const response = await fetch(
+      `https://www.googleapis.com/drive/v3/files/${fileId}?alt=media`,
+      {
+        headers: { Authorization: `Bearer ${this.accessToken}` },
+        cache: 'no-store'
+      }
+    );
+
+    if (!response.ok) {
+      throw new Error('파일 다운로드 실패 (Fetch): ' + response.statusText);
+    }
+
+    if (onProgress) onProgress(80);
+
+    let blob = await response.blob();
+
+    if (appProperties && appProperties.isEncrypted === 'true') {
+      const arrayBuffer = await blob.arrayBuffer();
+      const decryptedBuffer = await decryptData(arrayBuffer, this.encryptionPassword);
+      blob = new Blob([decryptedBuffer], { type: 'application/zip' });
     }
 
     if (onProgress) onProgress(100);
@@ -681,11 +676,7 @@ class GoogleDriveService extends CloudStorageInterface {
 
         console.log(`자동 정리: ${filesToDelete.length}개의 오래된 백업을 삭제합니다.`);
 
-        // 각 파일을 순차적으로 삭제
-        for (const file of filesToDelete) {
-          await this.deleteBackupFile(file.id);
-          console.log(`삭제 완료: ${file.name}`);
-        }
+        await Promise.all(filesToDelete.map(file => this.deleteBackupFile(file.id)));
       }
     } catch (error) {
       console.error('오래된 백업 파일 자동 삭제 실패:', error);

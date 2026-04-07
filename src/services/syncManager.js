@@ -172,14 +172,7 @@ class SyncManager {
     if (!file || !file.modifiedTime) return;
 
     try {
-      const newSyncTime = new Date(file.modifiedTime).toISOString();
-      await updateSyncMetadata({
-        lastSyncAt: newSyncTime,
-        remoteFileId: file.id,
-        lastSyncDeviceId: this.deviceId,
-      });
-      this.lastSyncTime = newSyncTime;
-      this.remoteFileId = file.id;
+      await this._applyMetadata(file);
 
       this.setStatus(SyncStatus.SUCCESS);
       this.notifyListeners();
@@ -187,6 +180,21 @@ class SyncManager {
     } catch (error) {
       console.error('[SyncManager] Failed to update metadata after external sync:', error);
     }
+  }
+
+  /**
+   * 동기화 메타데이터 업데이트 (내부 공통 헬퍼)
+   * @param {{ id: string, modifiedTime: string }} file
+   */
+  async _applyMetadata(file) {
+    const newSyncTime = new Date(file.modifiedTime).toISOString();
+    await updateSyncMetadata({
+      lastSyncAt: newSyncTime,
+      remoteFileId: file.id,
+      lastSyncDeviceId: this.deviceId,
+    });
+    this.lastSyncTime = newSyncTime;
+    this.remoteFileId = file.id;
   }
 
   /**
@@ -616,14 +624,7 @@ class SyncManager {
       // [수정] remoteMetadata가 유효한 경우에만 메타데이터를 업데이트합니다.
       // autoSync에서 전달된 remoteMetadata가 null일 수 있는 엣지 케이스를 방어합니다.
       if (remoteMetadata && remoteMetadata.id && remoteMetadata.modifiedTime) {
-        const newSyncTime = new Date(remoteMetadata.modifiedTime).toISOString();
-        await updateSyncMetadata({
-          lastSyncAt: newSyncTime,
-          remoteFileId: remoteMetadata.id,
-          lastSyncDeviceId: this.deviceId,
-        });
-        this.lastSyncTime = newSyncTime;
-        this.remoteFileId = remoteMetadata.id;
+        await this._applyMetadata(remoteMetadata);
       } else {
         console.warn('performPull: remoteMetadata가 유효하지 않아 메타데이터 업데이트를 건너뜁니다.');
       }
@@ -641,16 +642,7 @@ class SyncManager {
     if (uploadedFile?.file?.modifiedTime && !uploadedFile.skipped) {
       console.log('Local changes pushed successfully.');
 
-      // 메타데이터 업데이트
-      const file = uploadedFile.file;
-      const newSyncTime = new Date(file.modifiedTime).toISOString();
-      await updateSyncMetadata({
-        lastSyncAt: newSyncTime,
-        remoteFileId: file.id,
-        lastSyncDeviceId: this.deviceId,
-      });
-      this.lastSyncTime = newSyncTime;
-      this.remoteFileId = file.id;
+      await this._applyMetadata(uploadedFile.file);
     }
   }
 

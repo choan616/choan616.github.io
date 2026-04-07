@@ -75,12 +75,6 @@ function AppContent() {
       setTimeout(() => setShowOnboarding(true), 500);
     }
 
-    // [New] 암호화 비밀번호 세션 복원
-    const storedPwd = sessionStorage.getItem('diary_encryption_password');
-    if (storedPwd) {
-      googleDriveService.setEncryptionPassword(storedPwd);
-      console.log('Session encryption password restored');
-    }
   }, []);
 
   // 일기가 있는 날짜 목록 조회 (삭제된 일기 제외됨)

@@ -3,7 +3,7 @@ import { syncManager } from '../services/syncManager';
 import { SyncContext } from './SyncContext';
 import { useToast } from '../hooks/useToast';
 import { SyncStatus } from '../constants';
-// 로컬 데이터 요약 함수를 가져옵니다.
+import { formatSyncError } from '../utils/syncErrorUtils';
 import { ConflictResolutionModal } from '../components/ConflictResolutionModal';
 
 /**
@@ -23,11 +23,7 @@ export function SyncProvider({ children }) {
 
       // 자동 동기화 중 오류가 발생했을 때 사용자에게 알림
       if (newState.status === SyncStatus.ERROR && newState.lastError) {
-        const errorMessage = newState.lastError.message || '알 수 없는 오류';
-        if (errorMessage.includes('central directory')) {
-          showToast('자동 동기화 실패: Drive의 백업 파일이 손상되었을 수 있습니다.', 'error');
-        }
-        // 다른 종류의 자동 동기화 오류는 여기서 처리 가능
+        showToast(`자동 동기화 실패: ${formatSyncError(newState.lastError)}`, 'error');
       }
     };
 
@@ -52,24 +48,7 @@ export function SyncProvider({ children }) {
         showToast('✅ 동기화 완료', 'success');
       }
     } catch (error) {
-      console.error('동기화 에러:', error);
-
-      // 에러 메시지 개선 - 사용자가 이해하기 쉽고 실행 가능한 메시지
-      const errorMsg = error.message || '';
-
-      if (errorMsg.includes('central directory')) {
-        showToast('동기화 실패: 백업 파일이 손상되었을 수 있습니다', 'error');
-      } else if (errorMsg.includes('오프라인')) {
-        showToast('동기화 실패: 인터넷 연결을 확인해주세요', 'error');
-      } else if (errorMsg.includes('Wi-Fi')) {
-        showToast('동기화 실패: Wi-Fi 연결이 필요합니다 (설정에서 변경 가능)', 'error');
-      } else if (errorMsg.includes('로그인')) {
-        showToast('동기화 실패: Google Drive 로그인이 필요합니다', 'error');
-      } else if (error.code === 'PASSWORD_REQUIRED') {
-        showToast('동기화 실패: 암호화된 백업입니다. 설정에서 비밀번호를 입력해주세요.', 'error');
-      } else {
-        showToast(`동기화 실패: ${errorMsg}`, 'error');
-      }
+      showToast(`동기화 실패: ${formatSyncError(error)}`, 'error');
 
       // 에러를 다시 throw하여 호출자가 처리할 수 있도록 함
       throw error;

@@ -4,6 +4,7 @@ import { CloudStorageFactory } from '../services/cloudStorage/CloudStorageFactor
 // syncManager import removed to avoid circular dependency
 import { useSyncContext } from '../contexts/SyncContext';
 import { useToast } from '../hooks/useToast';
+import { signInWithCloudProvider } from '../utils/cloudAuthUtils';
 import './BackupPanel.css';
 import './ConflictResolutionModal.css';
 import { SyncStatus } from '../constants';
@@ -109,35 +110,21 @@ export function BackupPanel({ currentUser, onClose, onDataRestored, onAuthentica
   async function handleSignIn() {
     try {
       setIsLoading(true);
-      await cloudService.signIn();
+      const { cloudUser, userId } = await signInWithCloudProvider(selectedProvider);
 
-      const user = await cloudService.getCurrentUser();
-      if (!user) throw new Error('사용자 정보를 가져올 수 없습니다.');
-
-      // Google Drive의 경우에만 이메일 확인 및 사용자 생성
       if (selectedProvider === 'google') {
-        const ALLOWED_EMAILS = (import.meta.env.VITE_ALLOWED_EMAILS || '').split(',').map(e => e.trim()).filter(Boolean);
-        if (ALLOWED_EMAILS.length > 0 && !ALLOWED_EMAILS.includes(user.email)) {
-          await cloudService.signOut();
-          throw new Error(`접근 권한이 없는 계정입니다: ${user.email}`);
-        }
-
-        const { createUser, getUser } = await import('../db/adapter');
-        const userId = await createUser(
-          { email: user.email, name: user.name },
-          { imageUrl: user.imageUrl }
-        );
-
+        const { getUser } = await import('../db/adapter');
         const dbUser = await getUser(userId);
         if (onAuthenticated) {
           onAuthenticated(dbUser);
         }
       }
 
+      setCloudUser(cloudUser);
       showToast('로그인 성공!', 'success');
     } catch (error) {
       console.error('로그인 오류:', error);
-      showToast('로그인 실패', 'error');
+      showToast(error.message || '로그인 실패', 'error');
     } finally {
       setIsLoading(false);
     }
@@ -152,6 +139,15 @@ export function BackupPanel({ currentUser, onClose, onDataRestored, onAuthentica
       showToast('로그아웃 되었습니다', 'info');
     } catch (error) {
       console.error('로그아웃 오류:', error);
+    }
+  }
+
+  async function handleManualSync() {
+    try {
+      await triggerSync({ silent: false, isManual: true });
+      loadBackupFiles();
+    } catch {
+      // 토스트는 SyncProvider에서 이미 표시됨
     }
   }
 
@@ -464,13 +460,7 @@ export function BackupPanel({ currentUser, onClose, onDataRestored, onAuthentica
                       </button>
                       <button
                         className="btn btn-primary clickable"
-                        onClick={() => triggerSync({ silent: false, isManual: true })
-                          .then(() => {
-                            loadBackupFiles(); // 동기화 후 목록 새로고침
-                          }).catch(err => {
-                            console.error("수동 동기화 실패:", err);
-                            // 토스트는 SyncProvider에서 이미 표시됨
-                          })}
+                        onClick={handleManualSync}
                         disabled={status === SyncStatus.SYNCING}
                       >
                         {status === SyncStatus.SYNCING ? '🔄 동기화 중...' : '🔄 지금 동기화'}

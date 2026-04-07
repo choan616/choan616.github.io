@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { usePinInput } from '../hooks/usePinInput';
 import { useSession } from '../contexts/useSession';
 import { googleDriveService } from '../services/googleDrive';
 import { getCurrentUser } from '../utils/auth';
@@ -9,7 +10,8 @@ import './Modal.css';
 
 export function SessionLockModal() {
   const {
-    isNewUser, // 신규 사용자인지 확인
+    isNewUser,
+    isLocked,
     unlock,
     attemptsLeft,
     decrementAttempt,
@@ -17,16 +19,14 @@ export function SessionLockModal() {
     lastUnlockTime
   } = useSession();
 
-  const { isLocked } = useSession(); // 이 줄은 아래 로직으로 대체되므로 실제로는 사용되지 않습니다.
-  const currentUserId = getCurrentUser(); // [수정] localStorage에서 직접 가져와 안정성을 높입니다.
+  const currentUserId = getCurrentUser();
 
-  const [input, setInput] = useState('');
-  const [error, setError] = useState('');
+  const { pin, setPin, error, setError, handleChange } = usePinInput();
 
   useEffect(() => {
     if (!isLocked) {
       const id = setTimeout(() => {
-        setInput('');
+        setPin('');
         setError('');
       }, 0);
       return () => clearTimeout(id);
@@ -90,24 +90,18 @@ export function SessionLockModal() {
     return null;
   }
 
-  const handleChange = (e) => {
-    const v = e.target.value.replace(/\D/g, '').slice(0, 4);
-    setInput(v);
-    setError('');
-  };
-
   const handleSubmit = async (e) => {
     e.preventDefault();
-    if (!/^\d{4}$/.test(input)) {
+    if (!/^\d{4}$/.test(pin)) {
       setError('4자리 PIN을 입력하세요.');
       return;
     }
     try {
       const { verifyPin } = await import('../db/adapter');
-      const ok = await verifyPin(currentUserId, input);
+      const ok = await verifyPin(currentUserId, pin);
       if (ok) {
         unlock();
-        setInput('');
+        setPin('');
       } else {
         decrementAttempt();
         setError(`PIN이 일치하지 않습니다. 남은 시도: ${attemptsLeft - 1}`);
@@ -133,7 +127,7 @@ export function SessionLockModal() {
 
       if (isValid) {
         unlock();
-        setInput('');
+        setPin('');
       } else {
         setError('등록되지 않은 기기입니다.');
       }
@@ -154,7 +148,7 @@ export function SessionLockModal() {
             <input
               inputMode="numeric"
               pattern="\d{4}"
-              value={input}
+              value={pin}
               onChange={handleChange}
               placeholder="0000"
               autoFocus

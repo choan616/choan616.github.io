@@ -1,10 +1,10 @@
 import React, { useState } from 'react';
 import { googleDriveService } from '../services/googleDrive';
-import { CloudStorageFactory } from '../services/cloudStorage/CloudStorageFactory';
 import { useSession } from '../contexts/useSession';
 import { Icon } from './Icon';
 import { authenticatePasskey } from '../utils/webauthn';
 import { getUserIdByCredentialId, getUser } from '../db/adapter';
+import { signInWithCloudProvider } from '../utils/cloudAuthUtils';
 import { Logo } from './Logo';
 import './UserAuth.css';
 
@@ -31,61 +31,22 @@ export function UserAuth({ onAuthenticated }) {
     </svg>
   );
 
-  // .env 파일에서 허용된 이메일 목록을 가져옵니다.
-  const ALLOWED_EMAILS = (import.meta.env.VITE_ALLOWED_EMAILS || '')
-    .split(',')
-    .map(email => email.trim())
-    .filter(Boolean);
-
   async function handleCloudLogin(provider = 'google') {
     setIsLoading(true);
     setError('');
 
     try {
-      // 0. 서비스 가져오기
-      const cloudService = await CloudStorageFactory.getService(provider);
+      const { cloudUser, userId } = await signInWithCloudProvider(provider);
 
-      // 1. 클라우드 로그인
-      await cloudService.signIn();
-
-      // 2. 사용자 정보 가져오기
-      const cloudUser = await cloudService.getCurrentUser();
-      if (!cloudUser) throw new Error('사용자 정보를 가져올 수 없습니다.');
-
-      // 3. Google Drive의 경우, 허용된 이메일인지 확인합니다.
-      // (Dropbox는 개인 백업 용도가 강하므로 일단 제한을 두지 않거나 필요시 추가)
-      if (provider === 'google' && ALLOWED_EMAILS.length > 0 && !ALLOWED_EMAILS.includes(cloudUser.email)) {
-        await cloudService.signOut();
-        throw new Error(`접근 권한이 없는 계정입니다: ${cloudUser.email}`);
-      }
-
-      // 4. 로컬 DB에 사용자를 생성하거나 프로필 정보를 업데이트합니다.
-      const { createUser } = await import('../db/adapter');
-      const userId = await createUser(
-        { email: cloudUser.email, name: cloudUser.name },
-        { imageUrl: cloudUser.imageUrl }
-      );
-
-      // 5. 기본 클라우드 제공자로 설정
       localStorage.setItem('preferredCloudProvider', provider);
 
-      let user = await getUser(userId);
+      const user = await getUser(userId);
+      if (!user) throw new Error('사용자 정보를 찾을 수 없습니다.');
 
-      if (!user) { // 만약을 대비한 방어 코드
-        const userData = {
-          email: cloudUser.email,
-          name: cloudUser.name,
-          password: ''
-        };
-        const newUserId = await createUser(userData);
-        user = { userId: newUserId, ...userData };
-      }
-
-      // 사용자 정보를 세션에 설정
       const { setCurrentUser } = await import('../utils/auth');
       setCurrentUser(user.userId);
       session.setCurrentUser(user.userId);
-      session.setIsNewUser(!user.pinHash); // PIN 설정 여부에 따라 신규 사용자 판별
+      session.setIsNewUser(!user.pinHash);
 
       await onAuthenticated(user, { method: provider });
     } catch (err) {
