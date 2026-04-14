@@ -65,24 +65,18 @@
 }
 
 .login-header {
-  margin-bottom: 0;
+  margin-bottom: 20px;
 }
 
 .login-logo {
-  font-size: 2.5rem;
-  /* 40px */
-  font-weight: 900;
-  color: var(--text-primary);
-  text-decoration: none;
-  letter-spacing: -1px;
-}
-
-.desktop-auth-logo {
   display: block;
+  text-decoration: none;
 }
 
-.mobile-auth-logo {
-  display: none;
+.login-logo-img {
+  width: 180px;
+  height: auto;
+  display: block;
 }
 
 .login-card {
@@ -477,12 +471,8 @@
 
 /* 반응형 */
 @media (max-width: 768px) {
-  .desktop-auth-logo {
-    display: none;
-  }
-
-  .mobile-auth-logo {
-    display: block;
+  .login-logo-img {
+    width: 140px;
   }
 
   .user-auth-modal {

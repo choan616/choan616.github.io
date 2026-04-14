@@ -5,7 +5,6 @@ import { Icon } from './Icon';
 import { authenticatePasskey } from '../utils/webauthn';
 import { getUserIdByCredentialId, getUser } from '../db/adapter';
 import { signInWithCloudProvider } from '../utils/cloudAuthUtils';
-import { Logo } from './Logo';
 import './UserAuth.css';
 
 
@@ -92,12 +91,7 @@ export function UserAuth({ onAuthenticated }) {
       <div className="login-wrapper">
         <div className="login-header">
           <a href="/" className="login-logo">
-            <div className="desktop-auth-logo">
-              <Logo size="200" />
-            </div>
-            <div className="mobile-auth-logo">
-              <Logo size="100" />
-            </div>
+            <img src="/login_logo.png" alt="MMTM" className="login-logo-img" />
           </a>
 
         </div>
