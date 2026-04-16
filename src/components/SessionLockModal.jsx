@@ -50,7 +50,7 @@ export function SessionLockModal() {
 
         // 설정 확인
         try {
-          const savedSettings = localStorage.getItem('app_settings');
+          const savedSettings = localStorage.getItem('ui_settings');
           if (savedSettings) {
             const settings = JSON.parse(savedSettings);
             if (settings.enableScreenLock === false) {
@@ -77,7 +77,7 @@ export function SessionLockModal() {
   }, [isLocked, currentUserId, unlock]);
 
   // [수정] 모든 훅 호출 이후에 렌더링 여부를 결정합니다.
-  const savedSettings = JSON.parse(localStorage.getItem('app_settings') || '{}');
+  const savedSettings = JSON.parse(localStorage.getItem('ui_settings') || '{}');
   const lockEnabled = savedSettings.enableScreenLock !== false; // 기본값은 true
 
   const now = typeof window !== 'undefined' && window.performance ? Math.floor(window.performance.now() + performance.timeOrigin) : Date.now();

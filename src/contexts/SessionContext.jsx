@@ -8,7 +8,7 @@ export function SessionProvider({ children }) {
     // 초기 로딩 시 잠금 상태 결정 (새로고침 시 보안 강화)
     if (typeof window === 'undefined') return false;
 
-    const savedSettings = JSON.parse(localStorage.getItem('app_settings') || '{}');
+    const savedSettings = JSON.parse(localStorage.getItem('ui_settings') || '{}');
     const lockEnabled = savedSettings.enableScreenLock !== false; // 기본값 true
     const hasUser = !!sessionStorage.getItem('diary_current_user');
 
