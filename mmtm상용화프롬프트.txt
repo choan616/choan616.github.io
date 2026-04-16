@@ -1,0 +1,32 @@
+# 프로젝트 마이그레이션 및 상용화 작업 요청
+
+**목표**: 기존의 `f:\LAB\DIARY2` 프로젝트를 새로운 폴더 `f:\LAB\Mmtm`(가칭)으로 복사하고, 이전에 수립된 [COMMERCIALIZATION_PLAN.md](cci:7://file:///f:/LAB/DIARY2/COMMERCIALIZATION_PLAN.md:0:0-0:0)에 따라 상용화 개발을 시작하려고 합니다.
+
+## 1. 현재 상황 (Context)
+- 기존 프로젝트 `DIARY2`는 React + Vite + PWA + IndexedDB + Google Drive Sync 기반의 완성도 높은 일기장 앱입니다.
+- 상용화를 위해 **'Mmtm (Your Daily Momentum)'**이라는 새로운 브랜드로 리브랜딩하기로 결정했습니다.
+- 상용화 핵심 전략은 **"서버 없는 평생 일기장(Serverless & Local-First)"**이며, 주요 작업은 UX 개선(구글 로그인), 보안 강화(생체인식), 부분 유료화 기능 추가입니다.
+
+## 2. 작업 지시 (Action Items)
+
+### Step 1: 프로젝트 복제 및 환경 설정
+1.  **새 작업 공간 생성**: `f:\LAB\DIARY2`의 모든 내용을 `f:\LAB\Mmtm` (또는 유저가 지정한 새 폴더)으로 복사해주세요. (node_modules 제외 권장)
+2.  **패키지 설정 변경**: [package.json](cci:7://file:///f:/LAB/DIARY2/package.json:0:0-0:0)의 `name`을 `mmtm`으로 변경하고 버전을 `1.0.0`으로 올리세요.
+3.  **의존성 설치**: 새 폴더에서 `npm install`을 실행하여 환경을 구축하세요.
+4.  **브랜딩 반영**:
+    - [index.html](cci:7://file:///f:/LAB/DIARY2/index.html:0:0-0:0)의 `<title>`을 `Mmtm: Your Daily Momentum`으로 변경하세요.
+    - [manifest.webmanifest](cci:7://file:///f:/LAB/DIARY2/manifest.webmanifest:0:0-0:0)의 이름과 단축 이름을 `Mmtm`으로 변경하세요.
+
+### Step 2: 상용화 개발 시작 (우선순위)
+복제 후 다음 작업을 순차적으로 진행해주세요. (참고: [COMMERCIALIZATION_PLAN.md](cci:7://file:///f:/LAB/DIARY2/COMMERCIALIZATION_PLAN.md:0:0-0:0) 파일이 프로젝트 루트에 있습니다.)
+
+1.  **UI/UX 리브랜딩**:
+    - 앱 상단 헤더, 로고 텍스트를 `Mmtm`으로 변경.
+    - 테마 컬러를 브랜드에 맞게 미세 조정 (필요 시).
+2.  **Google 로그인 진입 장벽 제거**:
+    - 기존의 복잡한 API Key/Client ID 입력 방식을 개선하는 방안 연구 및 적용.
+3.  **보안 기능 활성화**:
+    - [src/utils/webauthn.js](cci:7://file:///f:/LAB/DIARY2/src/utils/webauthn.js:0:0-0:0)를 활용하여 앱 잠금/해제 UI 구현.
+
+## 3. 참고 자료
+- 원본 소스의 [COMMERCIALIZATION_PLAN.md](cci:7://file:///f:/LAB/DIARY2/COMMERCIALIZATION_PLAN.md:0:0-0:0)에 모든 기획안(SWOT, 수익모델, 마이그레이션 전략 등)이 들어있으니 이를 가장 중요한 지침으로 삼아주세요.
