@@ -31,7 +31,7 @@ export function SessionLockModal() {
       }, 0);
       return () => clearTimeout(id);
     }
-  }, [isLocked]);
+  }, [isLocked, setPin, setError]);
 
   // PIN이 설정되지 않은 계정은 바로 unlock 처리
   const [pinRequired, setPinRequired] = useState(true);
