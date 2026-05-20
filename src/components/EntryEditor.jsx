@@ -243,6 +243,7 @@ export function EntryEditor({ entry, onSave, isEditing, setIsEditing, onImageDel
             placeholder="제목을 입력하세요"
             value={formData.title}
             onChange={(e) => setFormData(prev => ({ ...prev, title: e.target.value }))}
+            style={{ fontFamily }}
           />
 
           <textarea
