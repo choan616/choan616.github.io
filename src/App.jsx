@@ -16,6 +16,7 @@ import { TagCloud } from './components/TagCloud';
 import { useUiSettings } from './contexts/useUiSettings';
 import ErrorBoundary from './components/ErrorBoundary';
 import { setCurrentUser as setAuthUser, getCurrentUser, clearCurrentUser, isAuthenticated } from './utils/auth';
+import { getEntriesDateList, getAllEntries, getUser, searchEntries, getEntryWithImages, saveEntryWithImages, deleteEntry, deleteOrphanedImages } from './db/adapter';
 import { syncManager } from './services/syncManager';
 import { OfflineBanner } from './components/OfflineBanner';
 import { googleDriveService } from './services/googleDrive';
@@ -81,7 +82,6 @@ function AppContent() {
   const entriesDateList = useLiveQuery(async () => {
     if (!currentUser) return [];
     try {
-      const { getEntriesDateList } = await import('./db/adapter');
       return await getEntriesDateList(currentUser.userId);
     } catch (error) {
       console.error('Failed to load entries list:', error);
@@ -93,7 +93,6 @@ function AppContent() {
   const allEntries = useLiveQuery(async () => {
     if (!currentUser) return [];
     try {
-      const { getAllEntries } = await import('./db/adapter');
       return await getAllEntries(currentUser.userId);
     } catch (error) {
       console.error('Failed to load all entries:', error);
@@ -131,7 +130,6 @@ function AppContent() {
         if (isAuthenticated()) {
           const userId = getCurrentUser();
           if (userId) {
-            const { getUser } = await import('./db/adapter');
             const user = await getUser(userId);
             if (user) {
               // 저장된 사용자로 인증 처리
@@ -202,7 +200,6 @@ function AppContent() {
   const handleSearch = async (query) => {
     setSearchCurrentPage(1);
     if (query && currentUser) {
-      const { searchEntries } = await import('./db/adapter');
       const results = await searchEntries(currentUser.userId, query, searchStartDate, searchEndDate);
       setSearchResults(results);
       setCurrentQuery(query);
@@ -268,7 +265,6 @@ function AppContent() {
     if (!currentUser?.userId || !selectedDate) return null;
 
     try {
-      const { getEntryWithImages } = await import('./db/adapter');
       const entryData = await getEntryWithImages(currentUser.userId, selectedDate);
 
       // getEntryWithImages는 이미 처리가 완료된 객체(Blob URL 등 포함)를 반환함
@@ -303,7 +299,6 @@ function AppContent() {
         ...entryData,
         images: currentEntry?.images || [],
       };
-      const { saveEntryWithImages, getEntryWithImages } = await import('./db/adapter');
       await saveEntryWithImages(currentUser.userId, fullEntryData, imageFiles, (current, total) => {
         if (total > 0) {
           showToast(`이미지 압축 중... (${current}/${total})`, 'info', 500);
@@ -336,7 +331,6 @@ function AppContent() {
     }
 
     try {
-      const { deleteEntry } = await import('./db/adapter');
       await deleteEntry(currentUser.userId, currentEntry.date);
       showToast('일기가 삭제되었습니다.', 'success');
 
@@ -424,7 +418,6 @@ function AppContent() {
 
     // 앱 시작 시에만 고아 이미지 정리
     if (isInitialLoad && !user.isGuest) {
-      const { deleteOrphanedImages } = await import('./db/adapter');
       const deletedCount = await deleteOrphanedImages(user.userId);
       if (deletedCount > 0) {
         console.log(`정리 완료: ${deletedCount}개의 고아 이미지를 삭제했습니다.`);

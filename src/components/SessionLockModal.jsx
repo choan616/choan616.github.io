@@ -4,7 +4,7 @@ import { useSession } from '../contexts/useSession';
 import { googleDriveService } from '../services/googleDrive';
 import { getCurrentUser } from '../utils/auth';
 import { authenticatePasskey } from '../utils/webauthn';
-import { getWebAuthnCredentials } from '../db/adapter';
+import { getWebAuthnCredentials, getUser, verifyPin } from '../db/adapter';
 import { Icon } from './Icon';
 import './Modal.css';
 
@@ -63,7 +63,6 @@ export function SessionLockModal() {
           console.error("Failed to read settings in LockModal", e);
         }
 
-        const { getUser } = await import('../db/adapter');
         const user = await getUser(currentUserId);
         if (!user || !user.pinHash || !user.pinSalt) {
           setPinRequired(false);
@@ -97,7 +96,6 @@ export function SessionLockModal() {
       return;
     }
     try {
-      const { verifyPin } = await import('../db/adapter');
       const ok = await verifyPin(currentUserId, pin);
       if (ok) {
         unlock();

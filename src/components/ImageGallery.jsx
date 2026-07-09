@@ -2,6 +2,7 @@ import React, { useMemo, useState, useEffect } from 'react';
 import { useLiveQuery } from 'dexie-react-hooks';
 import './ImageGallery.css';
 import { base64ToBlob } from '../utils/imageCompression';
+import { db } from '../db/db';
 
 // 이미지 URL 생성 및 정리를 담당하는 내부 컴포넌트
 const GalleryImage = ({ blob, alt }) => {
@@ -24,8 +25,6 @@ export function ImageGallery({ userId, onEntryClick, onClose }) {
     if (!userId) return [];
     
     try {
-      const { db } = await import('../db/db');
-      
       // 1. 이미지 데이터 조회 (삭제되지 않은 것)
       const images = await db.images.where({ userId }).and(i => !i.deletedAt).toArray();
       if (images.length === 0) return [];

@@ -1,4 +1,5 @@
 import { CloudStorageFactory } from '../services/cloudStorage/CloudStorageFactory';
+import { createUser } from '../db/adapter';
 
 const ALLOWED_EMAILS = (import.meta.env.VITE_ALLOWED_EMAILS || '')
   .split(',')
@@ -22,7 +23,6 @@ export async function signInWithCloudProvider(provider) {
     throw new Error(`접근 권한이 없는 계정입니다: ${cloudUser.email}`);
   }
 
-  const { createUser } = await import('../db/adapter');
   const userId = await createUser(
     { email: cloudUser.email, name: cloudUser.name },
     { imageUrl: cloudUser.imageUrl }

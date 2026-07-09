@@ -1,5 +1,6 @@
 import { db } from './db';
 import { compressImage, createThumbnail, blobToBase64, base64ToBlob } from '../utils/imageCompression';
+import { generateSalt, hashPassword, verifyPassword } from '../utils/auth';
 import JSZip from 'jszip';
 
 /**
@@ -46,7 +47,6 @@ export async function createUser(userData, googleData = null) {
   }
 
   // 비밀번호 해싱
-  const { generateSalt, hashPassword } = await import('../utils/auth');
   const salt = generateSalt();
   const passwordHash = password ? await hashPassword(password, salt) : null;
 
@@ -89,7 +89,6 @@ export async function authenticateUser(userId, password) {
   }
 
   // 비밀번호 검증
-  const { verifyPassword } = await import('../utils/auth');
   return await verifyPassword(password, user.passwordHash, user.passwordSalt);
 }
 
@@ -117,7 +116,6 @@ export async function getUser(userId) {
  * @returns {Promise<void>}
  */
 export async function updateUserPassword(userId, newPassword) {
-  const { generateSalt, hashPassword } = await import('../utils/auth');
   const salt = generateSalt();
   const passwordHash = await hashPassword(newPassword, salt);
 
@@ -308,7 +306,6 @@ export async function getEntryWithImages(userId, date) {
  * @param {string} pin - 평문 PIN (숫자 4자리)
  */
 export async function setPin(userId, pin) {
-  const { generateSalt, hashPassword } = await import('../utils/auth');
   const salt = generateSalt();
   const pinHash = await hashPassword(pin, salt);
   await db.users.update(userId, {
@@ -340,8 +337,7 @@ export async function verifyPin(userId, pin) {
   try {
     const user = await db.users.get(userId);
     if (!user || !user.pinHash || !user.pinSalt) return false;
-    const { verifyPassword } = await import('../utils/auth');
-    return await verifyPassword(pin, user.pinHash, user.pinSalt);
+      return await verifyPassword(pin, user.pinHash, user.pinSalt);
   } catch (err) {
     console.error('verifyPin error:', err);
     return false;

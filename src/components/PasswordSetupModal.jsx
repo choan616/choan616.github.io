@@ -2,6 +2,7 @@ import { useSession } from '../contexts/useSession';
 import { useToast } from '../hooks/useToast';
 import { usePinInput } from '../hooks/usePinInput';
 import { getCurrentUser } from '../utils/auth';
+import { setPin } from '../db/adapter';
 import './Modal.css';
 
 export function PasswordSetupModal({ onClose }) {
@@ -26,7 +27,6 @@ export function PasswordSetupModal({ onClose }) {
       return;
     }
     try {
-      const { setPin } = await import('../db/adapter');
       await setPin(currentAuthUserId, pin);
       setIsNewUser(false);
       unlock();

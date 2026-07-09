@@ -2,8 +2,8 @@
  * 클라우드 저장소 팩토리
  * 저장소 타입에 따라 적절한 서비스 인스턴스를 반환합니다.
  */
+import { googleDriveService } from './GoogleDriveService';
 
-let googleDriveServiceInstance = null;
 let dropboxServiceInstance = null;
 
 export class CloudStorageFactory {
@@ -15,11 +15,7 @@ export class CloudStorageFactory {
   static async getService(provider) {
     switch (provider) {
       case 'google': {
-        if (!googleDriveServiceInstance) {
-          const { googleDriveService } = await import('./GoogleDriveService');
-          googleDriveServiceInstance = googleDriveService;
-        }
-        return googleDriveServiceInstance;
+        return googleDriveService;
       }
 
       case 'dropbox': {

@@ -5,6 +5,7 @@ import { CloudStorageFactory } from '../services/cloudStorage/CloudStorageFactor
 import { useSyncContext } from '../contexts/SyncContext';
 import { useToast } from '../hooks/useToast';
 import { signInWithCloudProvider } from '../utils/cloudAuthUtils';
+import { getUser, exportUserDataAsZip, getLocalDataSummary, importUserData, bulkAddEntries } from '../db/adapter';
 import './BackupPanel.css';
 import './ConflictResolutionModal.css';
 import { SyncStatus } from '../constants';
@@ -113,7 +114,6 @@ export function BackupPanel({ currentUser, onClose, onDataRestored, onAuthentica
       const { cloudUser, userId } = await signInWithCloudProvider(selectedProvider);
 
       if (selectedProvider === 'google') {
-        const { getUser } = await import('../db/adapter');
         const dbUser = await getUser(userId);
         if (onAuthenticated) {
           onAuthenticated(dbUser);
@@ -160,7 +160,6 @@ export function BackupPanel({ currentUser, onClose, onDataRestored, onAuthentica
 
       // 1. 데이터를 ZIP 파일로 압축
       let zipBlob;
-      const { exportUserDataAsZip } = await import('../db/adapter');
       try {
         zipBlob = await exportUserDataAsZip(currentUser.userId);
         console.log('백업 ZIP 파일 생성 완료. 크기:', zipBlob.size);
@@ -177,7 +176,6 @@ export function BackupPanel({ currentUser, onClose, onDataRestored, onAuthentica
       }
 
       // 2. 요약 정보 및 해시 생성 (syncManager.js와 동일한 로직)
-      const { getLocalDataSummary } = await import('../db/adapter');
       const localSummary = await getLocalDataSummary(currentUser.userId);
       const buffer = await zipBlob.arrayBuffer();
       const hashBuffer = await crypto.subtle.digest('SHA-256', buffer);
@@ -235,7 +233,6 @@ export function BackupPanel({ currentUser, onClose, onDataRestored, onAuthentica
       // 2. Blob을 ArrayBuffer로 변환하여 importUserData에 전달
       const zipArrayBuffer = await restoredData.blob.arrayBuffer();
       // importUserData가 내부에서 ZIP을 파싱하고 이미지를 복원합니다
-      const { importUserData } = await import('../db/adapter');
       await importUserData(currentUser.userId, zipArrayBuffer, true); // true = 병합
       setRestoreProgress(100);
 
@@ -281,7 +278,6 @@ export function BackupPanel({ currentUser, onClose, onDataRestored, onAuthentica
 
   async function handleExportZip() {
     try {
-      const { exportUserDataAsZip } = await import('../db/adapter');
       const blob = await exportUserDataAsZip(currentUser.userId);
       const url = URL.createObjectURL(blob);
       const a = document.createElement('a');
@@ -308,7 +304,6 @@ export function BackupPanel({ currentUser, onClose, onDataRestored, onAuthentica
 
     try {
       // Read file as ArrayBuffer for importUserData
-      const { importUserData } = await import('../db/adapter');
       const data = await file.arrayBuffer();
       // Import with merge mode (true) to prevent data loss and duplication issues
       await importUserData(currentUser.userId, data, true);
@@ -349,7 +344,6 @@ export function BackupPanel({ currentUser, onClose, onDataRestored, onAuthentica
         return;
       }
 
-      const { bulkAddEntries } = await import('../db/adapter');
       const addedCount = await bulkAddEntries(entries);
 
       showToast(`${addedCount}개의 일기를 성공적으로 가져왔습니다.`, 'success');

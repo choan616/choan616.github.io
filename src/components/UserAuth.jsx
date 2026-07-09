@@ -4,6 +4,7 @@ import { useSession } from '../contexts/useSession';
 import { Icon } from './Icon';
 import { authenticatePasskey } from '../utils/webauthn';
 import { getUserIdByCredentialId, getUser } from '../db/adapter';
+import { setCurrentUser } from '../utils/auth';
 import { signInWithCloudProvider } from '../utils/cloudAuthUtils';
 import './UserAuth.css';
 
@@ -42,7 +43,6 @@ export function UserAuth({ onAuthenticated }) {
       const user = await getUser(userId);
       if (!user) throw new Error('사용자 정보를 찾을 수 없습니다.');
 
-      const { setCurrentUser } = await import('../utils/auth');
       setCurrentUser(user.userId);
       session.setCurrentUser(user.userId);
       session.setIsNewUser(!user.pinHash);
@@ -71,7 +71,6 @@ export function UserAuth({ onAuthenticated }) {
       if (!user) throw new Error('사용자 정보를 찾을 수 없습니다.');
 
       // 사용자 정보를 세션에 설정
-      const { setCurrentUser } = await import('../utils/auth');
       setCurrentUser(user.userId);
       session.setCurrentUser(user.userId);
       session.setIsNewUser(!user.pinHash);
