@@ -17,6 +17,7 @@ export function EntryEditor({ entry, onSave, isEditing, setIsEditing, onImageDel
 
   const [isSaving, setIsSaving] = useState(false);
   const fileInputRef = useRef(null);
+  const entryViewContentRef = useRef(null);
   const { showToast } = useToast();
 
   // entry prop을 기반으로 폼 데이터를 리셋하는 함수
@@ -83,6 +84,29 @@ export function EntryEditor({ entry, onSave, isEditing, setIsEditing, onImageDel
   const handleCancel = () => {
     resetFormFromEntry(entry);
     setIsEditing(false);
+  };
+
+  // view에 렌더링된 본문을 전체 선택한 뒤 그 선택 영역을 클립보드로 복사
+  const handleCopy = async () => {
+    const viewEl = entryViewContentRef.current;
+    // 본문이 없으면 placeholder 문구가 복사되므로 건너뜀
+    if (!viewEl || !entry.content) return;
+
+    const selection = window.getSelection();
+    const range = document.createRange();
+    range.selectNodeContents(viewEl);
+    selection.removeAllRanges();
+    selection.addRange(range);
+
+    const textToCopy = selection.toString().trim();
+    if (!textToCopy) return;
+
+    try {
+      await navigator.clipboard.writeText(textToCopy);
+      showToast('클립보드에 복사되었습니다', 'success');
+    } catch {
+      showToast('복사에 실패했습니다', 'error');
+    }
   };
 
   const handleFileSelect = (e) => {
@@ -172,15 +196,7 @@ export function EntryEditor({ entry, onSave, isEditing, setIsEditing, onImageDel
           <div className="flex items-center space-x-2">
             <button
               className="btn btn-secondary clickable"
-              onClick={() => {
-                const textToCopy = entry.content || '';
-                if (!textToCopy) return;
-                navigator.clipboard.writeText(textToCopy).then(() => {
-                  showToast('클립보드에 복사되었습니다', 'success');
-                }).catch(() => {
-                  showToast('복사에 실패했습니다', 'error');
-                });
-              }}
+              onClick={handleCopy}
             >
               📋 복사
             </button>
@@ -338,7 +354,7 @@ export function EntryEditor({ entry, onSave, isEditing, setIsEditing, onImageDel
             </div>
           </div>
 
-          <div className="entry-view-content">
+          <div ref={entryViewContentRef} className="entry-view-content">
             {entry.content ? (
               entry.content.split('\n').map((line, i) => (
                 line ? <p key={i}>{line}</p> : null
