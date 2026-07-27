@@ -103,6 +103,7 @@ export function EntryEditor({ entry, onSave, isEditing, setIsEditing, onImageDel
 
     try {
       await navigator.clipboard.writeText(textToCopy);
+      selection.removeAllRanges(); // 복사 후 선택 하이라이트 해제
       showToast('클립보드에 복사되었습니다', 'success');
     } catch {
       showToast('복사에 실패했습니다', 'error');
