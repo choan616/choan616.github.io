@@ -44,6 +44,9 @@ export default defineConfig(({ command }) => {
           skipWaiting: true,
           clientsClaim: true,
           cleanupOutdatedCaches: true,
+          // 이 SW 는 스코프 '/' 라 같은 계정의 다른 프로젝트 페이지까지 관할에 들어온다.
+          // 그쪽 주소를 mmtm 의 index.html 로 갈아치우면 안 된다
+          navigateFallbackDenylist: [/^\/yomenai/, /^\/youdid/],
           globPatterns: ['**/*.{js,css,html,ico,png,svg,woff2}'],
           runtimeCaching: []
         }
