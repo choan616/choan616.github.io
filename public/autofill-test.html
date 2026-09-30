@@ -45,5 +45,26 @@
 
   <div class="case"><b>10. contenteditable div</b>
     <div contenteditable="true"></div></div>
+
+  <div class="case"><b>11. 앱과 같은 구조: form off 안에 제목 + 본문 + 태그 (각 칸 눌러보기)</b>
+    <form autocomplete="off" onsubmit="return false">
+      <input type="text" autocomplete="off" placeholder="11-제목을 입력하세요">
+      <textarea autocomplete="off" placeholder="11-오늘 하루는 어땠나요?"></textarea>
+      <input type="text" autocomplete="off" placeholder="11-태그 (쉼표로 구분, 예: 여행, 맛집, 친구)">
+      <button type="button">📷 이미지 선택</button>
+      <input type="file" multiple accept="image/*" style="display:none">
+    </form></div>
+
+  <div class="case"><b>12. 칸마다 따로 form off (제목 form / 본문 / 태그 form)</b>
+    <form autocomplete="off" onsubmit="return false"><input type="text" autocomplete="off" placeholder="12-제목을 입력하세요"></form>
+    <textarea autocomplete="off" placeholder="12-오늘 하루는 어땠나요?"></textarea>
+    <form autocomplete="off" onsubmit="return false"><input type="text" autocomplete="off" placeholder="12-태그 (쉼표로 구분)"></form></div>
+
+  <div class="case"><b>13. 11번과 같되 placeholder 없음</b>
+    <form autocomplete="off" onsubmit="return false">
+      <input type="text" autocomplete="off">
+      <textarea autocomplete="off"></textarea>
+      <input type="text" autocomplete="off">
+    </form></div>
 </body>
 </html>
