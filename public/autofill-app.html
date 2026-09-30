@@ -56,6 +56,38 @@
     };
     new MutationObserver(strip).observe(document.documentElement, { childList: true, subtree: true });
 
+    // ta=: 본문(textarea) 전용 실험. touchend·delay 는 앱의 즉시 해제(React 위임 핸들러)를 막고 시점을 바꾼다
+    const ta = new URLSearchParams(location.search).get('ta');
+    const isBody = el => el && el.classList && el.classList.contains('input-content');
+    if (ta === 'touchend' || ta === 'delay') {
+      ['touchstart', 'mousedown', 'focusin'].forEach(type => document.addEventListener(type, e => {
+        if (isBody(e.target)) e.stopPropagation();
+      }, true));
+    }
+    if (ta === 'touchend') {
+      document.addEventListener('touchend', e => { if (isBody(e.target)) e.target.readOnly = false; }, true);
+    }
+    if (ta === 'delay') {
+      document.addEventListener('focusin', e => {
+        if (isBody(e.target)) setTimeout(() => { e.target.readOnly = false; }, 300);
+      }, true);
+    }
+    if (ta === 'nocorrect' || ta === 'name') {
+      new MutationObserver(() => {
+        const el = document.querySelector('.input-content');
+        if (!el || el.dataset.ta) return;
+        el.dataset.ta = '1';
+        if (ta === 'nocorrect') {
+          el.setAttribute('autocorrect', 'off');
+          el.setAttribute('autocapitalize', 'off');
+          el.setAttribute('spellcheck', 'false');
+        } else {
+          el.name = 'diary-body';
+          el.id = 'diary-body';
+        }
+      }).observe(document.documentElement, { childList: true, subtree: true });
+    }
+
     fetch('/?t=' + Date.now()).then(r => r.text()).then(html => {
       const doc = new DOMParser().parseFromString(html, 'text/html');
       doc.head.querySelectorAll('link, script[type=module]').forEach(src => {
