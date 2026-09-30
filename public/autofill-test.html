@@ -1,0 +1,49 @@
+<!-- iOS Safari '자동 완성 연락처' 버튼이 어떤 입력칸 속성에서 사라지는지 실측하는 임시 테스트 페이지 -->
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>AutoFill 테스트</title>
+  <style>
+    body { font-family: -apple-system, sans-serif; margin: 16px; padding-bottom: 60vh; }
+    .case { margin: 0 0 20px; }
+    .case b { display: block; margin-bottom: 6px; }
+    input, textarea, [contenteditable] { box-sizing: border-box; width: 100%; font-size: 16px; padding: 10px; border: 1px solid #999; border-radius: 8px; }
+    [contenteditable] { min-height: 44px; }
+  </style>
+</head>
+<body>
+  <p>각 칸을 눌러 키보드 위에 "자동 완성 연락처"가 뜨는지 번호별로 알려주세요.</p>
+
+  <div class="case"><b>1. 속성 없음 (기준)</b>
+    <input type="text" placeholder="제목을 입력하세요"></div>
+
+  <div class="case"><b>2. autocomplete="off" (현재 앱)</b>
+    <input type="text" autocomplete="off" placeholder="제목을 입력하세요"></div>
+
+  <div class="case"><b>3. autocomplete="off" + placeholder 없음</b>
+    <input type="text" autocomplete="off"></div>
+
+  <div class="case"><b>4. autocomplete="off" + name/id 에 search</b>
+    <input type="text" autocomplete="off" name="search_title" id="search-title" placeholder="제목을 입력하세요"></div>
+
+  <div class="case"><b>5. type="search"</b>
+    <input type="search" autocomplete="off" placeholder="제목을 입력하세요"></div>
+
+  <div class="case"><b>6. autocomplete="nope" (없는 값)</b>
+    <input type="text" autocomplete="nope" placeholder="제목을 입력하세요"></div>
+
+  <div class="case"><b>7. form autocomplete="off" 안의 입력칸</b>
+    <form autocomplete="off" onsubmit="return false"><input type="text" autocomplete="off" placeholder="제목을 입력하세요"></form></div>
+
+  <div class="case"><b>8. textarea autocomplete="off" (현재 본문)</b>
+    <textarea autocomplete="off" placeholder="오늘 하루는 어땠나요?"></textarea></div>
+
+  <div class="case"><b>9. textarea + name/id 에 search</b>
+    <textarea autocomplete="off" name="search_content" id="search-content" placeholder="오늘 하루는 어땠나요?"></textarea></div>
+
+  <div class="case"><b>10. contenteditable div</b>
+    <div contenteditable="true"></div></div>
+</body>
+</html>
