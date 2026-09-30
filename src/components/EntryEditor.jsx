@@ -5,6 +5,33 @@ import { useUiSettings } from '../contexts/useUiSettings';
 import { Icon } from './Icon';
 import { noAutofillProps } from '../utils/noAutofill';
 
+// 본문 입력칸. iOS 가 textarea 에는 어떤 속성으로도 '자동 완성 연락처' 버튼을 띄워서
+// contenteditable 로 받는다 (public/autofill-app.html?ta=ce 실측 2026-09-30)
+function PlainTextEditable({ value, onChange, placeholder, className, style }) {
+  const ref = useRef(null);
+
+  // 바깥에서 값이 바뀐 경우(일기 전환·취소)에만 DOM 을 덮어쓴다. 입력 중에 덮어쓰면 커서가 튄다
+  useEffect(() => {
+    const el = ref.current;
+    if (el && el.innerText !== value) el.innerText = value;
+  }, [value]);
+
+  return (
+    <div
+      ref={ref}
+      contentEditable="plaintext-only"
+      suppressContentEditableWarning
+      role="textbox"
+      aria-multiline="true"
+      aria-placeholder={placeholder}
+      data-placeholder={placeholder}
+      className={`${className}${value ? '' : ' is-empty'}`}
+      style={style}
+      onInput={(e) => onChange(e.currentTarget.innerText)}
+    />
+  );
+}
+
 export function EntryEditor({ entry, onSave, isEditing, setIsEditing, onImageDelete, onDelete }) {
   const [isAnimating, setIsAnimating] = useState(false);
   const [formData, setFormData] = useState({
@@ -67,7 +94,8 @@ export function EntryEditor({ entry, onSave, isEditing, setIsEditing, onImageDel
       await onSave({
         date: entry.date,
         title: formData.title,
-        content: formData.content,
+        // contenteditable 은 끝에서 줄바꿈·붙여넣기 할 때 innerText 끝에 줄바꿈을 덧붙인다
+        content: formData.content.replace(/\n+$/, ''),
         tags: tagsArray
       }, selectedFiles);
 
@@ -267,13 +295,11 @@ export function EntryEditor({ entry, onSave, isEditing, setIsEditing, onImageDel
             style={{ fontFamily }}
           />
 
-          <textarea
+          <PlainTextEditable
             className="input-content"
-            autoComplete="off"
-            {...noAutofillProps}
-            placeholder="오늘 하루는 어땠나요?&#10;자유롭게 작성해보세요..."
+            placeholder={'오늘 하루는 어땠나요?\n자유롭게 작성해보세요...'}
             value={formData.content}
-            onChange={(e) => setFormData(prev => ({ ...prev, content: e.target.value }))}
+            onChange={(content) => setFormData(prev => ({ ...prev, content }))}
             style={{ fontFamily }}
           />
 

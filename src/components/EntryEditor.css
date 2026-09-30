@@ -160,6 +160,17 @@
   min-height: 200px;
   line-height: 1.6;
   resize: vertical;
+  /* 본문은 contenteditable div 라 textarea 처럼 줄바꿈·긴 단어를 직접 처리한다 */
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+  cursor: text;
+}
+
+.input-content.is-empty::before {
+  content: attr(data-placeholder);
+  color: var(--text-muted);
+  white-space: pre-line;
+  pointer-events: none;
 }
 
 .input-tags {
