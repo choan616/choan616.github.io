@@ -253,7 +253,9 @@ export function EntryEditor({ entry, onSave, isEditing, setIsEditing, onImageDel
       </div>
 
       {isEditing ? (
-        <div className="editor-form flex-grow overflow-y-auto p-4">
+        // iOS Safari 는 입력칸의 autocomplete="off" 를 무시하고 '자동 완성 연락처' 버튼을 띄운다.
+        // <form autocomplete="off"> 로 감싸야 사라진다 (public/autofill-test.html 실측 2026-09-30)
+        <form className="editor-form flex-grow overflow-y-auto p-4" autoComplete="off" onSubmit={(e) => e.preventDefault()}>
           <input
             type="text"
             className="input-title"
@@ -289,6 +291,7 @@ export function EntryEditor({ entry, onSave, isEditing, setIsEditing, onImageDel
                 {((entry.images?.length || 0) + selectedFiles.length)}/10)
               </h3>
               <button
+                type="button"
                 className="btn btn-primary btn-small clickable"
                 onClick={() => fileInputRef.current?.click()}
                 disabled={(entry.images?.length || 0) + selectedFiles.length >= 10}
@@ -316,6 +319,7 @@ export function EntryEditor({ entry, onSave, isEditing, setIsEditing, onImageDel
                     <div key={img.id} className="image-thumb">
                       <img src={img.thumbnailUrl} alt="기존 이미지" />
                       <button
+                        type="button"
                         className="btn-delete-image clickable"
                         onClick={() => handleDeleteExistingImage(img.id)}
                       >
@@ -336,6 +340,7 @@ export function EntryEditor({ entry, onSave, isEditing, setIsEditing, onImageDel
                     <div key={index} className="image-thumb">
                       <img src={file.preview} alt="새 이미지" />
                       <button
+                        type="button"
                         className="btn-delete-image clickable"
                         onClick={() => handleRemoveSelectedFile(index)}
                       >
@@ -348,7 +353,7 @@ export function EntryEditor({ entry, onSave, isEditing, setIsEditing, onImageDel
               </div>
             )}
           </div>
-        </div>
+        </form>
       ) : (
         <div className={`entry-view flex-grow font-size-${fontSize}`} style={{ fontFamily }}>
           <div className="entry-view-header">

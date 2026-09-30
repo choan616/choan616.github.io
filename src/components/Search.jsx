@@ -22,7 +22,7 @@ export function Search({ onSearch, onClear, isSearching, startDate, endDate, onS
 
   return (
     <div className="search-container">
-      <form onSubmit={handleSubmit} className="search-form">
+      <form onSubmit={handleSubmit} className="search-form" autoComplete="off">
         <input
           type="search"
           autoComplete="off"

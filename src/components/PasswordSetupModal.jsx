@@ -51,7 +51,7 @@ export function PasswordSetupModal({ onClose }) {
         )}
         <h3>보안 PIN 설정</h3>
         <p>서비스 이용을 위해 4자리 PIN을 설정해주세요. (기기 간 동기화)</p>
-        <form onSubmit={handleSubmit}>
+        <form onSubmit={handleSubmit} autoComplete="off">
           <input
             inputMode="numeric"
             autoComplete="off"

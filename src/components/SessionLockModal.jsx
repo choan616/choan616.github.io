@@ -143,7 +143,7 @@ export function SessionLockModal() {
       <div className="modal">
         <h3>PIN 입력</h3>
         <p>보안을 위해 PIN을 입력해주세요.</p>
-        <form onSubmit={handleSubmit}>
+        <form onSubmit={handleSubmit} autoComplete="off">
           <div className="pin-input-wrapper" style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
             <input
               inputMode="numeric"
