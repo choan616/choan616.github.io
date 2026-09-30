@@ -14,17 +14,33 @@
       select: '.calendar-navigation select',
       search: '.search-form',
     };
-    const targets = (new URLSearchParams(location.search).get('rm') || '')
-      .split(',').map(s => REMOVABLE[s.trim()]).filter(Boolean);
+    const rm = (new URLSearchParams(location.search).get('rm') || '').split(',').map(s => s.trim());
+    const targets = rm.map(s => REMOVABLE[s]).filter(Boolean);
 
-    if (targets.length) {
-      const strip = () => targets.forEach(sel => document.querySelectorAll(sel).forEach(el => el.remove()));
-      new MutationObserver(strip).observe(document.body, { childList: true, subtree: true });
-    }
+    const strip = () => {
+      targets.forEach(sel => document.querySelectorAll(sel).forEach(el => el.remove()));
+      // outside: 에디터 form 이 뜨면 그 조상들의 형제를 모두 지워 form 만 남긴다
+      const form = document.querySelector('form.editor-form');
+      if (rm.includes('outside') && form) {
+        for (let node = form; node && node !== document.body; node = node.parentElement) {
+          [...node.parentElement.children].forEach(sib => { if (sib !== node && sib.tagName !== 'SCRIPT') sib.remove(); });
+        }
+      }
+      // fields: form 안에 제목 칸만 남긴다
+      if (rm.includes('fields') && form) {
+        form.querySelectorAll('textarea, .input-tags, .image-upload-section').forEach(el => el.remove());
+      }
+      // css: 앱 스타일(링크·styled-components·인라인 style)을 모두 뺀다
+      if (rm.includes('css')) {
+        document.querySelectorAll('style, link[rel=stylesheet]').forEach(el => el.remove());
+      }
+    };
+    new MutationObserver(strip).observe(document.documentElement, { childList: true, subtree: true });
 
     fetch('/?t=' + Date.now()).then(r => r.text()).then(html => {
       const doc = new DOMParser().parseFromString(html, 'text/html');
       doc.head.querySelectorAll('link, script[type=module]').forEach(src => {
+        if (rm.includes('css') && src.rel === 'stylesheet') return;
         const el = document.createElement(src.tagName);
         for (const a of src.attributes) el.setAttribute(a.name, a.value);
         document.head.appendChild(el);
