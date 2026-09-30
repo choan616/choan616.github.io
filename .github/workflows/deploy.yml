@@ -3,9 +3,10 @@
 # 사용자가 직접 할 일 (한 번):
 #   1. 저장소 Settings → Secrets and variables → Actions 에 아래 VITE_* secret 을 등록.
 #      VITE_ 접두어 환경변수는 빌드 시점 값이 번들에 그대로 박히므로(.env 는 CI에 없음)
-#      빠진 값은 배포된 사이트에서 해당 기능(로그인·Dropbox 등)이 동작하지 않는다
+#      빠진 값은 배포된 사이트에서 해당 기능(로그인·Dropbox 등)이 동작하지 않는다.
+#      필수 secret 이 비어 있으면 "Check required secrets" 단계에서 빌드를 멈춰 배포하지 않는다
 #   2. 저장소 Settings → Pages → Source 를 "GitHub Actions" 로 설정
-#      (그 전까지는 기존 gh-pages 브랜치가 계속 서빙되고 deploy 잡은 실패한다)
+#      (Source 가 gh-pages 브랜치여도 deploy 잡은 성공하고 사이트를 덮어쓴다)
 name: Deploy to GitHub Pages
 
 on:
@@ -31,6 +32,20 @@ jobs:
         with:
           node-version: 22
           cache: npm
+      - name: Check required secrets
+        env:
+          VITE_GOOGLE_CLIENT_ID: ${{ secrets.VITE_GOOGLE_CLIENT_ID }}
+          VITE_DROPBOX_APP_KEY: ${{ secrets.VITE_DROPBOX_APP_KEY }}
+          VITE_DROPBOX_APP_SECRET: ${{ secrets.VITE_DROPBOX_APP_SECRET }}
+        run: |
+          missing=0
+          for name in VITE_GOOGLE_CLIENT_ID VITE_DROPBOX_APP_KEY VITE_DROPBOX_APP_SECRET; do
+            if [ -z "${!name}" ]; then
+              echo "::error::secret $name 가 비어 있다"
+              missing=1
+            fi
+          done
+          exit $missing
       - run: npm ci
       - run: npm run build
         env:
