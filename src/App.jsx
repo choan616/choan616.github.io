@@ -111,6 +111,11 @@ function AppContent() {
       console.log('SW Registered:', r);
       // 앱을 켜 둔 채 며칠 쓰는 경우를 위해 주기적으로도 확인한다. 브라우저는 재방문 때만 본다
       if (r) setInterval(() => r.update(), SW_UPDATE_CHECK_INTERVAL_MS);
+      // iOS 홈 화면 앱은 백그라운드에서 다시 꺼낼 때 페이지를 새로 불러오지 않고 타이머도 멈춰 있어서,
+      // 화면으로 돌아올 때마다 확인해야 업데이트 띠가 제때 뜬다
+      if (r) document.addEventListener('visibilitychange', () => {
+        if (document.visibilityState === 'visible') r.update();
+      });
     },
     onRegisterError(error) {
       console.log('SW registration error:', error);
