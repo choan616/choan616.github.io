@@ -66,5 +66,32 @@
       <textarea autocomplete="off"></textarea>
       <input type="text" autocomplete="off">
     </form></div>
+
+  <div class="case"><b>14. 운영 앱 DOM 그대로 (클래스 포함, 처음부터 HTML)</b>
+    <form class="editor-form flex-grow overflow-y-auto p-4" autocomplete="off" onsubmit="return false"><input class="input-title" autocomplete="off" placeholder="14-제목을 입력하세요" type="text" value=""><textarea class="input-content" autocomplete="off" placeholder="14-오늘 하루는 어땠나요?"></textarea><input class="input-tags" autocomplete="off" placeholder="14-태그 (쉼표로 구분, 예: 여행, 맛집, 친구)" type="text" value=""></form></div>
+
+  <div class="case"><b>15. 11번 구조를 1초 뒤 스크립트로 삽입 (클래스 없음)</b>
+    <div id="dyn15"></div></div>
+
+  <div class="case"><b>16. 14번(운영 DOM)을 1초 뒤 스크립트로 삽입</b>
+    <div id="dyn16"></div></div>
+
+  <script>
+    // 앱처럼 페이지 로드 뒤에 form 을 DOM 에 넣는 경우
+    setTimeout(() => {
+      const f15 = document.createElement('form')
+      f15.setAttribute('autocomplete', 'off')
+      f15.onsubmit = () => false
+      f15.innerHTML = '<input type="text" autocomplete="off" placeholder="15-제목을 입력하세요"><textarea autocomplete="off" placeholder="15-오늘 하루는 어땠나요?"></textarea><input type="text" autocomplete="off" placeholder="15-태그 (쉼표로 구분)">'
+      document.getElementById('dyn15').appendChild(f15)
+
+      const f16 = document.createElement('form')
+      f16.className = 'editor-form flex-grow overflow-y-auto p-4'
+      f16.setAttribute('autocomplete', 'off')
+      f16.onsubmit = () => false
+      f16.innerHTML = '<input class="input-title" autocomplete="off" placeholder="16-제목을 입력하세요" type="text" value=""><textarea class="input-content" autocomplete="off" placeholder="16-오늘 하루는 어땠나요?"></textarea><input class="input-tags" autocomplete="off" placeholder="16-태그 (쉼표로 구분)" type="text" value="">'
+      document.getElementById('dyn16').appendChild(f16)
+    }, 1000)
+  </script>
 </body>
 </html>
