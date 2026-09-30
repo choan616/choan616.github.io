@@ -257,6 +257,7 @@ export function EntryEditor({ entry, onSave, isEditing, setIsEditing, onImageDel
           <input
             type="text"
             className="input-title"
+            autoComplete="off"
             placeholder="제목을 입력하세요"
             value={formData.title}
             onChange={(e) => setFormData(prev => ({ ...prev, title: e.target.value }))}
@@ -265,6 +266,7 @@ export function EntryEditor({ entry, onSave, isEditing, setIsEditing, onImageDel
 
           <textarea
             className="input-content"
+            autoComplete="off"
             placeholder="오늘 하루는 어땠나요?&#10;자유롭게 작성해보세요..."
             value={formData.content}
             onChange={(e) => setFormData(prev => ({ ...prev, content: e.target.value }))}
@@ -274,6 +276,7 @@ export function EntryEditor({ entry, onSave, isEditing, setIsEditing, onImageDel
           <input
             type="text"
             className="input-tags"
+            autoComplete="off"
             placeholder="태그 (쉼표로 구분, 예: 여행, 맛집, 친구)"
             value={formData.tags}
             onChange={(e) => setFormData(prev => ({ ...prev, tags: e.target.value }))}

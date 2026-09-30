@@ -145,6 +145,7 @@ export function SessionLockModal() {
           <div className="pin-input-wrapper" style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
             <input
               inputMode="numeric"
+              autoComplete="off"
               pattern="\d{4}"
               value={pin}
               onChange={handleChange}

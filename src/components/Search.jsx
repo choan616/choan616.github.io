@@ -25,6 +25,7 @@ export function Search({ onSearch, onClear, isSearching, startDate, endDate, onS
       <form onSubmit={handleSubmit} className="search-form">
         <input
           type="search"
+          autoComplete="off"
           placeholder="일기 검색..."
           value={query}
           onChange={(e) => setQuery(e.target.value)}

@@ -54,6 +54,7 @@ export function PasswordSetupModal({ onClose }) {
         <form onSubmit={handleSubmit}>
           <input
             inputMode="numeric"
+            autoComplete="off"
             pattern="\d{4}"
             value={pin}
             onChange={handleChange}
