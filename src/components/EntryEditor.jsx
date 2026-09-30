@@ -6,7 +6,7 @@ import { Icon } from './Icon';
 import { noAutofillProps } from '../utils/noAutofill';
 
 // 본문 입력칸. iOS 가 textarea 에는 어떤 속성으로도 '자동 완성 연락처' 버튼을 띄워서
-// contenteditable 로 받는다 (public/autofill-app.html?ta=ce 실측 2026-09-30)
+// contenteditable 로 받는다 (2026-09-30 iPhone 실기기 실측)
 function PlainTextEditable({ value, onChange, placeholder, className, style }) {
   const ref = useRef(null);
 
