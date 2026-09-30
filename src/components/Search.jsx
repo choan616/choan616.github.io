@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import './Search.css';
 import SearchFilter from './SearchFilter';
 import { HighlightText } from '../utils/searchUtils';
+import { noAutofillProps } from '../utils/noAutofill';
 
 export function Search({ onSearch, onClear, isSearching, startDate, endDate, onStartDateChange, onEndDateChange, onFilterClear }) {
   const [query, setQuery] = useState('');
@@ -26,6 +27,7 @@ export function Search({ onSearch, onClear, isSearching, startDate, endDate, onS
         <input
           type="search"
           autoComplete="off"
+          {...noAutofillProps}
           placeholder="일기 검색..."
           value={query}
           onChange={(e) => setQuery(e.target.value)}

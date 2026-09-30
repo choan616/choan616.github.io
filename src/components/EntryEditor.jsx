@@ -3,6 +3,7 @@ import './EntryEditor.css';
 import { useToast } from '../hooks/useToast';
 import { useUiSettings } from '../contexts/useUiSettings';
 import { Icon } from './Icon';
+import { noAutofillProps } from '../utils/noAutofill';
 
 export function EntryEditor({ entry, onSave, isEditing, setIsEditing, onImageDelete, onDelete }) {
   const [isAnimating, setIsAnimating] = useState(false);
@@ -253,13 +254,13 @@ export function EntryEditor({ entry, onSave, isEditing, setIsEditing, onImageDel
       </div>
 
       {isEditing ? (
-        // iOS Safari 는 입력칸의 autocomplete="off" 를 무시하고 '자동 완성 연락처' 버튼을 띄운다.
-        // <form autocomplete="off"> 로 감싸야 사라진다 (public/autofill-test.html 실측 2026-09-30)
+        // iOS '자동 완성 연락처' 버튼은 autocomplete="off" 로는 안 사라져 입력칸에 noAutofillProps 를 쓴다
         <form className="editor-form flex-grow overflow-y-auto p-4" autoComplete="off" onSubmit={(e) => e.preventDefault()}>
           <input
             type="text"
             className="input-title"
             autoComplete="off"
+            {...noAutofillProps}
             placeholder="제목을 입력하세요"
             value={formData.title}
             onChange={(e) => setFormData(prev => ({ ...prev, title: e.target.value }))}
@@ -269,6 +270,7 @@ export function EntryEditor({ entry, onSave, isEditing, setIsEditing, onImageDel
           <textarea
             className="input-content"
             autoComplete="off"
+            {...noAutofillProps}
             placeholder="오늘 하루는 어땠나요?&#10;자유롭게 작성해보세요..."
             value={formData.content}
             onChange={(e) => setFormData(prev => ({ ...prev, content: e.target.value }))}
@@ -279,6 +281,7 @@ export function EntryEditor({ entry, onSave, isEditing, setIsEditing, onImageDel
             type="text"
             className="input-tags"
             autoComplete="off"
+            {...noAutofillProps}
             placeholder="태그 (쉼표로 구분, 예: 여행, 맛집, 친구)"
             value={formData.tags}
             onChange={(e) => setFormData(prev => ({ ...prev, tags: e.target.value }))}
