@@ -1,0 +1,35 @@
+<!-- 실제 앱을 띄우고 ?rm= 로 지정한 요소를 빼서 iOS '자동 완성 연락처' 원인을 좁히는 임시 테스트 페이지 -->
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>AutoFill 앱 테스트</title>
+</head>
+<body>
+  <div id="root"></div>
+  <script>
+    // 빌드마다 번들 해시가 바뀌므로 운영 index.html 에서 스타일·스크립트 태그를 읽어와 붙인다
+    const REMOVABLE = {
+      select: '.calendar-navigation select',
+      search: '.search-form',
+    };
+    const targets = (new URLSearchParams(location.search).get('rm') || '')
+      .split(',').map(s => REMOVABLE[s.trim()]).filter(Boolean);
+
+    if (targets.length) {
+      const strip = () => targets.forEach(sel => document.querySelectorAll(sel).forEach(el => el.remove()));
+      new MutationObserver(strip).observe(document.body, { childList: true, subtree: true });
+    }
+
+    fetch('/?t=' + Date.now()).then(r => r.text()).then(html => {
+      const doc = new DOMParser().parseFromString(html, 'text/html');
+      doc.head.querySelectorAll('link, script[type=module]').forEach(src => {
+        const el = document.createElement(src.tagName);
+        for (const a of src.attributes) el.setAttribute(a.name, a.value);
+        document.head.appendChild(el);
+      });
+    });
+  </script>
+</body>
+</html>
