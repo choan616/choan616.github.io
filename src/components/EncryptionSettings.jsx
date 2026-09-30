@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import styled from 'styled-components';
 import { googleDriveService } from '../services/cloudStorage/GoogleDriveService';
 import Switch from './Switch';
@@ -42,19 +42,10 @@ const Button = styled.button`
 `;
 
 export default function EncryptionSettings({ showToast }) {
-  const [isEnabled, setIsEnabled] = useState(false);
-  const [password, setPassword] = useState('');
-  const [savedPassword, setSavedPassword] = useState(''); // 현재 적용된 비밀번호
-
-  useEffect(() => {
-    // 보안상 비밀번호는 메모리에만 유지합니다. 페이지 새로고침 시 재입력이 필요합니다.
-    const inMemoryPwd = googleDriveService.getEncryptionPassword();
-    if (inMemoryPwd) {
-      setIsEnabled(true);
-      setPassword(inMemoryPwd);
-      setSavedPassword(inMemoryPwd);
-    }
-  }, []);
+  // 보안상 비밀번호는 메모리에만 유지합니다. 페이지 새로고침 시 재입력이 필요합니다.
+  const [isEnabled, setIsEnabled] = useState(() => !!googleDriveService.getEncryptionPassword());
+  const [password, setPassword] = useState(() => googleDriveService.getEncryptionPassword() || '');
+  const [savedPassword, setSavedPassword] = useState(() => googleDriveService.getEncryptionPassword() || ''); // 현재 적용된 비밀번호
 
   const handleToggle = (checked) => {
     if (!checked) {

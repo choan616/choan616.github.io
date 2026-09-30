@@ -204,7 +204,7 @@ class DropboxService extends CloudStorageInterface {
 
             this.exchangeCodeForToken(code).then(resolve).catch(reject);
           }
-        } catch (e) {
+        } catch {
           // ignore cross-origin errors
         }
       }, 500);
@@ -285,7 +285,7 @@ class DropboxService extends CloudStorageInterface {
   /**
    * 세션 복원 시도
    */
-  async restoreSession(email) {
+  async restoreSession() {
     if (this.refreshToken) {
       try {
         await this.refreshAccessToken();
@@ -498,7 +498,7 @@ class DropboxService extends CloudStorageInterface {
         const arrayBuffer = await blob.arrayBuffer();
         const decryptedBuffer = await decryptData(arrayBuffer, this.encryptionPassword);
         blob = new Blob([decryptedBuffer], { type: 'application/zip' });
-      } catch (err) {
+      } catch {
         throw new Error('복호화 실패: 비밀번호가 틀렸거나 파일이 손상되었습니다.');
       }
     }
@@ -578,7 +578,7 @@ class DropboxService extends CloudStorageInterface {
         },
         body: JSON.stringify({ path: BACKUP_FOLDER, autorename: false })
       });
-    } catch (e) {
+    } catch {
       // conflict is okay
     }
   }

@@ -2,6 +2,8 @@
  * 클라우드 저장소 서비스의 공통 인터페이스
  * 모든 클라우드 저장소 구현체는 이 인터페이스를 준수해야 합니다.
  */
+// 추상 메서드는 구현체가 받을 인자를 시그니처로 보여주기만 하고 쓰지 않는다
+/* eslint-disable no-unused-vars */
 export class CloudStorageInterface {
   /**
    * 클라우드 서비스 클라이언트 초기화

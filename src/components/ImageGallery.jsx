@@ -11,6 +11,8 @@ const GalleryImage = ({ blob, alt }) => {
   useEffect(() => {
     if (!blob) return;
     const url = URL.createObjectURL(blob);
+    // object URL 은 만들고 해제하는 외부 자원이라 effect 에서 만들어 state 로 넘긴다
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setSrc(url);
     return () => URL.revokeObjectURL(url);
   }, [blob]);

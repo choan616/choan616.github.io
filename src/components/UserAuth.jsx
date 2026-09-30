@@ -1,5 +1,4 @@
 import React, { useState } from 'react';
-import { googleDriveService } from '../services/googleDrive';
 import { useSession } from '../contexts/useSession';
 import { Icon } from './Icon';
 import { authenticatePasskey } from '../utils/webauthn';
@@ -36,7 +35,7 @@ export function UserAuth({ onAuthenticated }) {
     setError('');
 
     try {
-      const { cloudUser, userId } = await signInWithCloudProvider(provider);
+      const { userId } = await signInWithCloudProvider(provider);
 
       localStorage.setItem('preferredCloudProvider', provider);
 

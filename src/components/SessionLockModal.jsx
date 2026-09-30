@@ -79,7 +79,9 @@ export function SessionLockModal() {
   const savedSettings = JSON.parse(localStorage.getItem('ui_settings') || '{}');
   const lockEnabled = savedSettings.enableScreenLock !== false; // 기본값은 true
 
-  const now = typeof window !== 'undefined' && window.performance ? Math.floor(window.performance.now() + performance.timeOrigin) : Date.now();
+  // 렌더할 때마다 현재 시각으로 '최근 10분 내 잠금 해제'를 다시 판정하는 것이 의도다
+  // eslint-disable-next-line react-hooks/purity
+  const now = Date.now();
   const recentlyUnlocked = lastUnlockTime && now - lastUnlockTime < 600000;
 
   // 모달을 표시해야 하는 모든 조건을 여기서 확인합니다.

@@ -425,46 +425,48 @@ class GoogleDriveService extends CloudStorageInterface {
       await this.findOrCreateFolder();
     }
 
-    return new Promise(async (resolve, reject) => {
+    const now = new Date();
+    const timestamp = now.toISOString().replace(/[:.]/g, '-');
+    let uploadBlob = zipBlob;
+    let finalAppProperties = { ...appProperties };
+    let fileExtension = 'zip';
+
+    // 암호화가 활성화된 경우
+    if (this.encryptionPassword) {
       try {
-        const now = new Date();
-        const timestamp = now.toISOString().replace(/[:.]/g, '-');
-        let uploadBlob = zipBlob;
-        let finalAppProperties = { ...appProperties };
-        let fileExtension = 'zip';
+        // Blob -> ArrayBuffer
+        const arrayBuffer = await zipBlob.arrayBuffer();
+        const encryptedBuffer = await encryptData(arrayBuffer, this.encryptionPassword);
+        uploadBlob = new Blob([encryptedBuffer], { type: 'application/octet-stream' });
 
-        // 암호화가 활성화된 경우
-        if (this.encryptionPassword) {
-          try {
-            // Blob -> ArrayBuffer
-            const arrayBuffer = await zipBlob.arrayBuffer();
-            const encryptedBuffer = await encryptData(arrayBuffer, this.encryptionPassword);
-            uploadBlob = new Blob([encryptedBuffer], { type: 'application/octet-stream' });
+        finalAppProperties.isEncrypted = 'true';
+        fileExtension = 'enc';
+        console.log('데이터가 암호화되어 업로드됩니다.');
+      } catch (err) {
+        throw new Error('백업 암호화 중 오류 발생: ' + err.message);
+      }
+    }
 
-            finalAppProperties.isEncrypted = 'true';
-            fileExtension = 'enc';
-            console.log('데이터가 암호화되어 업로드됩니다.');
-          } catch (err) {
-            return reject(new Error('백업 암호화 중 오류 발생: ' + err.message));
-          }
-        }
+    const fileName = `${BACKUP_FILE_PREFIX}${timestamp}.${fileExtension}`;
 
-        const fileName = `${BACKUP_FILE_PREFIX}${timestamp}.${fileExtension}`;
+    const metadata = {
+      name: fileName,
+      mimeType: this.encryptionPassword ? 'application/octet-stream' : 'application/zip',
+      parents: [this.folderId],
+      appProperties: finalAppProperties,
+    };
 
-        const metadata = {
-          name: fileName,
-          mimeType: this.encryptionPassword ? 'application/octet-stream' : 'application/zip',
-          parents: [this.folderId],
-          appProperties: finalAppProperties,
-        };
+    const path = 'https://www.googleapis.com/upload/drive/v3/files?uploadType=multipart';
+    const method = 'POST';
 
-        const path = 'https://www.googleapis.com/upload/drive/v3/files?uploadType=multipart';
-        const method = 'POST';
+    const form = new FormData();
+    form.append('metadata', new Blob([JSON.stringify(metadata)], { type: 'application/json' }));
+    form.append('file', uploadBlob, fileName);
 
-        const form = new FormData();
-        form.append('metadata', new Blob([JSON.stringify(metadata)], { type: 'application/json' }));
-        form.append('file', uploadBlob, fileName);
-
+    // XHR 은 업로드 진행률(onProgress)을 받기 위해 쓴다. 비동기 준비는 위에서 끝내고
+    // 콜백만 Promise 로 감싼다
+    return new Promise((resolve, reject) => {
+      try {
         const xhr = new XMLHttpRequest();
         xhr.open(method, path);
         xhr.setRequestHeader('Authorization', `Bearer ${this.accessToken}`);
@@ -548,7 +550,7 @@ class GoogleDriveService extends CloudStorageInterface {
         const arrayBuffer = await blob.arrayBuffer();
         const decryptedBuffer = await decryptData(arrayBuffer, this.encryptionPassword);
         blob = new Blob([decryptedBuffer], { type: 'application/zip' });
-      } catch (err) {
+      } catch {
         const error = new Error('복호화 실패: 비밀번호가 틀렸거나 파일이 손상되었습니다.');
         error.code = 'DECRYPTION_FAILED';
         throw error;
