@@ -47,8 +47,10 @@ export default defineConfig(({ command }) => {
           clientsClaim: true,
           cleanupOutdatedCaches: true,
           // 이 SW 는 스코프 '/' 라 같은 계정의 다른 프로젝트 페이지까지 관할에 들어온다.
-          // 그쪽 주소를 mmtm 의 index.html 로 갈아치우면 안 된다
-          navigateFallbackDenylist: [/^\/yomenai/, /^\/youdid/],
+          // 그쪽 주소를 mmtm 의 index.html 로 갈아치우면 안 된다.
+          // mmtm 은 라우터 없이 루트 한 페이지(Dropbox 로그인 복귀 ?code= 포함)만 쓰므로,
+          // 프로젝트를 늘릴 때마다 막을 경로를 적는 대신 루트만 허용한다
+          navigateFallbackAllowlist: [/^\/(index\.html)?(\?.*)?$/],
           globPatterns: ['**/*.{js,css,html,ico,png,svg,woff2}'],
           runtimeCaching: []
         }
