@@ -72,6 +72,23 @@
         if (isBody(e.target)) setTimeout(() => { e.target.readOnly = false; }, 300);
       }, true);
     }
+    // noform: 본문을 form 밖(바로 뒤)으로 옮긴다 / ce: 본문을 contenteditable div 로 바꾼다
+    if (ta === 'noform' || ta === 'ce') {
+      new MutationObserver(() => {
+        const el = document.querySelector('form.editor-form textarea.input-content');
+        if (!el) return;
+        const form = el.form;
+        if (ta === 'noform') {
+          form.after(el);
+        } else {
+          const div = document.createElement('div');
+          div.contentEditable = 'true';
+          div.className = 'input-content';
+          div.style.cssText = 'min-height:160px;border:1px solid #ccc;border-radius:8px;padding:12px;background:#fff;';
+          el.replaceWith(div);
+        }
+      }).observe(document.documentElement, { childList: true, subtree: true });
+    }
     if (ta === 'nocorrect' || ta === 'name') {
       new MutationObserver(() => {
         const el = document.querySelector('.input-content');
