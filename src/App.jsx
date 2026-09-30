@@ -31,6 +31,8 @@ import { Settings } from './components/Settings';
 import { SessionLockModal } from './components/SessionLockModal';
 import { OnboardingGuide } from './components/OnboardingGuide';
 import './App.css';
+
+const SW_UPDATE_CHECK_INTERVAL_MS = 60 * 60 * 1000;
 // ...
 function AppContent() {
   const [currentUser, setCurrentUser] = useState(null);
@@ -105,22 +107,30 @@ function AppContent() {
     needRefresh: [needRefresh, setNeedRefresh],
     updateServiceWorker,
   } = useRegisterSW({
-    onRegistered(r) {
+    onRegisteredSW(_url, r) {
       console.log('SW Registered:', r);
+      // 앱을 켜 둔 채 며칠 쓰는 경우를 위해 주기적으로도 확인한다. 브라우저는 재방문 때만 본다
+      if (r) setInterval(() => r.update(), SW_UPDATE_CHECK_INTERVAL_MS);
     },
     onRegisterError(error) {
       console.log('SW registration error:', error);
     },
   });
 
+  // 새 버전 안내는 아래 업데이트 띠가 맡는다. 토스트까지 띄우면 같은 안내가 두 번 뜬다
   useEffect(() => {
-    if (needRefresh) {
-      showToast('새 버전이 있습니다. 앱을 업데이트 해주세요.', 'info', 0); // 0 = 무한 지속
-    }
     if (offlineReady) {
       showToast('앱이 오프라인에서 동작할 준비가 되었습니다.', 'success');
     }
-  }, [needRefresh, offlineReady, showToast]);
+  }, [offlineReady, showToast]);
+
+  const applyUpdate = () => {
+    // vite-plugin-pwa 는 workbox 의 isUpdate 가 참일 때만 새로고침하는데, isUpdate 는
+    // 등록 시점에 컨트롤러가 있었는지로 정해진다. 앱을 처음 설치한 탭을 켜 둔 채 업데이트를
+    // 받으면 새 SW 는 활성화돼도 화면은 옛 버전 그대로라, 새로고침을 직접 건다
+    navigator.serviceWorker?.addEventListener('controllerchange', () => window.location.reload(), { once: true });
+    updateServiceWorker(true);
+  };
 
   // 인증 확인
   useEffect(() => {
@@ -467,7 +477,7 @@ function AppContent() {
         {needRefresh && (
           <div className="pwa-update-toast">
             <span>새 버전이 있습니다.</span>
-            <button className="btn btn-primary btn-small" onClick={() => updateServiceWorker(true)}>
+            <button className="btn btn-primary btn-small" onClick={applyUpdate}>
               새로고침
             </button>
             <button className="btn btn-secondary btn-small" onClick={() => setNeedRefresh(false)}>닫기</button>

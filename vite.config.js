@@ -10,7 +10,9 @@ export default defineConfig(({ command }) => {
       VitePWA({
         // 개발 모드('serve')에서는 PWA 비활성화, 빌드 모드('build')에서만 활성화
         disable: command === 'serve', // Keep PWA disabled in dev mode to prevent caching issues
-        registerType: 'autoUpdate',
+        // 일기를 쓰는 중에 페이지가 갈리면 작성 중인 글이 사라진다. 새 SW 는 사용자가
+        // 업데이트 띠의 「새로고침」을 누를 때까지 대기시킨다 (src/App.jsx)
+        registerType: 'prompt',
         includeAssets: ['favicon.ico', 'robots.txt', 'apple-touch-icon.png'],
         manifest: {
           name: 'Mmtm: Your Daily Momentum',
@@ -41,7 +43,7 @@ export default defineConfig(({ command }) => {
           lang: 'ko-KR'
         },
         workbox: {
-          skipWaiting: true,
+          // skipWaiting 을 안 켠다 — 새 SW 가 기다려야 업데이트 띠를 띄울 수 있다
           clientsClaim: true,
           cleanupOutdatedCaches: true,
           // 이 SW 는 스코프 '/' 라 같은 계정의 다른 프로젝트 페이지까지 관할에 들어온다.
