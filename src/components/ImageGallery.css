@@ -83,7 +83,7 @@
 
 .gallery-item {
   aspect-ratio: 1;
-  border-radius: 12px;
+  border-radius: var(--border-radius-md);
   overflow: hidden;
   cursor: pointer;
   position: relative;
@@ -140,9 +140,9 @@
 .btn-back-diary {
   padding: 10px 20px;
   background-color: var(--accent-primary);
-  color: white;
+  color: var(--text-on-accent);
   border: none;
-  border-radius: 8px;
+  border-radius: var(--border-radius-sm);
   cursor: pointer;
   font-weight: 600;
   transition: background-color 0.2s;

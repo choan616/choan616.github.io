@@ -1,6 +1,6 @@
 .search-filter {
   background-color: var(--bg-secondary, #f5f5f5);
-  border-radius: 12px;
+  border-radius: var(--border-radius-md);
   padding: 10px 16px;  
   transition: all 0.2s ease;
   border: 1px solid transparent;
@@ -38,7 +38,7 @@
 .search-date-input {
   background: transparent;
   border: 1px solid transparent;
-  border-radius: 6px;
+  border-radius: var(--border-radius-sm);
   padding: 6px 8px;
   font-size: 0.9rem;
   color: var(--text-primary);

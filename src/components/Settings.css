@@ -142,7 +142,7 @@
 
 .setting-select {
   padding: 8px 12px;
-  border-radius: var(--border-radius-md);
+  border-radius: var(--border-radius-sm);
   border: 1px solid var(--border-color);
   background: var(--card-bg);
   font-size: 14px;
@@ -232,7 +232,7 @@ input:checked+.slider:before {
 /* General Button styles (re-scoped from EntryEditor) */
 .btn {
   border: 1px solid transparent;
-  border-radius: var(--border-radius-md);
+  border-radius: var(--border-radius-sm);
   cursor: pointer;
   transition: all 0.2s;
   font-family: inherit;
@@ -243,17 +243,6 @@ input:checked+.slider:before {
   align-items: center;
   justify-content: center;
   gap: 8px;
-}
-
-.btn-danger {
-  background: color-mix(in srgb, var(--color-danger) 15%, transparent);
-  color: var(--color-danger);
-  border-color: color-mix(in srgb, var(--color-danger) 30%, transparent);
-}
-
-.btn-danger:hover:not(:disabled) {
-  background: color-mix(in srgb, var(--color-danger) 25%, transparent);
-  color: var(--color-danger-hover);
 }
 
 /* Footer */

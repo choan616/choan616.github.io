@@ -52,7 +52,7 @@
   background: var(--bg-secondary);
   color: var(--text-secondary);
   padding: 2px 8px;
-  border-radius: 12px;
+  border-radius: var(--border-radius-pill);
   font-weight: 500;
 }
 
@@ -126,22 +126,24 @@
   background: var(--bg-secondary);
   color: var(--text-secondary);
   padding: 6px 14px;
-  border-radius: 99px;
+  border-radius: var(--border-radius-pill);
   font-size: 13px;
   font-weight: 500;
   cursor: pointer;
-  border: 1px solid transparent;
+  border: 1px solid var(--border-color);
   transition: all 0.2s;
 }
 
+/* 활성·hover: 악센트 연함 면 + 악센트 글자 */
 .tag-item:hover {
-  background: var(--accent-primary);
-  color: white;
+  background: var(--accent-soft);
+  color: var(--accent-primary);
+  border-color: var(--accent-soft-border);
 }
 
 .tag-item.active {
-  background: var(--accent-primary);
-  color: white;
+  background: var(--accent-soft);
+  color: var(--accent-primary);
   font-weight: 600;
-  border-color: var(--accent-primary-hover);
+  border-color: var(--accent-soft-border);
 }

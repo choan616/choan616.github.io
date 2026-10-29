@@ -56,6 +56,7 @@
   --accent-primary-hover: #2A3661;
   --accent-soft: #EDEEF5;
   --accent-soft-border: #D6D9E8;
+  --text-on-accent: #FFFFFF;
 
   --accent-secondary: #4C7A5A;
   --accent-secondary-gradient: #4C7A5A;
@@ -116,6 +117,7 @@
   --accent-primary-hover: #C2CBEE;
   --accent-soft: #262B3D;
   --accent-soft-border: #39405A;
+  --text-on-accent: #15161A;
 
   --accent-secondary: #7FA98C;
   --accent-secondary-gradient: #7FA98C;
@@ -234,8 +236,7 @@ textarea {
   justify-content: center;
   padding: 10px 20px;
   /* Slight larger padding */
-  border-radius: var(--border-radius-md);
-  /* Softer corners */
+  border-radius: var(--border-radius-sm);
   font-weight: 500;
   border: 1px solid transparent;
   cursor: pointer;
@@ -253,22 +254,28 @@ textarea {
   transform: scale(0.98);
 }
 
+.btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+/* 주요: 악센트 면 + 글자 */
 .btn-primary {
-  background: var(--accent-primary-gradient);
-  color: white;
-  border: none;
-  box-shadow: 0 4px 12px rgba(var(--accent-primary-rgb), 0.25);
+  background: var(--accent-primary);
+  color: var(--text-on-accent);
+  border: 1px solid var(--accent-primary);
 }
 
 .btn-primary:hover:not(:disabled) {
-  box-shadow: 0 6px 16px rgba(var(--accent-primary-rgb), 0.35);
-  transform: translateY(-1px);
+  background: var(--accent-primary-hover);
+  border-color: var(--accent-primary-hover);
 }
 
+/* 보조: 흰 면 + 진한 선 1px */
 .btn-secondary {
   background: var(--bg-secondary);
   color: var(--text-primary);
-  border: 1px solid var(--border-color);
+  border: 1px solid var(--border-strong);
 }
 
 .btn-secondary:hover:not(:disabled) {
@@ -277,20 +284,20 @@ textarea {
 }
 
 .btn-success {
-  background: var(--accent-secondary-gradient);
-  color: white;
-  border: none;
-  box-shadow: 0 4px 12px rgba(var(--accent-secondary-rgb), 0.25);
+  background: var(--accent-secondary);
+  color: var(--text-on-accent);
+  border: 1px solid var(--accent-secondary);
 }
 
+/* 삭제: 흰 면 + 경고 글자 + 경고 테두리 */
 .btn-danger {
-  background: rgba(239, 68, 68, 0.1);
+  background: var(--bg-secondary);
   color: var(--color-danger);
-  border: 1px solid transparent;
+  border: 1px solid var(--color-danger-border);
 }
 
 .btn-danger:hover {
-  background: rgba(239, 68, 68, 0.15);
+  background: var(--bg-secondary-hover);
   border-color: var(--color-danger);
 }
 

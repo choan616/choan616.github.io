@@ -9,7 +9,7 @@
   padding: 12px;
   font-size: 15px;
   font-weight: 600;
-  border-radius: var(--border-radius-md);
+  border-radius: var(--border-radius-sm);
   border: 1px solid var(--border-color);
   background: var(--bg-secondary);
   color: var(--text-primary);
@@ -85,7 +85,7 @@ body {
   text-align: center;
   color: var(--text-secondary);
   background-color: var(--bg-secondary);
-  border-radius: 12px;
+  border-radius: var(--border-radius-md);
 }
 
 .main-placeholder-icon {

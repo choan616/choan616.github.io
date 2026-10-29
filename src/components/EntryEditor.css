@@ -58,25 +58,8 @@
   font-weight: 600;
 }
 
-.editor-toolbar .btn:hover:not(:disabled) {
-  box-shadow: var(--shadow-md);
-  transform: translateY(-1px);
-}
-
 .editor-toolbar .btn:active:not(:disabled) {
-  transform: translateY(0) scale(0.98);
-  box-shadow: var(--shadow-sm);
-}
-
-/* 저장 버튼 강조 */
-.editor-toolbar .btn-primary {
-  background: linear-gradient(135deg, var(--accent-primary) 0%, color-mix(in srgb, var(--accent-primary) 90%, #000) 100%);
-  position: relative;
-}
-
-.editor-toolbar .btn-primary:hover:not(:disabled) {
-  background: linear-gradient(135deg, var(--accent-primary-hover) 0%, color-mix(in srgb, var(--accent-primary-hover) 90%, #000) 100%);
-  box-shadow: 0 4px 12px rgba(var(--accent-primary-rgb), 0.3);
+  transform: scale(0.98);
 }
 
 .editor-toolbar .btn-primary:disabled {
@@ -342,7 +325,7 @@
   background: var(--bg-secondary);
   color: var(--text-secondary);
   padding: 4px 12px;
-  border-radius: 99px;
+  border-radius: var(--border-radius-pill);
   font-size: 13px;
   font-weight: 600;
 }

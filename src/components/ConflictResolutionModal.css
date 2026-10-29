@@ -109,7 +109,7 @@
 .modal-button {
   padding: 8px 16px;
   border: 1px solid transparent;
-  border-radius: var(--border-radius-md);
+  border-radius: var(--border-radius-sm);
   background-color: var(--bg-secondary);
   color: var(--text-primary);
   cursor: pointer;
@@ -124,5 +124,5 @@
 
 .modal-button.primary {
   background-color: var(--accent-primary);
-  color: white;
+  color: var(--text-on-accent);
 }
