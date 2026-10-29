@@ -212,6 +212,10 @@
 .backup-actions .btn,
 .manual-backup-actions .btn {
   flex: 1;
+  padding-left: 12px;
+  padding-right: 12px;
+  /* 좁은 폭에서 글자 중간이 아니라 띄어쓰기에서만 꺾이게 한다 */
+  word-break: keep-all;
 }
 
 /* Progress Bar */

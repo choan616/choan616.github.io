@@ -229,22 +229,6 @@ input:checked+.slider:before {
   border-radius: 50%;
 }
 
-/* General Button styles (re-scoped from EntryEditor) */
-.btn {
-  border: 1px solid transparent;
-  border-radius: var(--border-radius-sm);
-  cursor: pointer;
-  transition: all 0.2s;
-  font-family: inherit;
-  font-weight: 600;
-  padding: 10px 20px;
-  font-size: 14px;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  gap: 8px;
-}
-
 /* Footer */
 .settings-footer {
   padding: 16px 0;
