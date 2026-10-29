@@ -2,7 +2,8 @@
 .calendar-navigation {
   display: flex;
   gap: 8px;
-  padding: 0 8px 16px 8px;
+  /* 좌우 패딩이 있으면 캡션·날짜 격자(0)보다 안쪽에서 시작해 왼쪽 선이 어긋난다 */
+  padding: 0 0 16px 0;
 }
 
 .calendar-navigation select,
@@ -181,14 +182,25 @@
   max-width: 100%;
 }
 
+/* 칸 폭을 44px 고정으로 두면 좁은 화면에서 격자가 컨테이너를 넘쳐 토요일이 잘리고 한쪽으로 쏠린다.
+   7등분으로 폭을 나누고 날짜 버튼만 칸 안에서 줄어들게 한다 */
 .rdp-month_grid {
   width: 100%;
+  table-layout: fixed;
+}
+
+.rdp-weekday,
+.rdp-day {
+  width: auto;
 }
 
 .rdp-day_button {
   margin: 0 auto;
   position: relative;
   z-index: 1;
+  width: min(var(--rdp-day_button-width), 100%);
+  height: auto;
+  aspect-ratio: 1;
 }
 
 @media (max-width: 640px) {
