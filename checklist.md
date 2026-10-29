@@ -5,7 +5,6 @@
 
 ## 축 A — 기존 요소 외형 개선 (구조·기능 변경 없음)
 
-- [ ] A7 `.day-has-entry` 점 표시로 교체
 - [ ] A8 `.pwa-update-toast` 배경 `#2c3e50` → 토큰. `max-content`/`keep-all`은 유지
 - [ ] 축 A 완료 후 라이트·다크 육안 리뷰 (여기서 멈춤)
 

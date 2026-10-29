@@ -145,22 +145,18 @@
   border: 1px solid var(--accent-primary);
 }
 
-/* 일기가 있는 날짜 표시 */
-.day-has-entry {
-  font-weight: 600;
-  color: var(--accent-secondary);
-}
-
+/* 일기가 있는 날짜: 글자는 그대로 두고 아래에 4px 악센트 점만 찍는다 */
 .day-has-entry::after {
   content: '';
   position: absolute;
-  bottom: 5px;
+  bottom: 4px;
   left: 50%;
   transform: translateX(-50%);
-  width: 5px;
-  height: 5px;
-  background: var(--accent-secondary);
+  width: 4px;
+  height: 4px;
+  background: var(--accent-primary);
   border-radius: 50%;
+  pointer-events: none;
 }
 
 .rdp-day_selected.day-has-entry::after {
