@@ -132,6 +132,12 @@
   cursor: pointer;
   border: 1px solid var(--border-color);
   transition: all 0.2s;
+  /* 긴 태그가 줄을 넘지 않게 말줄임 (tag-list·entry-view-tags 는 flex-wrap) */
+  max-width: 150px;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 /* 활성·hover: 악센트 연함 면 + 악센트 글자 */
