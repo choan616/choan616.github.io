@@ -1,10 +1,18 @@
 import { defineConfig } from 'vite'
 import react from '@vitejs/plugin-react'
 import { VitePWA } from 'vite-plugin-pwa'
+import { readFileSync } from 'node:fs'
+
+const { version } = JSON.parse(readFileSync(new URL('./package.json', import.meta.url), 'utf-8'))
 
 // https://vite.dev/config/
 export default defineConfig(({ command }) => {
   return {
+    // 설정 화면에 표시해 새로고침 후 실제로 새 빌드가 적용됐는지 확인하는 용도 (src/constants.js)
+    define: {
+      __APP_VERSION__: JSON.stringify(version),
+      __BUILD_TIME__: JSON.stringify(new Date().toISOString())
+    },
     plugins: [
       react(),
       VitePWA({

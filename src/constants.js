@@ -1,6 +1,11 @@
+/* global __APP_VERSION__, __BUILD_TIME__ */
 /**
  * 앱 전역에서 사용되는 상수
  */
+
+// vite.config.js 의 define 이 빌드 시 채운다
+export const APP_VERSION = __APP_VERSION__;
+export const BUILD_TIME = __BUILD_TIME__;
 
 export const SyncStatus = {
   IDLE: 'idle',         // 대기
