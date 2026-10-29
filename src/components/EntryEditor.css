@@ -270,7 +270,6 @@
   height: 26px;
   border: none;
   background: color-mix(in srgb, var(--color-danger) 85%, transparent);
-  backdrop-filter: blur(4px);
   color: white;
   border-radius: 50%;
   font-size: 18px;

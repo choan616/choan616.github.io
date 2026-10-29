@@ -75,7 +75,6 @@
   font-size: 12px;
   font-weight: 500;
   z-index: 10;
-  backdrop-filter: blur(4px);
 }
 
 /* Lightbox Styles */
@@ -90,8 +89,6 @@
   align-items: center;
   justify-content: center;
   z-index: 1000;
-  -webkit-backdrop-filter: blur(8px);
-  backdrop-filter: blur(8px);
 }
 
 .lightbox-content {

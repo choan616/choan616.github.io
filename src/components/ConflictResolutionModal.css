@@ -9,8 +9,6 @@
   align-items: center;
   justify-content: center;
   z-index: 12000; /* 다른 모달(11000)보다 높게 설정하여 항상 위에 표시되도록 함 */
-  backdrop-filter: blur(5px);
-  -webkit-backdrop-filter: blur(5px);
 }
 
 .conflict-resolution-modal {
