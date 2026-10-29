@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo, Suspense } from 'react';
+import React, { useState, useEffect, useMemo, useRef, Suspense } from 'react';
 import { useLiveQuery } from 'dexie-react-hooks';
 import { format } from 'date-fns';
 import { UserProvider } from './contexts/UserContext'; // UserProvider import
@@ -102,6 +102,8 @@ function AppContent() {
     }
   }, [currentUser, lastSyncTime]);
   // PWA 서비스 워커 업데이트 로직
+  // 설정 화면의 「업데이트 확인」이 쓰도록 등록 객체를 콜백 밖으로 꺼내 둔다
+  const swRegistrationRef = useRef(null);
   const {
     offlineReady: [offlineReady],
     needRefresh: [needRefresh, setNeedRefresh],
@@ -109,6 +111,7 @@ function AppContent() {
   } = useRegisterSW({
     onRegisteredSW(_url, r) {
       console.log('SW Registered:', r);
+      swRegistrationRef.current = r;
       // 앱을 켜 둔 채 며칠 쓰는 경우를 위해 주기적으로도 확인한다. 브라우저는 재방문 때만 본다
       if (r) setInterval(() => r.update(), SW_UPDATE_CHECK_INTERVAL_MS);
       // iOS 홈 화면 앱은 백그라운드에서 다시 꺼낼 때 페이지를 새로 불러오지 않고 타이머도 멈춰 있어서,
@@ -135,6 +138,32 @@ function AppContent() {
     // 받으면 새 SW 는 활성화돼도 화면은 옛 버전 그대로라, 새로고침을 직접 건다
     navigator.serviceWorker?.addEventListener('controllerchange', () => window.location.reload(), { once: true });
     updateServiceWorker(true);
+  };
+
+  const checkForUpdate = async () => {
+    const r = swRegistrationRef.current;
+    if (!r) {
+      showToast('서비스 워커가 등록되지 않아 확인할 수 없습니다.', 'info');
+      return;
+    }
+    if (needRefresh) {
+      showToast('새 버전이 준비돼 있습니다. 업데이트 띠의 「새로고침」을 누르세요.', 'info');
+      return;
+    }
+    try {
+      await r.update();
+    } catch (error) {
+      console.error('SW update check failed:', error);
+      showToast('업데이트를 확인하지 못했습니다. 연결을 확인하세요.', 'error');
+      return;
+    }
+    // update() 는 새 SW 를 발견하면 내려받는 중인 상태로 돌아온다. 대기·설치 중이 없으면 최신이다
+    showToast(
+      r.installing || r.waiting
+        ? '새 버전을 받는 중입니다. 잠시 뒤 업데이트 띠가 뜹니다.'
+        : '이미 최신 버전입니다.',
+      'info'
+    );
   };
 
   // 인증 확인
@@ -606,6 +635,7 @@ function AppContent() {
               isGuest={currentUser.isGuest}
               onClose={() => setShowSettings(false)}
               showToast={showToast}
+              onCheckUpdate={checkForUpdate}
             />
           </Suspense>
         )}

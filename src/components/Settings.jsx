@@ -7,14 +7,16 @@ import { AVAILABLE_FONTS } from '../services/uiSettings';
 import { registerPasskey } from '../utils/webauthn';
 import { getUser, addWebAuthnCredential } from '../db/adapter';
 import { getCurrentUser } from '../utils/auth';
+import { APP_VERSION, BUILD_TIME } from '../constants';
 import EncryptionSettings from './EncryptionSettings';
 import './Settings.css';
 
 /**
  * 설정 패널 컴포넌트
  */
-export function Settings({ isGuest, onClose }) {
+export function Settings({ isGuest, onClose, onCheckUpdate }) {
   const [showPinSetup, setShowPinSetup] = useState(false);
+  const [checkingUpdate, setCheckingUpdate] = useState(false);
   const { settings: uiSettings, updateSetting: updateUiSetting } = useUiSettings();
   const [currentSyncSettings, setCurrentSyncSettings] = useState(syncSettings.getAll());
 
@@ -55,6 +57,15 @@ export function Settings({ isGuest, onClose }) {
     } catch (err) {
       console.error('Passkey registration failed:', err);
       showToast(err.message || '패스키 등록 중 오류가 발생했습니다.', 'error');
+    }
+  };
+
+  const handleCheckUpdate = async () => {
+    setCheckingUpdate(true);
+    try {
+      await onCheckUpdate();
+    } finally {
+      setCheckingUpdate(false);
     }
   };
 
@@ -222,6 +233,19 @@ export function Settings({ isGuest, onClose }) {
             {!isGuest && (
               <EncryptionSettings showToast={showToast} />
             )}
+          </div>
+
+          <div className="settings-section">
+            <h3>앱 정보</h3>
+            <div className="setting-item">
+              <div className="setting-info">
+                <span className="setting-label">버전 {APP_VERSION}</span>
+                <span className="setting-desc">빌드 {new Date(BUILD_TIME).toLocaleString('ko-KR')}</span>
+              </div>
+              <button className="btn btn-secondary" onClick={handleCheckUpdate} disabled={checkingUpdate}>
+                {checkingUpdate ? '확인 중...' : '업데이트 확인'}
+              </button>
+            </div>
           </div>
 
           <div className="settings-footer">

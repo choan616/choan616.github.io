@@ -3,12 +3,6 @@
 열려 있는 작업만 둔다. 끝난 항목은 지운다 (이력은 커밋에 있다).
 계획과 배경은 `implementation_plan_design_v2.md`, 결정은 `decisions.md`, 세션 분배는 `handoff.md`.
 
-## 축 B 최우선 — 버전 가시화
-
-- [ ] B0-1 `vite.config.js` `define`에 `__APP_VERSION__` + 빌드 시각 주입, `constants.js`에서 노출
-- [ ] B0-2 설정에 현재 버전 표시 + "업데이트 확인" 버튼 (`onRegisteredSW`의 `r`을 끌어올려야 한다)
-- [ ] B0 감지·알림은 이미 동작한다. 새로 만들지 않는다
-
 ## 축 A — 기존 요소 외형 개선 (구조·기능 변경 없음)
 
 - [ ] A1 `index.css` 토큰 교체 (색·그림자·반경). `--glass-*`는 값만 평면화하고 변수는 남긴다
