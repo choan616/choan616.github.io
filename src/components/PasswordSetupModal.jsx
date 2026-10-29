@@ -4,6 +4,7 @@ import { usePinInput } from '../hooks/usePinInput';
 import { getCurrentUser } from '../utils/auth';
 import { setPin } from '../db/adapter';
 import './Modal.css';
+import { Icon } from './Icon';
 
 export function PasswordSetupModal({ onClose }) {
   const { isNewUser, setIsNewUser, unlock } = useSession();
@@ -45,8 +46,8 @@ export function PasswordSetupModal({ onClose }) {
     <div className="modal-overlay">
       <div className="modal" onClick={(e) => e.stopPropagation()}>
         {onClose && (
-          <button onClick={onClose} className="close-btn" style={{ position: 'absolute', top: '1rem', right: '1rem' }}>
-            ✕
+          <button onClick={onClose} className="close-btn" aria-label="닫기" style={{ position: 'absolute', top: '1rem', right: '1rem' }}>
+            <Icon name="close" size={20} />
           </button>
         )}
         <h3>보안 PIN 설정</h3>

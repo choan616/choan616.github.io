@@ -1,6 +1,7 @@
 import React, { useMemo, useState, useEffect } from 'react';
 import { useLiveQuery } from 'dexie-react-hooks';
 import './ImageGallery.css';
+import { Icon } from './Icon';
 import { base64ToBlob } from '../utils/imageCompression';
 import { db } from '../db/db';
 
@@ -69,7 +70,7 @@ export function ImageGallery({ userId, onEntryClick, onClose }) {
   if (!galleryItems || galleryItems.length === 0) {
     return (
       <div className="gallery-empty">
-        <div className="gallery-empty-icon">🖼️</div>
+        <div className="gallery-empty-icon"><Icon name="photo" size={48} /></div>
         <p>사진이 포함된 일기가 없습니다.</p>
         <button className="btn-back-diary" onClick={onClose}>일기 쓰러 가기</button>
       </div>
@@ -84,7 +85,7 @@ export function ImageGallery({ userId, onEntryClick, onClose }) {
           <span className="gallery-count">총 {galleryItems ? galleryItems.length : 0}장</span>
         </div>
         <button className="gallery-close-btn" onClick={onClose} aria-label="닫기">
-          ✕
+          <Icon name="close" size={20} />
         </button>
       </div>
       

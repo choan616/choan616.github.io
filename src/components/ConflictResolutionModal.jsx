@@ -34,7 +34,7 @@ export function ConflictResolutionModal({ remoteMetadata, localModifiedTime, loc
       {/* 모달 내부 클릭 시 닫히지 않도록 이벤트 전파 중단 */}
       <div className="conflict-resolution-modal" onClick={(e) => e.stopPropagation()}>
         <div className="modal-header">
-          ⚠️ 동기화 충돌 해결
+          동기화 충돌 해결
         </div>
         <div className="modal-body">
           <p>
@@ -43,8 +43,8 @@ export function ConflictResolutionModal({ remoteMetadata, localModifiedTime, loc
           </p>
 
           <div className="conflict-comparison-area">
-            {renderContent('💻 로컬 데이터 (현재 기기)', localSummary, localModifiedTime)}
-            {renderContent('☁️ 클라우드 데이터', remoteMetadata?.appProperties, remoteMetadata?.modifiedTime)}
+            {renderContent('로컬 데이터 (현재 기기)', localSummary, localModifiedTime)}
+            {renderContent('클라우드 데이터', remoteMetadata?.appProperties, remoteMetadata?.modifiedTime)}
           </div>
         </div>
         <div className="modal-footer">
@@ -52,13 +52,13 @@ export function ConflictResolutionModal({ remoteMetadata, localModifiedTime, loc
             className="modal-button primary"
             onClick={() => handleResolve('push')}
           >
-            💻 로컬 데이터 유지 (클라우드에 덮어쓰기)
+            로컬 데이터 유지 (클라우드에 덮어쓰기)
           </button>
           <button
             className="modal-button"
             onClick={() => handleResolve('pull')}
           >
-            ☁️ 클라우드 데이터 사용 (로컬에 덮어쓰기)
+            클라우드 데이터 사용 (로컬에 덮어쓰기)
           </button>
         </div>
       </div>

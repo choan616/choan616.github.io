@@ -192,7 +192,7 @@ export function EntryEditor({ entry, onSave, isEditing, setIsEditing, onImageDel
     return (
       <div className="entry-editor empty">
         <div className="empty-state">
-          <div className="empty-icon">📝</div>
+          <div className="empty-icon"><Icon name="pencil" size={48} /></div>
           <p>날짜를 선택하여 일기를 작성하세요</p>
         </div>
       </div>
@@ -212,7 +212,7 @@ export function EntryEditor({ entry, onSave, isEditing, setIsEditing, onImageDel
               onClick={handleSave}
               disabled={isSaving}
             >
-              {isSaving ? '저장 중...' : '💾 저장'}
+              {isSaving ? '저장 중...' : '저장'}
             </button>
             <button
               className="btn btn-secondary clickable"
@@ -228,10 +228,10 @@ export function EntryEditor({ entry, onSave, isEditing, setIsEditing, onImageDel
               className="btn btn-secondary clickable"
               onClick={handleCopy}
             >
-              📋 복사
+              복사
             </button>
             <button className="btn btn-primary clickable" onClick={() => setIsEditing(true)}>
-              {isEmptyEntry ? '✏️ 쓰기' : '✏️ 편집'}
+              <Icon name="pencil" size={16} className="icon-inline" />{isEmptyEntry ? '쓰기' : '편집'}
             </button>
 
             {/* 삭제 버튼 추가 */}
@@ -240,7 +240,7 @@ export function EntryEditor({ entry, onSave, isEditing, setIsEditing, onImageDel
                 className="btn btn-danger-text clickable"
                 onClick={onDelete}
               >
-                🗑️ 삭제
+                <Icon name="trash" size={16} className="icon-inline" />삭제
               </button>
             )}
           </div>
@@ -326,8 +326,8 @@ export function EntryEditor({ entry, onSave, isEditing, setIsEditing, onImageDel
                 disabled={(entry.images?.length || 0) + selectedFiles.length >= 10}
               >
                 {(entry.images?.length || 0) + selectedFiles.length >= 10
-                  ? '🚫 최대 10장'
-                  : '📷 이미지 선택'}
+                  ? '최대 10장'
+                  : <><Icon name="photo" size={16} className="icon-inline" />이미지 선택</>}
               </button>
               <input
                 ref={fileInputRef}

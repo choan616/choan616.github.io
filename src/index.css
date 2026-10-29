@@ -161,6 +161,12 @@ textarea {
   font-family: inherit;
 }
 
+/* 글자 옆에 붙는 아이콘의 세로 정렬과 간격 */
+.icon-inline {
+  vertical-align: -3px;
+  margin-right: 6px;
+}
+
 #root {
   width: 100vw;
   height: 100vh;

@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import './Search.css';
+import { Icon } from './Icon';
 import SearchFilter from './SearchFilter';
 import { HighlightText } from '../utils/searchUtils';
 import { noAutofillProps } from '../utils/noAutofill';
@@ -47,8 +48,8 @@ export function Search({ onSearch, onClear, isSearching, startDate, endDate, onS
           </svg>
         </button>
         {isSearching ? (
-          <button type="button" onClick={handleClear} className="search-button clear">
-            ✕
+          <button type="button" onClick={handleClear} className="search-button clear" aria-label="검색 지우기">
+            <Icon name="close" size={18} />
           </button>
         ) : (
           <button type="submit" className="search-button">

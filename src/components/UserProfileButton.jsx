@@ -120,7 +120,9 @@ export function UserProfileButton({ user, onLogout, onSettingsClick, onBackupCli
               <div className="theme-control-header">
                 <label className="theme-label">테마</label>
                 <span className="theme-current-value">
-                  {theme === 'system' ? '🌗 자동' : theme === 'light' ? '☀️ 라이트' : '🌙 다크'}
+                  {theme === 'system' ? '자동' : theme === 'light'
+                    ? <><Icon name="sun" size={16} className="icon-inline" />라이트</>
+                    : <><Icon name="moon" size={16} className="icon-inline" />다크</>}
                 </span>
               </div>
               <div className="range-selector-wrapper">

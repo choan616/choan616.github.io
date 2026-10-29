@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react';
+import { Icon } from './Icon';
 import { googleDriveService } from '../services/googleDrive';
 import { CloudStorageFactory } from '../services/cloudStorage/CloudStorageFactory';
 // syncManager import removed to avoid circular dependency
@@ -372,10 +373,10 @@ export function BackupPanel({ currentUser, onClose, onDataRestored, onAuthentica
       <div className="backup-panel">
         <div className="backup-header">
           <div>
-            <h2>💾 백업 및 동기화</h2>
+            <h2>백업 및 동기화</h2>
             <p className="backup-user-info">사용자: {currentUser.name || currentUser.email}</p>
           </div>
-          <button className="close-btn clickable" onClick={handleClose}>✕</button>
+          <button className="close-btn clickable" onClick={handleClose} aria-label="닫기"><Icon name="close" size={20} /></button>
         </div>
 
         <div className="backup-content">
@@ -391,7 +392,7 @@ export function BackupPanel({ currentUser, onClose, onDataRestored, onAuthentica
             >
               {CloudStorageFactory.getAvailableProviders().map(provider => (
                 <option key={provider.value} value={provider.value}>
-                  {provider.icon} {provider.label}
+                  {provider.label}
                 </option>
               ))}
             </select>
@@ -401,19 +402,19 @@ export function BackupPanel({ currentUser, onClose, onDataRestored, onAuthentica
           <section className="backup-section">
             {currentUser.isGuest && !isAuthenticated ? (
               <div className="auth-section guest-prompt">
-                <h3>☁️ 클라우드 동기화</h3>
+                <h3>클라우드 동기화</h3>
                 <p>{cloudService?.providerName || '클라우드 저장소'}에 로그인하여 데이터를 안전하게 백업하고, 여러 기기에서 일기를 동기화하세요.</p>
                 <button
                   className="btn btn-primary clickable"
                   onClick={handleSignIn}
                   disabled={isLoading}
                 >
-                  🔐 {cloudService?.providerName || '클라우드'} 계정으로 시작하기
+                  {cloudService?.providerName || '클라우드'} 계정으로 시작하기
                 </button>
               </div>
             ) : (
               <>
-                <h3>☁️ {cloudService?.providerName || '클라우드 저장소'}</h3>
+                <h3>{cloudService?.providerName || '클라우드 저장소'}</h3>
 
                 {!isAuthenticated ? (
                   <div className="auth-section">
@@ -423,7 +424,7 @@ export function BackupPanel({ currentUser, onClose, onDataRestored, onAuthentica
                       onClick={handleSignIn}
                       disabled={isLoading}
                     >
-                      🔐 {cloudService?.providerName || '클라우드'} 로그인
+                      {cloudService?.providerName || '클라우드'} 로그인
                     </button>
                   </div>
                 ) : (
@@ -450,28 +451,28 @@ export function BackupPanel({ currentUser, onClose, onDataRestored, onAuthentica
                         className="btn btn-success clickable"
                         onClick={handleBackup}
                       >
-                        📤 지금 백업하기 (수동)
+                        지금 백업하기 (수동)
                       </button>
                       <button
                         className="btn btn-primary clickable"
                         onClick={handleManualSync}
                         disabled={status === SyncStatus.SYNCING}
                       >
-                        {status === SyncStatus.SYNCING ? '🔄 동기화 중...' : '🔄 지금 동기화'}
+                        {status === SyncStatus.SYNCING ? '동기화 중...' : '지금 동기화'}
                       </button>
                       <button
                         className="btn btn-secondary clickable"
                         onClick={loadBackupFiles}
                         disabled={isLoading}
                       >
-                        🔄 목록 새로고침
+                        목록 새로고침
                       </button>
                     </div>
 
                     {status === SyncStatus.CONFLICT && (
                       <div className="sync-status-info conflict">
                         <div className="conflict-header-info">
-                          <h4>⚠️ 동기화 충돌</h4>
+                          <h4><Icon name="error" size={16} className="icon-inline" />동기화 충돌</h4>
                           <p>{lastError || '다른 기기와 데이터 충돌이 발생했습니다.'}</p>
                         </div>
                         <button
@@ -533,17 +534,17 @@ export function BackupPanel({ currentUser, onClose, onDataRestored, onAuthentica
 
           {/* 수동 백업 섹션 */}
           <section className="backup-section">
-            <h3>💾 수동 백업 (로컬)</h3>
+            <h3>수동 백업 (로컬)</h3>
             <p>일기 데이터를 ZIP 파일로 컴퓨터에 저장하거나, 저장된 파일을 복원합니다.</p>
             <div className="manual-backup-actions">
               <button
                 className="btn btn-secondary clickable"
                 onClick={handleExportZip}
               >
-                📥 ZIP으로 내보내기
+                ZIP으로 내보내기
               </button>
               <label className="btn btn-secondary clickable">
-                📤 ZIP 가져오기
+                ZIP 가져오기
                 <input
                   type="file"
                   accept=".zip,application/zip"
@@ -552,7 +553,7 @@ export function BackupPanel({ currentUser, onClose, onDataRestored, onAuthentica
                 />
               </label>
               <label className="btn btn-secondary clickable">
-                📄 TXT 가져오기
+                TXT 가져오기
                 <input
                   type="file"
                   accept=".txt,text/plain"

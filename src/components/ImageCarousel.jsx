@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import './ImageCarousel.css';
+import { Icon } from './Icon';
 
 export function ImageCarousel({ images = [] }) {
   const [selectedImage, setSelectedImage] = useState(null);
@@ -15,7 +16,7 @@ export function ImageCarousel({ images = [] }) {
   if (!images || images.length === 0) {
     return (
       <div className="carousel-empty">
-        <div className="empty-icon">🖼️</div>
+        <div className="empty-icon"><Icon name="photo" size={48} /></div>
         <p>이미지가 없습니다</p>
       </div>
     );
@@ -47,7 +48,7 @@ export function ImageCarousel({ images = [] }) {
           <div className="lightbox-content">
             <img src={selectedImage} alt="확대 이미지" className="lightbox-image" />
           </div>
-          <button className="lightbox-close-button" onClick={closeLightbox}>✕</button>
+          <button className="lightbox-close-button" onClick={closeLightbox} aria-label="닫기"><Icon name="close" size={24} /></button>
         </div>
       )}
     </div>

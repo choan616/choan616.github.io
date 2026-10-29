@@ -33,12 +33,12 @@ export class CloudStorageFactory {
 
   /**
    * 사용 가능한 저장소 목록
-   * @returns {Array<{value: string, label: string, icon: string}>}
+   * @returns {Array<{value: string, label: string}>}
    */
   static getAvailableProviders() {
     return [
-      { value: 'google', label: 'Google Drive', icon: '☁️' },
-      { value: 'dropbox', label: 'Dropbox', icon: '📦' }
+      { value: 'google', label: 'Google Drive' },
+      { value: 'dropbox', label: 'Dropbox' }
     ];
   }
 }

@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useMemo, useRef, Suspense } from 'react';
 import { useLiveQuery } from 'dexie-react-hooks';
+import { Icon } from './components/Icon';
 import { format } from 'date-fns';
 import { UserProvider } from './contexts/UserContext'; // UserProvider import
 import { useRegisterSW } from 'virtual:pwa-register/react';
@@ -531,7 +532,7 @@ function AppContent() {
           sidebar={showStats || showGallery ? (
             <div className="sidebar-actions">
               <button className="btn-stats" onClick={() => { setShowStats(false); setShowGallery(false); }}>
-                ⬅️ 일기로 돌아가기
+                <Icon name="chevron-left" size={16} className="icon-inline" />일기로 돌아가기
               </button>
             </div>
           ) : (
@@ -552,7 +553,7 @@ function AppContent() {
                   <Calendar selectedDate={selectedDate} onSelect={handleDateSelect} entryDates={entriesDateList} currentUser={currentUser} />
                   <div style={{}}>
                     <button className="btn btn-secondary" style={{ width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px' }} onClick={() => setShowGallery(true)}>
-                      <span>🖼️</span> 사진 모아보기
+                      <Icon name="photo" size={18} /> 사진 모아보기
                     </button>
                   </div>
                   {/* 통계 버튼은 프로필 메뉴로 이동됨 */}
@@ -606,7 +607,7 @@ function AppContent() {
               />
             ) : (
               <div className="main-placeholder">
-                <div className="main-placeholder-icon">🔒</div>
+                <div className="main-placeholder-icon"><Icon name="lock" size={48} /></div>
                 <p>달력에서 날짜를 선택하여 일기를 확인하세요.</p>
               </div>
             )

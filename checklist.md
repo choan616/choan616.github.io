@@ -5,8 +5,6 @@
 
 ## 축 A — 기존 요소 외형 개선 (구조·기능 변경 없음)
 
-- [ ] A4 `Icon.jsx`에 10개 추가 (search, calendar, photo, tag, lock, pencil, trash, plus, close, chevron-left/right)
-- [ ] A4 UI 노출 이모지만 교체. 토스트 문구·`console.log`는 남긴다
 - [ ] A5 카드·버튼·칩 스타일 (반경 칩 9999 / 버튼 10 / 카드 14 / 본문 16)
 - [ ] A6 칩 넘침 방어 (`TagCloud.css`, `EntryEditor.css`)
 - [ ] A7 `.day-has-entry` 점 표시로 교체

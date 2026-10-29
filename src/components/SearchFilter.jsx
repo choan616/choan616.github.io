@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { format } from 'date-fns';
 import './SearchFilter.css';
+import { Icon } from './Icon';
 
 const DateInput = ({ value, onChange, ...props }) => {
     const [type, setType] = useState('text');
@@ -43,7 +44,7 @@ const SearchFilter = ({ startDate, endDate, onStartDateChange, onEndDateChange, 
       </div>
       {(startDate || endDate) && (
         <button onClick={onClear} className="search-filter-clear" aria-label="필터 초기화" title="필터 초기화">
-          ✕
+          <Icon name="close" size={16} />
         </button>
       )}
     </div>
