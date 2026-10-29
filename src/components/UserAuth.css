@@ -1,36 +1,16 @@
-/* --card-bg, --text-primary, --text-secondary, --border-color 는 index.css 의 토큰을 쓴다 */
+/* 공통 색 변수(--bg-color, --accent-color 등)는 index.css 의 토큰 별칭을 쓴다. 여기엔 구글 버튼 전용 값만 둔다 */
 :root {
-  --bg-color: #f5f6f7;
-  --text-tertiary: #888;
-  --border-color-light: #e1e8ed;
-  --accent-color: #4a90e2;
-  --accent-color-hover: #357abd;
-  --accent-bg-light: #f8fbff;
   --btn-google-bg: #ffffff;
   --btn-google-text: #3c4043;
   --btn-google-border: #dadce0;
   --btn-google-hover-bg: #f8f9fa;
-  --error-bg: #fee;
-  --error-text: #c33;
-  --shadow-light: rgba(0, 0, 0, 0.05);
-  --shadow-medium: rgba(0, 0, 0, 0.1);
 }
 
 .dark {
-  --bg-color: #121212;
-  --text-tertiary: #888;
-  --border-color-light: #3a3a3a;
-  --accent-color: #5d9cec;
-  --accent-color-hover: #7bb4f7;
-  --accent-bg-light: #2a2d3a;
   --btn-google-bg: #2d2d2d;
   --btn-google-text: #e0e0e0;
   --btn-google-border: #555;
   --btn-google-hover-bg: #3c3c3c;
-  --error-bg: #442222;
-  --error-text: #ff8888;
-  --shadow-light: rgba(255, 255, 255, 0.05);
-  --shadow-medium: rgba(255, 255, 255, 0.1);
 }
 
 .user-auth-container {

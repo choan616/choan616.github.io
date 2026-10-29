@@ -315,26 +315,6 @@
   font-size: 14px;
 }
 
-.entry-tags {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 8px;
-}
-
-.tag {
-  background: var(--bg-secondary);
-  color: var(--text-secondary);
-  padding: 4px 12px;
-  border-radius: var(--border-radius-pill);
-  font-size: 13px;
-  font-weight: 600;
-  max-width: 150px;
-  min-width: 0;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
 .entry-content {
   font-size: 1rem;
   line-height: 1.8;
@@ -564,17 +544,15 @@
   gap: 0.5rem;
 }
 
+/* 읽기 화면 태그는 눌러도 동작이 없으므로 TagCloud 의 칩 스타일에서 hover 반응만 뺀다 */
 .entry-view .tag-item {
-  background-color: var(--tag-bg);
-  color: var(--tag-color);
-  padding: 0;
-  border-radius: 9999px;
-  font-size: 0.9rem;
+  cursor: default;
 }
 
 .entry-view .tag-item:hover {
-  background-color: transparent;
-  color: var(--tag-color-strong);
+  background: var(--bg-secondary);
+  color: var(--text-secondary);
+  border-color: var(--border-color);
 }
 
 .entry-actions.view-mode {

@@ -36,14 +36,6 @@
   align-items: center;
 }
 
-/* 다크 모드 스타일 */
-:root.dark .stats-card {
-  background-color: var(--bg-paper-dark, #252525);
-  border-color: var(--border-color-dark, #444444);
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
-  color: var(--text-primary-dark, #eeeeee);
-}
-
 /* 반응형 스타일 */
 @media (max-width: 768px) {
   .stats-dashboard {

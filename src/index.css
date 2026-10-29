@@ -80,13 +80,30 @@
   --shadow-sm: 0 1px 2px 0 rgba(27, 27, 25, 0.04);
   --shadow-md: 0 1px 3px 0 rgba(27, 27, 25, 0.06);
   --shadow-lg: 0 2px 8px -2px rgba(27, 27, 25, 0.08);
-  --shadow-soft: 0 2px 12px -4px rgba(27, 27, 25, 0.06);
 
   /* Radius */
   --border-radius-sm: 10px;
   --border-radius-md: 14px;
   --border-radius-lg: 16px;
   --border-radius-pill: 9999px;
+
+  /* 레거시 변수 이름 → 토큰. 옛 이름을 쓰는 곳(UserAuth·Search·Switch·Onboarding 등)이 시안 값을 따르게 한다 */
+  --bg-color: var(--bg-primary);
+  --bg-color-offset: var(--surface-muted);
+  --bg-paper: var(--bg-secondary);
+  --text-tertiary: var(--text-muted);
+  --text-color: var(--text-primary);
+  --text-color-strong: var(--text-primary);
+  --text-color-light: var(--text-muted);
+  --border-color-light: var(--border-color);
+  --primary-color: var(--accent-primary);
+  --accent-color: var(--accent-primary);
+  --accent-color-hover: var(--accent-primary-hover);
+  --accent-bg-light: var(--accent-soft);
+  --accent-primary-alpha: rgba(var(--accent-primary-rgb), 0.15);
+  --error-bg: color-mix(in srgb, var(--color-danger) 10%, var(--bg-secondary));
+  --error-text: var(--color-danger);
+  --shadow-color: rgba(27, 27, 25, 0.08);
 
   /* Chart Colors */
   --chart-color-1-rgb: 59, 130, 246;
@@ -134,7 +151,6 @@
   --border-color: #2E3138;
   --border-strong: #3A3E46;
   --surface-muted: #23262C;
-  --shadow-soft: 0 2px 12px -4px rgba(0, 0, 0, 0.5);
 }
 
 * {
