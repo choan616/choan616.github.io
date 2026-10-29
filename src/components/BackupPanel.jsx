@@ -192,7 +192,8 @@ export function BackupPanel({ currentUser, onClose, onDataRestored, onAuthentica
       const result = await cloudService.uploadBackup(
         zipBlob,
         appProperties,
-        (percent) => setBackupProgress(percent)
+        // 진행률은 줄어들지 않게 한다 (겹친 콜백이 와도 오르내리지 않도록)
+        (percent) => setBackupProgress(prev => Math.max(prev, percent))
       );
 
       setBackupProgress(100);
@@ -450,6 +451,7 @@ export function BackupPanel({ currentUser, onClose, onDataRestored, onAuthentica
                       <button
                         className="btn btn-success clickable"
                         onClick={handleBackup}
+                        disabled={isLoading}
                       >
                         지금 백업하기 (수동)
                       </button>
