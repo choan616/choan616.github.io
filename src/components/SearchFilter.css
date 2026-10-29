@@ -89,5 +89,5 @@
 
 .search-filter-clear:hover {
   background-color: var(--accent-primary);
-  color: #fff;
+  color: var(--text-on-accent);
 }

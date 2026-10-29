@@ -190,9 +190,9 @@
 }
 
 .pagination-button:not(:disabled):hover {
-  background-color: var(--primary-color, #4a90e2);
-  color: white;
-  border-color: var(--primary-color, #4a90e2);
+  background-color: var(--accent-primary);
+  color: var(--text-on-accent);
+  border-color: var(--accent-primary);
   transform: translateY(-1px);
 }
 

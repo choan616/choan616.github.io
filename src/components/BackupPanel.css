@@ -218,15 +218,17 @@
 .progress-bar {
   position: relative;
   height: 24px;
-  background: var(--bg-secondary);
+  background: var(--surface-muted);
+  border: 1px solid var(--border-color);
   border-radius: var(--border-radius-md);
   overflow: hidden;
   margin: 16px 0;
 }
 
+/* 글자가 채움 위에 겹쳐 놓이므로 채움은 연하게 둬서 --text-primary 대비를 유지한다 */
 .progress-fill {
   height: 100%;
-  background: var(--accent-primary);
+  background: color-mix(in srgb, var(--accent-primary) 35%, var(--bg-secondary));
   transition: width 0.3s;
 }
 

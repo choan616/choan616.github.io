@@ -253,7 +253,7 @@
   height: 26px;
   border: none;
   background: color-mix(in srgb, var(--color-danger) 85%, transparent);
-  color: white;
+  color: var(--text-on-accent);
   border-radius: 50%;
   font-size: 18px;
   font-weight: 700;

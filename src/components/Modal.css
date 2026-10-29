@@ -101,7 +101,7 @@
 
 .modal button[type="submit"] {
   background: var(--accent-primary);
-  color: white;
+  color: var(--text-on-accent);
   border: none
 }
 
