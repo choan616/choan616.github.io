@@ -279,7 +279,8 @@
 .file-main-text {
   display: flex;
   align-items: center;
-  gap: 8px;
+  flex-wrap: wrap;
+  gap: 4px 8px;
   margin-bottom: 2px;
 }
 
@@ -287,6 +288,7 @@
   font-size: 14px;
   font-weight: 600;
   color: var(--text-primary);
+  white-space: nowrap;
 }
 
 .file-sub-text {
@@ -294,14 +296,26 @@
   color: var(--text-secondary);
   display: flex;
   align-items: center;
+  min-width: 0;
+  white-space: pre;
 }
 
+/* 파일명만 말줄임으로 줄이고 구분점과 크기는 항상 보이게 한다 */
 .file-name {
-  max-width: 200px;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.file-size {
+  flex-shrink: 0;
+  white-space: nowrap;
 }
 
 .file-actions {
   display: flex;
+  flex-shrink: 0;
   gap: 8px;
 }
 
@@ -312,6 +326,7 @@
   padding: 2px 8px;
   font-size: 11px;
   font-weight: 600;
+  white-space: nowrap;
   color: var(--accent-primary);
   background-color: color-mix(in srgb, var(--accent-primary) 10%, transparent);
   border-radius: var(--border-radius-pill);
@@ -355,5 +370,16 @@
   .backup-actions .btn,
   .manual-backup-actions .btn {
     width: 100%;
+  }
+
+  /* 백업 파일 항목: 파일 정보는 윗줄 전체 폭, 복원·삭제 버튼은 아랫줄로 분리한다 */
+  .file-item {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 10px;
+  }
+
+  .file-actions {
+    justify-content: flex-end;
   }
 }
