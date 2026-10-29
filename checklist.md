@@ -3,11 +3,6 @@
 열려 있는 작업만 둔다. 끝난 항목은 지운다 (이력은 커밋에 있다).
 계획과 배경은 `implementation_plan_design_v2.md`, 결정은 `decisions.md`, 세션 분배는 `handoff.md`.
 
-## S0 — 선행 (다른 세션)
-
-- [ ] 시안 Artifact의 `project/Tokens.dc.html`에서 토큰 값 추출 → `design-tokens.md`
-- [ ] 라이트 10종 / 다크 5종 / 타입 스케일 / 반경 / 칩 규칙 / `index.css` 변수 대응표
-
 ## 축 B 최우선 — 버전 가시화
 
 - [ ] B0-1 `vite.config.js` `define`에 `__APP_VERSION__` + 빌드 시각 주입, `constants.js`에서 노출
