@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { Icon } from './Icon';
 import { googleDriveService } from '../services/googleDrive';
 import { CloudStorageFactory } from '../services/cloudStorage/CloudStorageFactory';
@@ -27,6 +27,7 @@ export function BackupPanel({ currentUser, onClose, onDataRestored, onAuthentica
   const [isLoading, setIsLoading] = useState(false);
   const [backupProgress, setBackupProgress] = useState(0);
   const [restoreProgress, setRestoreProgress] = useState(0);
+  const backupRunningRef = useRef(false);
 
   const { showToast } = useToast();
   // notifySyncSuccess를 context에서 가져옴
@@ -153,6 +154,9 @@ export function BackupPanel({ currentUser, onClose, onDataRestored, onAuthentica
   }
 
   async function handleBackup() {
+    // state 는 리렌더 뒤에야 바뀌어 빠른 더블클릭이 둘 다 통과한다. ref 로 즉시 막는다
+    if (backupRunningRef.current) return;
+    backupRunningRef.current = true;
     try {
       setIsLoading(true);
       setBackupProgress(0);
@@ -209,6 +213,7 @@ export function BackupPanel({ currentUser, onClose, onDataRestored, onAuthentica
       console.error('백업 오류:', error);
       showToast(`백업 실패: ${error.message}`, 'error');
     } finally {
+      backupRunningRef.current = false;
       setIsLoading(false);
       setBackupProgress(0);
     }
