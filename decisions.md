@@ -1,0 +1,18 @@
+# 결정
+
+한 결정에 한두 줄. 뒤집힌 줄은 지우지 않고 상태만 바꾼다.
+결정의 근거와 기각한 대안은 `context-notes.md`.
+
+- **D1** 디자인 컨셉은 "종이와 잉크"(평면 흰 면 + 1px 선, 악센트 1종). 기각: 글래스모피즘 유지, 그라데이션 강화. `[valid]`
+- **D2** `implementation_plan_design_upgrade.md`(Ethereal Clarity)는 D1으로 대체. `[superseded → D1]`
+- **D3** 작업을 두 축으로 나눈다. 축 A(외형, 구조 무변경) 완료 후 축 B(신규 기능). 기각: 화면 단위로 묶어 한 번에. `[valid]`
+- **D4** `--glass-*` 변수는 제거하지 않고 값만 평면화한다. 8개 파일이 참조 중. `[valid]`
+- **D5** 이모지 교체는 UI 노출분만. 토스트 문구와 `console.log`는 남긴다. `[valid]`
+- **D6** 달력 작성일 표시는 `.day-has-entry` CSS만 고친다. `Calendar.jsx` 무변경. `[valid]`
+- **D7** 본문 글꼴만 사용자 선택(`AVAILABLE_FONTS`)을 받고 UI 글꼴은 고정. `[valid]`
+- **D8** "사진 있는 날" 필터는 `searchEntries`를 고치지 않고 태그 필터와 같은 클라이언트 경로를 쓴다. 기각: `searchEntries`에 필터 인자 추가(빈 `query` 계약을 깨야 함). `[valid]`
+- **D9** 사진 날짜 조회를 위해 스키마 v11에 복합 인덱스 `[userId+entryDate]`를 추가한다. 기각: 현재 인덱스로 전체 blob 로드. `[valid]`
+- **D10** 사진 개수는 `deletedAt`을 걸러내지 않은 대략치로 표시한다. 정확히 세려면 base64 전체를 읽어야 한다. `[valid]`
+- **D11** 자동 저장은 본문·태그 변경만 대상. 이미지 업로드는 수동 저장에 남긴다. `[valid]`
+- **D12** 모바일 하단 탭(B1)은 축 B의 마지막. 데스크톱 2단 레이아웃은 유지. `[valid]`
+- **D13** 테스트 러너는 도입하지 않는다. 검증은 `lint` + `build` + 항목별 수동 + 로직 항목(B2·B7)의 assert 자체 점검. `[valid]`
