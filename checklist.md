@@ -5,7 +5,6 @@
 
 ## 축 A — 기존 요소 외형 개선 (구조·기능 변경 없음)
 
-- [ ] A1 `index.css` 토큰 교체 (색·그림자·반경). `--glass-*`는 값만 평면화하고 변수는 남긴다
 - [ ] A2 변수를 안 쓰고 직접 쓴 `backdrop-filter: blur(...)` 걷어내기
 - [ ] A3 UI 고딕 / 본문 명조 분리. 본문 16.5px·행간 2.05·62자
 - [ ] A4 `Icon.jsx`에 10개 추가 (search, calendar, photo, tag, lock, pencil, trash, plus, close, chevron-left/right)
@@ -15,6 +14,14 @@
 - [ ] A7 `.day-has-entry` 점 표시로 교체
 - [ ] A8 `.pwa-update-toast` 배경 `#2c3e50` → 토큰. `max-content`/`keep-all`은 유지
 - [ ] 축 A 완료 후 라이트·다크 육안 리뷰 (여기서 멈춤)
+
+## 계획에 없던 것 (S2가 발견, 고치지 않고 적어 둠)
+
+- [ ] **A1을 무력화하는 충돌** — `UserAuth.css` 1~41행이 전역 `:root`/`.dark`를 또 정의해 `--card-bg` `--text-primary` `--text-secondary` `--border-color` 4개를 덮어쓴다. 번들 순서상 `index.css`보다 뒤라 앱 전체에서 이쪽이 이긴다. 브라우저 확인값: 라이트 `--text-primary=#333`(시안은 `#1B1B19`), `--border-color=#e0e0e0`(시안은 `#E3E3DF`). A5 전에 `.user-auth-container` 스코프로 내리거나 겹치는 4개를 지워야 한다
+- [ ] `Modal.css:11`이 쓰는 `--shadow-color`가 어디에도 정의돼 있지 않다 → 선언 전체가 무효라 모달 그림자가 원래 안 나온다
+- [ ] `index.css`의 `.btn-danger`가 `rgba(239, 68, 68, ...)`를 하드코딩한다. 글자색만 토큰이라 배경과 색이 어긋난다 (A5 몫)
+- [ ] `--chart-color-*-rgb`가 옛 파랑/초록/빨강 그대로다. 시안에 값이 없어 A1에서 건드리지 않았다 (B3·B4에서 결정)
+- [ ] `--shadow-soft`는 선언만 있고 참조가 0건이다 (기존 죽은 변수)
 
 ## 축 B — 신규 기능 (싼 것부터)
 

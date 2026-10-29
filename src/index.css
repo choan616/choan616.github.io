@@ -30,58 +30,57 @@
   /* Font */
   --font-family-sans: "Pretendard", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol";
 
-  /* --- Ethereal Clarity Theme (Light) --- */
+  /* --- Paper & Ink Theme (Light) --- */
 
   /* Core Colors */
-  --bg-primary: #f0f4f8;
-  /* Fallback */
-  --bg-gradient: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
-  /* Subtle Mesh/Gradient */
-  --bg-secondary: rgba(255, 255, 255, 0.65);
-  /* Glass Base */
-  --bg-secondary-hover: rgba(255, 255, 255, 0.85);
+  --bg-primary: #F6F6F4;
+  --bg-gradient: #F6F6F4;
+  --bg-secondary: #FFFFFF;
+  --bg-secondary-hover: #F0F0EC;
 
-  --card-bg: rgba(255, 255, 255, 0.7);
-  /* Glass Card */
+  --card-bg: #FFFFFF;
 
-  --text-primary: #1f2937;
-  /* Dark Gray mostly black */
-  --text-secondary: #4b5563;
-  --text-muted: #9ca3af;
+  --text-primary: #1B1B19;
+  --text-secondary: #55554F;
+  --text-muted: #76766F;
+  --text-body: #23231F;
 
   /* Accents */
-  --accent-primary: #3B82F6;
-  /* Modern Blue */
-  --accent-primary-gradient: linear-gradient(135deg, #3B82F6 0%, #2563EB 100%);
-  --accent-primary-rgb: 59, 130, 246;
-  --accent-primary-hover: #2563EB;
+  --accent-primary: #38477A;
+  --accent-primary-gradient: #38477A;
+  --accent-primary-rgb: 56, 71, 122;
+  --accent-primary-hover: #2A3661;
+  --accent-soft: #EDEEF5;
+  --accent-soft-border: #D6D9E8;
 
-  --accent-secondary: #10B981;
-  /* Emerald */
-  --accent-secondary-gradient: linear-gradient(135deg, #10B981 0%, #059669 100%);
-  --accent-secondary-rgb: 16, 185, 129;
+  --accent-secondary: #4C7A5A;
+  --accent-secondary-gradient: #4C7A5A;
+  --accent-secondary-rgb: 76, 122, 90;
 
-  --color-danger: #EF4444;
-  --color-danger-hover: #DC2626;
+  --color-danger: #A8564A;
+  --color-danger-hover: #8E4339;
+  --color-danger-border: #E6CFC9;
 
-  /* Glassmorphism Tokens */
-  --glass-bg: rgba(255, 255, 255, 0.6);
-  --glass-border: rgba(255, 255, 255, 0.4);
-  --glass-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.05);
-  --backdrop-blur: blur(12px);
+  /* Flattened glass tokens — variables kept, 8 files reference them (D4) */
+  --glass-bg: #FFFFFF;
+  --glass-border: #E3E3DF;
+  --glass-shadow: none;
+  --backdrop-blur: none;
 
-  --border-color: rgba(209, 213, 219, 0.5);
+  --border-color: #E3E3DF;
+  --border-strong: #D7D7D1;
+  --surface-muted: #F0F0EC;
 
-  /* Shadows */
-  --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
-  --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -2px rgba(0, 0, 0, 0.05);
-  --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.05), 0 4px 6px -4px rgba(0, 0, 0, 0.05);
-  --shadow-soft: 0 10px 40px -10px rgba(0, 0, 0, 0.08);
+  /* Shadows — layers are drawn by 1px lines, shadows only hint depth (D1) */
+  --shadow-sm: 0 1px 2px 0 rgba(27, 27, 25, 0.04);
+  --shadow-md: 0 1px 3px 0 rgba(27, 27, 25, 0.06);
+  --shadow-lg: 0 2px 8px -2px rgba(27, 27, 25, 0.08);
+  --shadow-soft: 0 2px 12px -4px rgba(27, 27, 25, 0.06);
 
   /* Radius */
-  --border-radius-sm: 8px;
-  --border-radius-md: 12px;
-  --border-radius-lg: 20px;
+  --border-radius-sm: 10px;
+  --border-radius-md: 14px;
+  --border-radius-lg: 16px;
   --border-radius-pill: 9999px;
 
   /* Chart Colors */
@@ -92,29 +91,44 @@
 }
 
 .dark {
-  /* --- Ethereal Clarity Theme (Dark) --- */
-  --bg-primary: #0f172a;
-  --bg-gradient: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);
+  /* --- Paper & Ink Theme (Dark) --- */
+  /* 시안이 준 값: 바탕·면·선·보조글자·악센트 5종. 나머지는 S2가 정했다 */
+  --bg-primary: #15161A;
+  --bg-gradient: #15161A;
 
-  --bg-secondary: rgba(30, 41, 59, 0.65);
-  --bg-secondary-hover: rgba(30, 41, 59, 0.85);
+  --bg-secondary: #1D1F24;
+  --bg-secondary-hover: #2E3138;
 
-  --card-bg: rgba(30, 41, 59, 0.6);
+  --card-bg: #1D1F24;
 
-  --text-primary: #f8fafc;
-  --text-secondary: #cbd5e1;
-  --text-muted: #64748b;
+  --text-primary: #D9D9D5;
+  --text-secondary: #B6B7B2;
+  --text-muted: #8A8B86;
+  --text-body: #D9D9D5;
 
-  --accent-primary: #60A5FA;
-  --accent-primary-gradient: linear-gradient(135deg, #60A5FA 0%, #3B82F6 100%);
-  --accent-primary-rgb: 96, 165, 250;
+  --accent-primary: #A8B4E4;
+  --accent-primary-gradient: #A8B4E4;
+  --accent-primary-rgb: 168, 180, 228;
+  --accent-primary-hover: #C2CBEE;
+  --accent-soft: #262B3D;
+  --accent-soft-border: #39405A;
 
-  --glass-bg: rgba(15, 23, 42, 0.6);
-  --glass-border: rgba(255, 255, 255, 0.1);
-  --glass-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.2);
+  --accent-secondary: #7FA98C;
+  --accent-secondary-gradient: #7FA98C;
+  --accent-secondary-rgb: 127, 169, 140;
 
-  --border-color: rgba(255, 255, 255, 0.1);
-  --shadow-soft: 0 10px 40px -10px rgba(0, 0, 0, 0.5);
+  --color-danger: #D08878;
+  --color-danger-hover: #E0A294;
+  --color-danger-border: #4A2F2A;
+
+  --glass-bg: #1D1F24;
+  --glass-border: #2E3138;
+  --glass-shadow: none;
+
+  --border-color: #2E3138;
+  --border-strong: #3A3E46;
+  --surface-muted: #23262C;
+  --shadow-soft: 0 2px 12px -4px rgba(0, 0, 0, 0.5);
 }
 
 * {
