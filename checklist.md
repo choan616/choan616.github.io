@@ -1,7 +1,18 @@
 # 체크리스트
 
 열려 있는 작업만 둔다. 끝난 항목은 지운다 (이력은 커밋에 있다).
-계획과 배경은 `implementation_plan_design_v2.md`, 결정은 `decisions.md`.
+계획과 배경은 `implementation_plan_design_v2.md`, 결정은 `decisions.md`, 세션 분배는 `handoff.md`.
+
+## S0 — 선행 (다른 세션)
+
+- [ ] 시안 Artifact의 `project/Tokens.dc.html`에서 토큰 값 추출 → `design-tokens.md`
+- [ ] 라이트 10종 / 다크 5종 / 타입 스케일 / 반경 / 칩 규칙 / `index.css` 변수 대응표
+
+## 축 B 최우선 — 버전 가시화
+
+- [ ] B0-1 `vite.config.js` `define`에 `__APP_VERSION__` + 빌드 시각 주입, `constants.js`에서 노출
+- [ ] B0-2 설정에 현재 버전 표시 + "업데이트 확인" 버튼 (`onRegisteredSW`의 `r`을 끌어올려야 한다)
+- [ ] B0 감지·알림은 이미 동작한다. 새로 만들지 않는다
 
 ## 축 A — 기존 요소 외형 개선 (구조·기능 변경 없음)
 
@@ -13,6 +24,7 @@
 - [ ] A5 카드·버튼·칩 스타일 (반경 칩 9999 / 버튼 10 / 카드 14 / 본문 16)
 - [ ] A6 칩 넘침 방어 (`TagCloud.css`, `EntryEditor.css`)
 - [ ] A7 `.day-has-entry` 점 표시로 교체
+- [ ] A8 `.pwa-update-toast` 배경 `#2c3e50` → 토큰. `max-content`/`keep-all`은 유지
 - [ ] 축 A 완료 후 라이트·다크 육안 리뷰 (여기서 멈춤)
 
 ## 축 B — 신규 기능 (싼 것부터)

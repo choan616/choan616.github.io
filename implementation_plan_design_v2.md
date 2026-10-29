@@ -42,6 +42,9 @@
 | `images` 테이블 | `entries`와 분리. 인덱스 `++id, userId, entryDate, createdAt`. blob·thumbnail을 **base64 data URL**로 저장 |
 | `ImageGallery` | 전체 이미지를 base64째로 메모리에 올린다 (`db.images.where({userId}).toArray()`). 기존 성능 문제 |
 | 테스트 러너 | **없다.** `package.json` scripts는 dev / build / lint / preview |
+| PWA 업데이트 감지·알림 | **이미 있다.** `registerType: 'prompt'` + `useRegisterSW` + 1시간 주기 `r.update()` + `visibilitychange` 재확인 + `.pwa-update-toast` 띠 + `controllerchange` 강제 새로고침 |
+| 앱 버전 노출 | **없다.** `vite.config.js`에 주입 없고 `constants.js`에도 없고 설정 화면에도 표기가 없다. `package.json`의 `1.0.0`은 코드에서 쓰이지 않는다 |
+| `.pwa-update-toast` | 배경이 `#2c3e50` 하드코딩. 토큰을 쓰지 않는다 (축 A 누락 지점) |
 
 ## 축 A — 기존 요소 외형 개선
 
@@ -75,9 +78,23 @@ UI는 고딕 고정, 일기 본문만 사용자가 고른 글꼴(`AVAILABLE_FONT
 JSX 무변경. 현재 스타일을 시안의 점 표시로 바꾼다.
 → verify: 일기 있는 날에만 점이 찍히는지
 
+**A8. 업데이트 띠 토큰화** — `src/App.css`의 `.pwa-update-toast`
+배경 `#2c3e50` 하드코딩을 토큰으로 바꾼다. **`width: max-content`와 `word-break: keep-all`은 건드리지 않는다** — 6be3d3b에서 좁은 화면에서 글자 단위로 꺾이던 걸 막은 코드다.
+→ verify: 320px 폭에서 띠가 글자 단위로 꺾이지 않는지, 라이트·다크 양쪽
+
 ## 축 B — 신규 기능
 
-시안에만 있고 코드에는 없는 것들. 싼 것부터 쓴다.
+시안에만 있고 코드에는 없는 것들. B0이 최우선이고 나머지는 싼 것부터 쓴다.
+
+**B0. 버전 가시화 — 축 B 최우선**
+감지와 알림 자체는 이미 동작한다(위 표). 없는 것은 **지금 쓰는 버전이 몇인지 알 길**이다. 그래서 "새로고침했는데 정말 새 버전으로 바뀐 건가"를 확인할 수 없고, 띠가 떠도 그 말을 믿을 근거가 없다. 알림 기능을 새로 만드는 게 아니라 **이미 있는 알림을 신뢰할 수 있게 만드는 작업**이다.
+- B0-1 빌드 시 버전 주입 — `vite.config.js`의 `define`에 `__APP_VERSION__`과 빌드 시각. `src/constants.js`에서 꺼내 쓴다
+- B0-2 버전 표시 + 수동 확인 — 설정(B1 이후에는 더보기)에 현재 버전과 "업데이트 확인" 버튼. 버튼은 등록 객체의 `update()`를 부른다
+- 손대는 곳: `vite.config.js`, `src/constants.js`, `src/App.jsx`, `src/components/Settings.jsx`
+- → verify: 빌드 후 설정에 `package.json`의 버전이 뜨는지. 버전을 올려 두 번 빌드한 뒤 `npm run preview`로 띠가 뜨고, 새로고침하면 표시 버전이 바뀌는지
+- 주의: `onRegisteredSW(_url, r)`의 등록 객체 `r`이 지금은 콜백 안에만 살아 있다. 설정 화면에서 쓰려면 ref나 상태로 끌어올려야 한다
+- 축 A와 파일이 겹치지 않는다(겹치는 건 `Settings.jsx`의 A5 스타일 정도). **축 A보다 먼저 해도 된다**
+- 시안에 이 UI가 없다. 띠는 A8 스타일을 따르고, 설정의 버전 행은 기존 설정 행 스타일을 쓴다
 
 **B4. 히트맵 되살리기** — 거의 공짜
 `ContributionHeatmap.jsx`가 이미 있고 아무도 안 쓴다. `StatsDashboard`에 import 하고 시안 스타일(5단계 명도)로 맞춘다.
@@ -128,11 +145,15 @@ JSX 무변경. 현재 스타일을 시안의 점 표시로 바꾼다.
 커밋 하나 = 위 항목 하나.
 
 ```
-A1 → A2 → A3 → A4 → A5 → A6 → A7   (축 A 완료, 여기서 한 번 멈춰 육안 리뷰)
+S0  토큰 추출 (design-tokens.md)        ← 이후 세션이 Artifact를 읽지 않아도 되게 한다
+B0  버전 가시화                          ← 축 A와 파일이 겹치지 않는다
+A1 → A2 → A3 → A4 → A5 → A6 → A7 → A8   (축 A 완료, 여기서 멈춰 육안 리뷰)
 B4 → B5 → B8 → B3 → B2 → B6 → B1 → B7
 ```
 
 축 A가 끝난 시점이 되돌릴 수 있는 안전지대다. 축 B는 여기서부터 각자 독립적으로 되돌릴 수 있게 유지한다.
+
+세션을 나눠 진행하는 방법과 각 세션에 넣을 지시는 `handoff.md`에 있다.
 
 ## 검증 수단
 
