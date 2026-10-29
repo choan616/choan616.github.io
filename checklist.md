@@ -17,7 +17,9 @@
 
 ## 계획에 없던 것 (S2가 발견, 고치지 않고 적어 둠)
 
-- [ ] **A1을 무력화하는 충돌** — `UserAuth.css` 1~41행이 전역 `:root`/`.dark`를 또 정의해 `--card-bg` `--text-primary` `--text-secondary` `--border-color` 4개를 덮어쓴다. 번들 순서상 `index.css`보다 뒤라 앱 전체에서 이쪽이 이긴다. 브라우저 확인값: 라이트 `--text-primary=#333`(시안은 `#1B1B19`), `--border-color=#e0e0e0`(시안은 `#E3E3DF`). A5 전에 `.user-auth-container` 스코프로 내리거나 겹치는 4개를 지워야 한다
+- [ ] **A1·A5를 무력화하는 충돌 — `UserAuth.css`가 스코프 없이 전역을 덮어쓴다.** 번들 순서상 `index.css`보다 뒤라 앱 전체에서 이쪽이 이긴다. `.user-auth-container` 아래로 내리거나 겹치는 선언을 지워야 한다
+  - 1~41행: 전역 `:root`/`.dark`에서 `--card-bg` `--text-primary` `--text-secondary` `--border-color` 4개 재정의. 브라우저 확인값 라이트 `--text-primary: #333`(시안 `#1B1B19`), `--border-color: #e0e0e0`(시안 `#E3E3DF`). 메인 일기 카드 글자가 실제로 `#333`으로 찍힌다
+  - 442~464행: 전역 `.btn`(`border-radius: 8px` 하드코딩 — 반경 토큰을 덮는다)과 `.btn-primary`(`linear-gradient(135deg, #667eea, #764ba2)` 보라색). 설정 모달 "닫기", 작성 화면 "이미지 선택"이 보라색으로 찍힌다. `EntryEditor.css:73`이 덮는 "저장"만 악센트 인디고로 나온다
 - [ ] `Modal.css:11`이 쓰는 `--shadow-color`가 어디에도 정의돼 있지 않다 → 선언 전체가 무효라 모달 그림자가 원래 안 나온다
 - [ ] `index.css`의 `.btn-danger`가 `rgba(239, 68, 68, ...)`를 하드코딩한다. 글자색만 토큰이라 배경과 색이 어긋난다 (A5 몫)
 - [ ] `--chart-color-*-rgb`가 옛 파랑/초록/빨강 그대로다. 시안에 값이 없어 A1에서 건드리지 않았다 (B3·B4에서 결정)
