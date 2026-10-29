@@ -398,24 +398,22 @@
 }
 
 /* 텍스트 크기 조절 */
+/* 행간은 노트 줄 배경(background-size)과 맞물려 px 여야 해서 calc 로 2.05배를 만든다 */
 .font-size-small .entry-view-content {
-  font-size: 1rem;
-  /* 16px */
-  --line-height: 28px;
+  font-size: 15px;
+  --line-height: calc(15px * 2.05);
   line-height: var(--line-height);
 }
 
 .font-size-medium .entry-view-content {
-  font-size: 1.1rem;
-  /* 17.6px */
-  --line-height: 32px;
+  font-size: 16.5px;
+  --line-height: calc(16.5px * 2.05);
   line-height: var(--line-height);
 }
 
 .font-size-large .entry-view-content {
-  font-size: 1.25rem;
-  /* 20px */
-  --line-height: 36px;
+  font-size: 19px;
+  --line-height: calc(19px * 2.05);
   line-height: var(--line-height);
 }
 
@@ -548,6 +546,9 @@
   flex-grow: 1;
   /* 헤더/태그를 제외한 남은 공간을 모두 차지 */
   padding: 0 1.5rem 2rem;
+  /* 한 줄 최대 62자: 한글 한 자가 1em 이므로 62em + 좌우 패딩 */
+  max-width: calc(62em + 3rem);
+  color: var(--text-body);
   overflow-y: auto;
   /* 이 요소가 직접 스크롤을 담당합니다. */
   font-size: 1.1rem;

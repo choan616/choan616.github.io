@@ -5,7 +5,6 @@
 
 ## 축 A — 기존 요소 외형 개선 (구조·기능 변경 없음)
 
-- [ ] A3 UI 고딕 / 본문 명조 분리. 본문 16.5px·행간 2.05·62자
 - [ ] A4 `Icon.jsx`에 10개 추가 (search, calendar, photo, tag, lock, pencil, trash, plus, close, chevron-left/right)
 - [ ] A4 UI 노출 이모지만 교체. 토스트 문구·`console.log`는 남긴다
 - [ ] A5 카드·버튼·칩 스타일 (반경 칩 9999 / 버튼 10 / 카드 14 / 본문 16)

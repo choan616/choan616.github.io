@@ -6,6 +6,7 @@
 const UI_SETTINGS_KEY = 'ui_settings';
 
 export const AVAILABLE_FONTS = [
+    { value: "var(--font-family-serif)", label: '노토 명조 (기본)' },
     { value: "'Nanum Gothic', sans-serif", label: '나눔고딕' },
     { value: "'Nanum Myeongjo', serif", label: '나눔명조' },
     { value: "'GyeonggiCheonnyeon Batang', serif", label: '경기천년바탕' },
@@ -18,7 +19,7 @@ export const AVAILABLE_FONTS = [
 const DEFAULT_UI_SETTINGS = {
   fontSize: 'medium',
   theme: 'light',
-  fontFamily: "var(--font-family-sans)",
+  fontFamily: "var(--font-family-serif)",
   enableScreenLock: true,
 };
 
