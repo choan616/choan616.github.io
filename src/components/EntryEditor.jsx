@@ -95,6 +95,21 @@ export function EntryEditor({ entry, onSave, isEditing, setIsEditing, onImageDel
     return () => selectedFiles.forEach(file => URL.revokeObjectURL(file.preview));
   }, [selectedFiles]);
 
+  // 모바일 전체 화면 작성 중에는 뒤의 페이지를 고정한다. 스크롤할 대상이 없어야
+  // iOS 가 키보드를 피하려고 바깥 화면을 밀지 못한다 (스타일은 EntryEditor.css 의 html.editor-open)
+  useEffect(() => {
+    if (!isEditing || !window.matchMedia('(max-width: 768px)').matches) return;
+    const root = document.documentElement;
+    const scrollTop = document.body.scrollTop || window.scrollY;
+    root.classList.add('editor-open');
+    return () => {
+      root.classList.remove('editor-open');
+      // body 가 고정에서 풀릴 때 위치가 0 으로 돌아가는 브라우저를 위해 되돌려 놓는다
+      document.body.scrollTop = scrollTop;
+      window.scrollTo(0, scrollTop);
+    };
+  }, [isEditing]);
+
   // 시안의 본문 글꼴(A) 버튼: 누를 때마다 글자 크기가 다음 단계로 간다
   const cycleFontSize = () => {
     const next = FONT_SIZES[(FONT_SIZES.indexOf(fontSize) + 1) % FONT_SIZES.length];

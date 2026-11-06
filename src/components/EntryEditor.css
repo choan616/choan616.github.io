@@ -646,6 +646,18 @@
     overscroll-behavior: contain;
   }
 
+  /* 작성 중에는 뒤의 페이지를 고정한다 (EntryEditor.jsx 가 html 에 클래스를 붙인다) */
+  html.editor-open,
+  html.editor-open body {
+    overflow: hidden;
+  }
+
+  html.editor-open body {
+    position: fixed;
+    inset: 0;
+    width: 100%;
+  }
+
   .editor-form {
     padding: 20px 20px 8px;
   }
