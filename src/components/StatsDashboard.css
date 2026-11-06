@@ -1,8 +1,8 @@
+/* 통계 화면 (시안 Stats): 기간 → 요약 3칸 → 히트맵 → 월별 → 태그 */
 .stats-dashboard {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-  gap: 20px;
-  padding: 20px;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 14px;
   width: 100%;
   box-sizing: border-box;
 }
@@ -36,57 +36,157 @@
   font-weight: 700;
 }
 
-/* 그리드 항목의 min-width: auto 때문에 카드가 안쪽 차트 캔버스의 기본 폭(300px)보다 줄어들지 못해,
-   그 폭보다 좁은 화면에서는 오른쪽으로 넘쳐 좌우 여백이 달라졌다 */
-.stats-dashboard > * {
+.stats-summary {
+  grid-column: 1 / -1;
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 8px;
+}
+
+.stats-tile {
   min-width: 0;
+  padding: 13px 12px;
+  background: var(--bg-secondary);
+  border: 1px solid var(--border-color);
+  border-radius: var(--border-radius-md);
+}
+
+.stats-tile-label {
+  margin-bottom: 5px;
+  font-size: 11px;
+  color: var(--text-muted);
+}
+
+.stats-tile-value {
+  font-size: 20px;
+  font-weight: 700;
+  letter-spacing: -0.4px;
+  color: var(--text-primary);
+}
+
+.stats-tile-value span {
+  font-size: 12px;
+  font-weight: 400;
+  color: var(--text-muted);
 }
 
 .stats-card {
-  background-color: var(--bg-paper, #ffffff);
+  min-width: 0;
+  padding: 16px 14px;
+  background: var(--bg-secondary);
+  border: 1px solid var(--border-color);
   border-radius: var(--border-radius-md);
-  padding: 20px;
-  box-shadow: var(--shadow-sm);
-  border: 1px solid var(--border-color, #e0e0e0);
-  display: flex;
-  flex-direction: column;
-  transition: background-color 0.3s ease, border-color 0.3s ease, box-shadow 0.3s ease, color 0.3s ease;
-  color: var(--text-primary, #333333);
+  color: var(--text-primary);
+}
+
+.stats-card-wide {
+  grid-column: 1 / -1;
 }
 
 .stats-card h3 {
-  margin-top: 0;
-  margin-bottom: 20px;
-  font-size: 1.1rem;
-  font-weight: 600;
+  margin: 0 0 14px;
+  font-size: 12.5px;
+  font-weight: 500;
   color: inherit;
 }
 
-.chart-container {
-  position: relative;
-  min-width: 0;
-  height: 300px;
-  width: 100%;
+/* 월별 막대 */
+.stats-months {
   display: flex;
-  justify-content: center;
-  align-items: center;
+  align-items: flex-end;
+  gap: 10px;
+  height: 96px;
 }
 
-/* Chart.js 가 캔버스 폭을 직접 지정하므로, 컨테이너가 줄어들 때 캔버스가 버티지 않게 한다 */
-.chart-container canvas {
+.stats-month {
+  flex: 1 1 0;
   min-width: 0;
-  max-width: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 7px;
 }
 
-/* 반응형 스타일 */
+.stats-month-value {
+  font-size: 11px;
+  color: var(--text-secondary);
+}
+
+.stats-month-bar {
+  width: 100%;
+  border-radius: 5px 5px 2px 2px;
+  background: var(--heat-1);
+}
+
+.stats-month-bar.is-current {
+  background: var(--accent-primary);
+}
+
+.stats-month-label {
+  font-size: 10.5px;
+  color: var(--text-muted);
+  white-space: nowrap;
+}
+
+/* 태그 가로 막대 */
+.stats-tags {
+  display: flex;
+  flex-direction: column;
+  gap: 9px;
+}
+
+.stats-tag {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.stats-tag-name {
+  flex-shrink: 0;
+  width: 72px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: 12px;
+  color: var(--text-primary);
+}
+
+.stats-tag-track {
+  flex-grow: 1;
+  min-width: 0;
+  height: 8px;
+  overflow: hidden;
+  background: var(--heat-0);
+  border-radius: var(--border-radius-pill);
+}
+
+.stats-tag-track span {
+  display: block;
+  height: 8px;
+  background: var(--accent-primary);
+  border-radius: var(--border-radius-pill);
+}
+
+.stats-tag-count {
+  flex-shrink: 0;
+  width: 26px;
+  text-align: right;
+  font-size: 11.5px;
+  color: var(--text-muted);
+}
+
+.stats-empty {
+  margin: 0;
+  font-size: 12px;
+  color: var(--text-muted);
+}
+
 @media (max-width: 768px) {
   .stats-dashboard {
-    grid-template-columns: 1fr;
-    /* 좌우 패딩은 main-container(8px)에 맡겨 위의 '일기로 돌아가기' 버튼과 같은 가장자리에 맞춘다 */
-    padding: 12px 0;
+    grid-template-columns: minmax(0, 1fr);
   }
-  
-  .chart-container {
-    height: 250px;
+
+  .stats-period {
+    max-width: none;
   }
 }

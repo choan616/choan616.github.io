@@ -1,6 +1,6 @@
 // 연속 일수·이번 달 기록 일수 경계 자체 점검. 실행: node scripts/check-streak.mjs
 import assert from 'node:assert/strict';
-import { calcStreak, countInMonth } from '../src/utils/streak.js';
+import { calcLongestStreak, calcStreak, countInMonth } from '../src/utils/streak.js';
 
 const d = (y, m, day) => new Date(y, m - 1, day, 12);
 const cases = [];
@@ -29,6 +29,19 @@ check('어제도 오늘도 없으면 연속은 끊겨 0', () => {
 
 check('중간에 빈 날이 있으면 거기서 멈춘다', () => {
   assert.equal(calcStreak(['2026-10-29', '2026-10-28', '2026-10-26'], d(2026, 10, 29)), 2);
+});
+
+check('최장 연속: 없으면 0, 하나면 1', () => {
+  assert.equal(calcLongestStreak([]), 0);
+  assert.equal(calcLongestStreak(['2026-10-29']), 1);
+});
+
+check('최장 연속: 가장 긴 구간을 고르고 순서·중복과 무관하다', () => {
+  assert.equal(calcLongestStreak(['2026-10-29', '2026-10-01', '2026-10-28', '2026-10-02', '2026-10-03', '2026-10-02']), 3);
+});
+
+check('최장 연속: 달·연 경계를 넘어 이어진다', () => {
+  assert.equal(calcLongestStreak(['2026-12-31', '2027-01-01', '2026-10-31', '2026-11-01', '2026-11-02']), 3);
 });
 
 check('달 경계를 넘어 이어진다 (연속 4, 이번 달 2)', () => {
