@@ -121,11 +121,18 @@
   /* '작년 오늘' 카드의 아이콘 타일. 라이트는 시안 값, 다크는 시안에 없어 따뜻한 톤을 어둡게 옮겼다 (D23) */
   --memory-tile-bg: #F1EEE8;
   --memory-tile-fg: #7A6A4F;
+
+  /* 축 C: 시안 마크업의 값 */
+  --border-soft: #EEEEEA;
+  --text-future: #B5B5AD;
+  --weekday-sat: #4A5E8C;
+  --nav-bg: #FFFFFF;
+  --tools-bg: #FCFCFB;
 }
 
 .dark {
   /* --- Paper & Ink Theme (Dark) --- */
-  /* 시안이 준 값: 바탕·면·선·보조글자·악센트 5종. 나머지는 S2가 정했다 */
+  /* 시안(Tokens·Stats)이 준 값을 쓰고, 경고·확인·악센트 연함처럼 시안에 없는 값만 S2가 정했다 (D19, D29) */
   --bg-primary: #15161A;
   --bg-gradient: #15161A;
 
@@ -134,18 +141,18 @@
 
   --card-bg: #1D1F24;
 
-  --text-primary: #D9D9D5;
+  --text-primary: #F2F2EF;
   --text-secondary: #B6B7B2;
-  --text-muted: #8A8B86;
+  --text-muted: #8C8D88;
   --text-body: #D9D9D5;
 
   --accent-primary: #A8B4E4;
   --accent-primary-gradient: #A8B4E4;
   --accent-primary-rgb: 168, 180, 228;
-  --accent-primary-hover: #C2CBEE;
+  --accent-primary-hover: #C6CDF0;
   --accent-soft: #262B3D;
   --accent-soft-border: #39405A;
-  --text-on-accent: #15161A;
+  --text-on-accent: #11121A;
 
   --accent-secondary: #7FA98C;
   --accent-secondary-gradient: #7FA98C;
@@ -171,6 +178,12 @@
 
   --memory-tile-bg: #2B2923;
   --memory-tile-fg: #B5A583;
+
+  --border-soft: #2E3138;
+  --text-future: #5F605C;
+  --weekday-sat: #A8B4E4;
+  --nav-bg: #1A1C21;
+  --tools-bg: #1A1C21;
 }
 
 * {
