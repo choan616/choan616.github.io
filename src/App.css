@@ -75,6 +75,29 @@ body {
   flex-shrink: 0;
 }
 
+/* 사이드바의 '사진 모아보기': 라벨은 왼쪽, 개수는 오른쪽 (시안) */
+.btn-gallery {
+  width: 100%;
+  height: 48px;
+  padding: 0 16px;
+  gap: 10px;
+  justify-content: flex-start;
+  border-radius: var(--border-radius-md);
+  font-size: 14px;
+  font-weight: 500;
+  text-align: left;
+}
+
+.btn-gallery-label {
+  flex-grow: 1;
+}
+
+.btn-gallery-count {
+  font-size: 12px;
+  font-weight: 400;
+  color: var(--text-muted);
+}
+
 /* 일기 카드 바로 아래에 '작년 오늘' 카드를 붙이는 열. 편집기는 원래처럼 내용 높이를 쓴다 */
 .main-diary {
   display: flex;

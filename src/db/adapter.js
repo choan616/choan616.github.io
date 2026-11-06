@@ -366,6 +366,16 @@ export async function getEntriesDateList(userId) {
 }
 
 /**
+ * 사용자의 사진 개수 (삭제 표시된 사진 포함한 대략치)
+ * deletedAt 을 거르려면 and() 로 레코드를 전부 읽어 base64 가 메모리에 올라오므로 count() 만 쓴다 (D10)
+ * @param {string} userId - 사용자 ID
+ * @returns {Promise<number>}
+ */
+export async function countImages(userId) {
+  return await db.images.where({ userId }).count();
+}
+
+/**
  * 사용자의 일기가 있는 모든 연도와 월 목록을 조회합니다.
  * @param {string} userId - 사용자 ID
  * @returns {Promise<Object>} { '2023': [1, 2, 12], '2024': [3, 5] } 형태의 객체

@@ -18,7 +18,7 @@ import { TagCloud } from './components/TagCloud';
 import { useUiSettings } from './contexts/useUiSettings';
 import ErrorBoundary from './components/ErrorBoundary';
 import { setCurrentUser as setAuthUser, getCurrentUser, clearCurrentUser, isAuthenticated } from './utils/auth';
-import { getEntriesDateList, getAllEntries, getUser, searchEntries, getEntryWithImages, saveEntryWithImages, deleteEntry, deleteOrphanedImages } from './db/adapter';
+import { getEntriesDateList, getAllEntries, countImages, getUser, searchEntries, getEntryWithImages, saveEntryWithImages, deleteEntry, deleteOrphanedImages } from './db/adapter';
 import { syncManager } from './services/syncManager';
 import { OfflineBanner } from './components/OfflineBanner';
 import { googleDriveService } from './services/googleDrive';
@@ -103,6 +103,18 @@ function AppContent() {
       return [];
     }
   }, [currentUser, lastSyncTime]);
+
+  // '사진 모아보기' 옆에 보여 줄 사진 개수. 삭제분이 섞인 대략치다
+  const photoCount = useLiveQuery(async () => {
+    if (!currentUser) return 0;
+    try {
+      return await countImages(currentUser.userId);
+    } catch (error) {
+      console.error('Failed to count images:', error);
+      return 0;
+    }
+  }, [currentUser, lastSyncTime], 0);
+
   // PWA 서비스 워커 업데이트 로직
   // 설정 화면의 「업데이트 확인」이 쓰도록 등록 객체를 콜백 밖으로 꺼내 둔다
   const swRegistrationRef = useRef(null);
@@ -552,11 +564,11 @@ function AppContent() {
               {!searchResults && (
                 <>
                   <Calendar selectedDate={selectedDate} onSelect={handleDateSelect} entryDates={entriesDateList} currentUser={currentUser} />
-                  <div style={{}}>
-                    <button className="btn btn-secondary" style={{ width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px' }} onClick={() => setShowGallery(true)}>
-                      <Icon name="photo" size={18} /> 사진 모아보기
-                    </button>
-                  </div>
+                  <button className="btn btn-secondary btn-gallery" onClick={() => setShowGallery(true)}>
+                    <Icon name="photo" size={18} />
+                    <span className="btn-gallery-label">사진 모아보기</span>
+                    {photoCount > 0 && <span className="btn-gallery-count">{photoCount.toLocaleString()}장</span>}
+                  </button>
                   {/* 통계 버튼은 프로필 메뉴로 이동됨 */}
                   {/* 검색 중이 아닐 때만 태그 클라우드 표시 */}
                   <TagCloud entries={allEntries} onTagSelect={handleTagSelect} activeTag={activeTag} />
