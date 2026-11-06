@@ -59,6 +59,7 @@ export function EntryEditor({ entry, onSave, isEditing, setIsEditing, onImageDel
   const [isSaving, setIsSaving] = useState(false);
   const fileInputRef = useRef(null);
   const loadedEntryKeyRef = useRef(null);
+  const editorRef = useRef(null);
   const { showToast } = useToast();
 
   // entry prop을 기반으로 폼 데이터를 리셋하는 함수
@@ -94,6 +95,34 @@ export function EntryEditor({ entry, onSave, isEditing, setIsEditing, onImageDel
   useEffect(() => {
     return () => selectedFiles.forEach(file => URL.revokeObjectURL(file.preview));
   }, [selectedFiles]);
+
+  // 모바일 전체 화면 작성: 뒤의 페이지가 같이 움직이지 않게 잠그고,
+  // iOS 키보드가 줄인 '보이는 영역'에 맞춰 높이를 잡는다 (키보드가 올라와도 100dvh 는 그대로라 아래가 가려진다)
+  useEffect(() => {
+    const el = editorRef.current;
+    if (!isEditing || !el || !window.matchMedia('(max-width: 768px)').matches) return;
+
+    const prevOverflow = document.body.style.overflow;
+    document.body.style.overflow = 'hidden';
+
+    const vv = window.visualViewport;
+    const fit = () => {
+      if (!vv) return;
+      el.style.top = `${vv.offsetTop}px`;
+      el.style.height = `${vv.height}px`;
+    };
+    fit();
+    vv?.addEventListener('resize', fit);
+    vv?.addEventListener('scroll', fit);
+
+    return () => {
+      document.body.style.overflow = prevOverflow;
+      vv?.removeEventListener('resize', fit);
+      vv?.removeEventListener('scroll', fit);
+      el.style.top = '';
+      el.style.height = '';
+    };
+  }, [isEditing]);
 
   // 시안의 본문 글꼴(A) 버튼: 누를 때마다 글자 크기가 다음 단계로 간다
   const cycleFontSize = () => {
@@ -275,7 +304,7 @@ export function EntryEditor({ entry, onSave, isEditing, setIsEditing, onImageDel
 
   if (isEditing) {
     return (
-      <div className={`entry-editor is-editing ${isAnimating ? 'fade-in-up' : ''}`}>
+      <div ref={editorRef} className={`entry-editor is-editing ${isAnimating ? 'fade-in-up' : ''}`}>
         <header className="editor-head">
           <button type="button" className="editor-icon-button" aria-label="닫기" onClick={handleCancel} disabled={isSaving}>
             <Icon name="close" size={21} />
