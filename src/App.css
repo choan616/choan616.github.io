@@ -104,27 +104,9 @@ body {
   gap: 20px;
 }
 
-.main-placeholder {
-  display: flex;
-  flex-direction: column;
-  justify-content: center;
-  align-items: center;
-  height: 100%;
-  padding: 20px;
-  text-align: center;
-  color: var(--text-secondary);
-  background-color: var(--bg-secondary);
-  border-radius: var(--border-radius-md);
-}
-
-.main-placeholder-icon {
-  font-size: 48px;
-  margin-bottom: 16px;
-}
-
 /* When onboarding is active, hide image areas to avoid visual clutter */
 .onboarding-active .content-top,
-.onboarding-active .image-upload-section {
+.onboarding-active .editor-photos {
   visibility: hidden;
 }
 
@@ -134,5 +116,24 @@ body {
   .sidebar-actions,
   .btn-gallery {
     display: none;
+  }
+
+  /* 모바일 홈 순서: 검색 → 달력 → 요약 카드(메인 영역) → 태그. 시안에 태그 자리가 없어 맨 아래로 보낸다 */
+  .sidebar,
+  .content-sidebar {
+    display: contents;
+  }
+
+  .tag-cloud-container {
+    order: 1;
+  }
+
+  /* 사진은 요약 카드의 썸네일로 보여 준다 */
+  .content-top {
+    display: none;
+  }
+
+  .main-diary {
+    gap: 14px;
   }
 }

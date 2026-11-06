@@ -17,7 +17,7 @@
     /* iOS 홈 인디케이터에 가리지 않도록 아래 안전 영역만큼 키운다 (index.html 의 viewport-fit=cover 필요) */
     height: calc(70px + env(safe-area-inset-bottom, 0px));
     padding: 0 6px env(safe-area-inset-bottom, 0px);
-    background: var(--bg-secondary);
+    background: var(--nav-bg);
     border-top: 1px solid var(--border-color);
   }
 

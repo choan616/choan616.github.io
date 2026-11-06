@@ -149,19 +149,21 @@
   font-weight: 700;
 }
 
-/* 선택: 악센트 면 + 악센트 위 글자 700 */
+/* 선택: 악센트 면 + 악센트 위 글자 700. 오늘이 곧 선택일이면 시안대로 오늘 표시를 유지한다 */
 .rdp-selected {
   font-size: inherit;
   font-weight: inherit;
 }
 
-.rdp-selected .rdp-day_button,
-.rdp-selected:not(.rdp-outside) .rdp-day_button,
-.rdp-selected .rdp-day_button:hover {
+.rdp-selected .rdp-day_button {
+  border: 0;
+}
+
+.rdp-selected:not(.rdp-today) .rdp-day_button,
+.rdp-selected:not(.rdp-today) .rdp-day_button:hover {
   background: var(--accent-primary);
   color: var(--text-on-accent);
   font-weight: 700;
-  border: 0;
 }
 
 /* 일기가 있는 날: 숫자 아래 4px 점 (D6) */
@@ -178,7 +180,7 @@
   pointer-events: none;
 }
 
-.rdp-selected.day-has-entry .rdp-day_button::after {
+.rdp-selected.day-has-entry:not(.rdp-today) .rdp-day_button::after {
   background: var(--text-on-accent);
 }
 

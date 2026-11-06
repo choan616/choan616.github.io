@@ -55,7 +55,6 @@ function AppContent() {
   const [showStats, setShowStats] = useState(false);
   const [showGallery, setShowGallery] = useState(false);
   const [activeTag, setActiveTag] = useState(null);
-  const [isContentVisible, setIsContentVisible] = useState(false);
   const [showOnboarding, setShowOnboarding] = useState(false);
   // 모바일: 하단 탭 '더보기'(프로필 메뉴)와 헤더의 검색 카드 펼침
   const [showMore, setShowMore] = useState(false);
@@ -242,7 +241,6 @@ function AppContent() {
     setActiveTag(null);
     setShowStats(false);
     setShowGallery(false);
-    setIsContentVisible(true); // 날짜 선택 시 컨텐츠 표시
   };
 
   // 태그 선택 핸들러
@@ -332,8 +330,6 @@ function AppContent() {
     } else {
       pendingEditRef.current = true;
     }
-    // 모바일은 달력 아래에 편집기가 있으므로 그 위치로 스크롤한다
-    setTimeout(() => document.querySelector('.content-area')?.scrollIntoView({ behavior: 'smooth', block: 'start' }), 50);
   };
 
   // 태그 또는 검색어에 따라 필터링된 일기 목록
@@ -386,7 +382,9 @@ function AppContent() {
           tags: [],
           images: [], // 새 일기는 이미지가 없음
         });
-        setIsEditing(true); // 새 일기는 편집 모드
+        // 새 일기는 편집 모드. 모바일은 작성 화면이 전체를 덮어 빈 날을 누를 때마다 달력이 가려지므로
+        // 요약 카드에 머문다 (쓰기 버튼으로 왔을 때만 연다, D31)
+        setIsEditing(pendingEditRef.current || !window.matchMedia('(max-width: 768px)').matches);
         pendingEditRef.current = false;
       }
     } catch (error) {
@@ -640,7 +638,6 @@ function AppContent() {
               {!searchResults && (
                 <>
                   <Calendar selectedDate={selectedDate} onSelect={handleDateSelect} entryDates={entriesDateList} currentUser={currentUser} />
-                  <HomeSummary entryDates={entriesDateList} />
                   <button className="btn btn-secondary btn-gallery" onClick={() => setShowGallery(true)}>
                     <Icon name="photo" size={18} />
                     <span className="btn-gallery-label">사진 모아보기</span>
@@ -686,7 +683,7 @@ function AppContent() {
                 onResultClick={handleResultClick}
                 query={`#${activeTag}`}
               />
-            ) : isContentVisible ? (
+            ) : (
               <div className="main-diary">
                 <EntryEditor
                   entry={currentEntry}
@@ -695,13 +692,10 @@ function AppContent() {
                   setIsEditing={setIsEditing}
                   onImageDelete={handleImageDelete}
                   onDelete={handleDelete}
+                  onWrite={handleWrite}
                 />
+                <HomeSummary entryDates={entriesDateList} />
                 <OnThisDay compact entries={allEntries} onSelectEntry={handleResultClick} />
-              </div>
-            ) : (
-              <div className="main-placeholder">
-                <div className="main-placeholder-icon"><Icon name="lock" size={48} /></div>
-                <p>달력에서 날짜를 선택하여 일기를 확인하세요.</p>
               </div>
             )
           }
