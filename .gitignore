@@ -29,3 +29,6 @@ dist-ssr
 *.sln
 *.sw?
 secrets.txt
+
+# Claude Code 개인 설정 (사용할 때마다 바뀌어 커밋하지 않는다)
+.claude/settings.local.json
