@@ -1,9 +1,11 @@
 import React, { useState, useEffect } from 'react';
 import { DayPicker } from 'react-day-picker';
+import { addMonths, format, subMonths } from 'date-fns';
 import { ko } from 'date-fns/locale';
 import 'react-day-picker/dist/style.css';
 import './Calendar.css';
 import { getAvailableYearsAndMonths } from '../db/adapter';
+import { Icon } from './Icon';
 
 export function Calendar({ selectedDate, onSelect, entryDates = [], currentUser }) {
   // Ensure selectedDate is a Date object, even if a string is passed.
@@ -13,6 +15,8 @@ export function Calendar({ selectedDate, onSelect, entryDates = [], currentUser 
   // Initialize displayMonth with a valid Date object.
   const [displayMonth, setDisplayMonth] = useState(internalSelectedDate || new Date());
   const [availableYears, setAvailableYears] = useState([]);
+  // 달력 제목을 누르면 연·월 바로가기가 펼쳐진다 (시안은 제목만 보인다)
+  const [jumpOpen, setJumpOpen] = useState(false);
 
   useEffect(() => {
     // 컴포넌트 마운트 시 일기가 있는 연도 목록을 가져옵니다.
@@ -25,6 +29,10 @@ export function Calendar({ selectedDate, onSelect, entryDates = [], currentUser 
     }
     fetchAvailableYears();
   }, [currentUserId]);
+
+  // 일기가 없는 해를 보고 있어도 셀렉트가 비지 않게 올해와 보고 있는 해를 함께 넣는다
+  const years = [...new Set([...availableYears, new Date().getFullYear(), displayMonth.getFullYear()])]
+    .sort((a, b) => b - a);
 
   const handleGoToToday = () => {
     const today = new Date();
@@ -61,27 +69,47 @@ export function Calendar({ selectedDate, onSelect, entryDates = [], currentUser 
   // react-day-picker에 전달할 modifiers
   const modifiers = {
     hasEntry: entryDates.map(dateStr => new Date(dateStr)),
+    future: { after: new Date() },
   };
 
   const modifiersClassNames = {
-    hasEntry: 'day-has-entry'
+    hasEntry: 'day-has-entry',
+    future: 'day-future',
   };
 
   return (
     <div className="calendar-container">
-      <div className="calendar-navigation">
-        <select value={displayMonth.getFullYear()} onChange={handleYearChange}>
-          {availableYears.map(year => (
-            <option key={year} value={year}>{year}년</option>
-          ))}
-        </select>
-        <select value={displayMonth.getMonth()} onChange={handleMonthChange}>
-          {Array.from({ length: 12 }, (_, i) => (
-            <option key={i} value={i}>{i + 1}월</option>
-          ))}
-        </select>
-        <button onClick={handleGoToToday} className="btn-today">오늘</button>
+      <div className="calendar-caption">
+        <button type="button" className="calendar-arrow" aria-label="이전 달" onClick={() => setDisplayMonth(subMonths(displayMonth, 1))}>
+          <Icon name="chevron-left" size={17} />
+        </button>
+        <button
+          type="button"
+          className="calendar-title"
+          aria-expanded={jumpOpen}
+          title="연·월 바로가기"
+          onClick={() => setJumpOpen(!jumpOpen)}
+        >
+          {format(displayMonth, 'yyyy년 M월')}
+        </button>
+        <button type="button" className="calendar-arrow" aria-label="다음 달" onClick={() => setDisplayMonth(addMonths(displayMonth, 1))}>
+          <Icon name="chevron-right" size={17} />
+        </button>
       </div>
+      {jumpOpen && (
+        <div className="calendar-navigation">
+          <select aria-label="연도" value={displayMonth.getFullYear()} onChange={handleYearChange}>
+            {years.map(year => (
+              <option key={year} value={year}>{year}년</option>
+            ))}
+          </select>
+          <select aria-label="월" value={displayMonth.getMonth()} onChange={handleMonthChange}>
+            {Array.from({ length: 12 }, (_, i) => (
+              <option key={i} value={i}>{i + 1}월</option>
+            ))}
+          </select>
+        </div>
+      )}
       <DayPicker
         mode="single"
         selected={internalSelectedDate}
@@ -91,9 +119,13 @@ export function Calendar({ selectedDate, onSelect, entryDates = [], currentUser 
         locale={ko}
         modifiers={modifiers}
         modifiersClassNames={modifiersClassNames}
-        showOutsideDays
-        fixedWeeks
+        hideNavigation
       />
+      <div className="calendar-legend">
+        <span className="calendar-legend-item"><span className="calendar-legend-dot" />작성한 날</span>
+        <span className="calendar-legend-item"><span className="calendar-legend-today" />오늘</span>
+        <button type="button" className="btn-today" onClick={handleGoToToday}>오늘로 이동</button>
+      </div>
     </div>
   );
 }
