@@ -179,7 +179,9 @@
 }
 
 .entry-view-content p {
-  margin: 0 0 1.4em;
+  /* 단락 사이는 줄 높이 한 줄. 1lh 를 모르는 브라우저는 앞의 em 값을 쓴다 */
+  margin: 0 0 2.05em;
+  margin-bottom: 1lh;
 }
 
 .entry-view-content p:last-child {
