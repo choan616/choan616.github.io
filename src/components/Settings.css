@@ -89,7 +89,15 @@
 .settings-content {
   flex: 1;
   overflow-y: auto;
+  /* overflow-y 만 auto 로 두면 x 도 auto 가 되어 넘치는 자식이 가로 스크롤로 흔들린다 */
+  overflow-x: hidden;
   padding: 24px;
+}
+
+/* 행 안의 버튼은 줄바꿈·축소되지 않고 정보 영역이 대신 줄어든다 */
+.setting-item > .btn {
+  flex-shrink: 0;
+  white-space: nowrap;
 }
 
 .settings-section {
@@ -122,7 +130,8 @@
 
 .setting-info {
   flex: 1;
-  min-width: 200px;
+  /* 200px 로 고정하면 좁은 화면에서 셀렉트·버튼과 합쳐 본문 폭을 넘는다. 줄어들며 설명이 줄바꿈되게 한다 */
+  min-width: 0;
 }
 
 .setting-label {
@@ -141,6 +150,8 @@
 }
 
 .setting-select {
+  min-width: 0;
+  max-width: 50%;
   padding: 8px 12px;
   border-radius: var(--border-radius-sm);
   border: 1px solid var(--border-color);
