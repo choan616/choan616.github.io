@@ -117,6 +117,10 @@
   --heat-2: #A3ABCB;
   --heat-3: #6F7BA6;
   --heat-4: #38477A;
+
+  /* '작년 오늘' 카드의 아이콘 타일. 라이트는 시안 값, 다크는 시안에 없어 따뜻한 톤을 어둡게 옮겼다 (D23) */
+  --memory-tile-bg: #F1EEE8;
+  --memory-tile-fg: #7A6A4F;
 }
 
 .dark {
@@ -164,6 +168,9 @@
   --heat-2: #5A6796;
   --heat-3: #7B8ABF;
   --heat-4: #A8B4E4;
+
+  --memory-tile-bg: #2B2923;
+  --memory-tile-fg: #B5A583;
 }
 
 * {

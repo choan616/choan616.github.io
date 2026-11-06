@@ -73,6 +73,7 @@ const icons = {
   'close': outline('M6 18 18 6M6 6l12 12'),
   'chevron-left': outline('M15.75 19.5 8.25 12l7.5-7.5'),
   'chevron-right': outline('m8.25 4.5 7.5 7.5-7.5 7.5'),
+  'clock': outline('M20.5 12a8.5 8.5 0 1 1-17 0 8.5 8.5 0 0 1 17 0ZM12 7.5V12l3 2'),
 };
 
 const themeIcons = {

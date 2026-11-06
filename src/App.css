@@ -75,6 +75,13 @@ body {
   flex-shrink: 0;
 }
 
+/* 일기 카드 바로 아래에 '작년 오늘' 카드를 붙이는 열. 편집기는 원래처럼 내용 높이를 쓴다 */
+.main-diary {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
 .main-placeholder {
   display: flex;
   flex-direction: column;

@@ -67,3 +67,67 @@
 :root.dark .on-this-day-item:hover {
   background-color: #000000;
 }
+
+/* 메인 화면용 한 줄 카드 (시안 '작년 오늘') */
+.on-this-day-cards {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.on-this-day-card {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  background: var(--bg-secondary);
+  border: 1px solid var(--border-color);
+  border-radius: var(--border-radius-md);
+  padding: 16px 20px;
+}
+
+.on-this-day-card-icon {
+  width: 38px;
+  height: 38px;
+  flex-shrink: 0;
+  border-radius: var(--border-radius-sm);
+  background: var(--memory-tile-bg);
+  color: var(--memory-tile-fg);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.on-this-day-card-body {
+  flex-grow: 1;
+  min-width: 0;
+}
+
+.on-this-day-card-label {
+  font-size: 12px;
+  color: var(--text-muted);
+  margin-bottom: 3px;
+}
+
+.on-this-day-card-text {
+  font-family: var(--font-family-serif);
+  font-size: 14.5px;
+  color: var(--text-body);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.on-this-day-card-open {
+  flex-shrink: 0;
+  background: none;
+  border: 0;
+  padding: 8px 4px;
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--accent-primary);
+  cursor: pointer;
+}
+
+.on-this-day-card-open:hover {
+  color: var(--accent-primary-hover);
+}

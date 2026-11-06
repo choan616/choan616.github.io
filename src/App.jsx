@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useMemo, useRef, Suspense } from 'react';
 import { useLiveQuery } from 'dexie-react-hooks';
 import { Icon } from './components/Icon';
+import OnThisDay from './components/OnThisDay';
 import { format } from 'date-fns';
 import { UserProvider } from './contexts/UserContext'; // UserProvider import
 import { useRegisterSW } from 'virtual:pwa-register/react';
@@ -597,14 +598,17 @@ function AppContent() {
                 query={`#${activeTag}`}
               />
             ) : isContentVisible ? (
-              <EntryEditor
-                entry={currentEntry}
-                onSave={handleSave}
-                isEditing={isEditing}
-                setIsEditing={setIsEditing}
-                onImageDelete={handleImageDelete}
-                onDelete={handleDelete}
-              />
+              <div className="main-diary">
+                <EntryEditor
+                  entry={currentEntry}
+                  onSave={handleSave}
+                  isEditing={isEditing}
+                  setIsEditing={setIsEditing}
+                  onImageDelete={handleImageDelete}
+                  onDelete={handleDelete}
+                />
+                <OnThisDay compact entries={allEntries} onSelectEntry={handleResultClick} />
+              </div>
             ) : (
               <div className="main-placeholder">
                 <div className="main-placeholder-icon"><Icon name="lock" size={48} /></div>
