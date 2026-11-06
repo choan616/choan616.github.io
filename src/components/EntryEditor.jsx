@@ -299,6 +299,12 @@ export function EntryEditor({ entry, onSave, isEditing, setIsEditing, onImageDel
             <div className="editor-head-date">{dateLabel} {weekdayLabel}</div>
             <div className="editor-head-state">{isDirty ? '저장하지 않은 변경이 있습니다' : '변경 사항 없음'}</div>
           </div>
+          {/* 모바일에서는 키보드가 맨 아래 도구줄의 삭제 버튼을 가려서 위쪽에도 둔다 */}
+          {hasSavedContent && (
+            <button type="button" className="editor-icon-button is-danger editor-head-delete" aria-label="이 일기 삭제" onClick={onDelete} disabled={isSaving}>
+              <Icon name="trash" size={20} />
+            </button>
+          )}
           <button type="button" className="editor-save" onClick={handleSave} disabled={isSaving}>
             {isSaving ? '저장 중...' : '저장'}
           </button>
