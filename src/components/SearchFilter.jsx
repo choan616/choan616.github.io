@@ -7,7 +7,7 @@ const DateInput = ({ value, onChange, ...props }) => {
     const [type, setType] = useState('text');
     
     // value가 유효한 경우에만 포맷팅, 아니면 빈 문자열
-    const displayValue = value ? format(new Date(value), 'yyyy년 MM월 dd일') : '';
+    const displayValue = value ? format(new Date(value), 'yyyy.MM.dd') : '';
 
     return (
         <input

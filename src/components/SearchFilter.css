@@ -1,10 +1,11 @@
 .search-filter {
-  background-color: var(--bg-secondary, #f5f5f5);
+  /* 검색 카드(--bg-secondary) 안에 놓이므로 바탕색 면 + 선으로 구분한다 */
+  background-color: var(--bg-primary);
   border-radius: var(--border-radius-md);
-  padding: 10px 16px;  
+  padding: 10px 16px;
   transition: all 0.2s ease;
-  border: 1px solid transparent;
-  margin-top: 4px;
+  border: 1px solid var(--border-color);
+  margin-top: 0;
   position: relative;
   animation: slideDown 0.2s ease-out;
   transform-origin: top center;
@@ -90,4 +91,16 @@
 .search-filter-clear:hover {
   background-color: var(--accent-primary);
   color: var(--text-on-accent);
+}
+
+/* 320px 폭에서 'yyyy.MM.dd' 가 잘리지 않게 줄인다 */
+@media (max-width: 380px) {
+  .search-filter {
+    padding: 10px 12px;
+  }
+
+  .search-date-input {
+    padding: 6px 2px;
+    font-size: 13px;
+  }
 }

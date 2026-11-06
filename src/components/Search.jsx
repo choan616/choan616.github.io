@@ -22,43 +22,41 @@ export function Search({ onSearch, onClear, isSearching, startDate, endDate, onS
     onClear();
   };
 
+  // 패널이 닫혀 있어도 기간이 지정돼 있으면 칩을 활성 색으로 둬서 필터가 걸려 있음을 알린다
+  const filterActive = showFilter || !!(startDate || endDate);
+
   return (
     <div className="search-container">
       <form onSubmit={handleSubmit} className="search-form" autoComplete="off">
+        <button type="submit" className="search-icon-button" aria-label="검색">
+          <Icon name="search" size={17} />
+        </button>
         <input
           type="search"
           autoComplete="off"
           {...noAutofillProps}
-          placeholder="일기 검색..."
+          placeholder="일기 검색"
+          aria-label="일기 검색"
           value={query}
           onChange={(e) => setQuery(e.target.value)}
           className="search-input"
         />
-        <button
-          type="button"
-          className={`search-filter-toggle ${showFilter ? 'active' : ''}`}
-          onClick={() => setShowFilter(!showFilter)}
-          title="날짜 필터"
-        >
-          <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-            <rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect>
-            <line x1="16" y1="2" x2="16" y2="6"></line>
-            <line x1="8" y1="2" x2="8" y2="6"></line>
-            <line x1="3" y1="10" x2="21" y2="10"></line>
-          </svg>
-        </button>
-        {isSearching ? (
-          <button type="button" onClick={handleClear} className="search-button clear" aria-label="검색 지우기">
-            <Icon name="close" size={18} />
-          </button>
-        ) : (
-          <button type="submit" className="search-button">
-            <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-              <circle cx="11" cy="11" r="8" /><line x1="21" y1="21" x2="16.65" y2="16.65" />
-            </svg>
+        {isSearching && (
+          <button type="button" onClick={handleClear} className="search-icon-button" aria-label="검색 지우기">
+            <Icon name="close" size={17} />
           </button>
         )}
       </form>
+      <div className="search-chips">
+        <button
+          type="button"
+          className={`search-chip${filterActive ? ' active' : ''}`}
+          aria-expanded={showFilter}
+          onClick={() => setShowFilter(!showFilter)}
+        >
+          기간 지정
+        </button>
+      </div>
       {showFilter && (
         <SearchFilter
           startDate={startDate}
