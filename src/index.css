@@ -105,12 +105,6 @@
   --error-text: var(--color-danger);
   --shadow-color: rgba(27, 27, 25, 0.08);
 
-  /* Chart Colors */
-  --chart-color-1-rgb: 59, 130, 246;
-  --chart-color-2-rgb: 16, 185, 129;
-  --chart-color-3-rgb: 239, 68, 68;
-  --chart-color-4-rgb: 245, 158, 11;
-
   /* 히트맵 5단계. 다크는 시안 값, 라이트는 시안에 없어 악센트 #38477A 를 흰 면에 섞어 만들었다 (D22) */
   --heat-0: #ECECE8;
   --heat-1: #D3D7E6;

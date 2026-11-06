@@ -8,7 +8,7 @@
 - **D3** 작업을 두 축으로 나눈다. 축 A(외형, 구조 무변경) 완료 후 축 B(신규 기능). 기각: 화면 단위로 묶어 한 번에. `[valid]`
 - **D4** `--glass-*` 변수는 제거하지 않고 값만 평면화한다. 8개 파일이 참조 중. `[valid]`
 - **D5** 이모지 교체는 UI 노출분만. 토스트 문구와 `console.log`는 남긴다. `[valid]`
-- **D6** 달력 작성일 표시는 `.day-has-entry` CSS만 고친다. `Calendar.jsx` 무변경. `[valid]`
+- **D6** 달력 작성일 표시는 `.day-has-entry` CSS만 고친다. `Calendar.jsx` 무변경. `[일부 superseded → D30: 점 표시는 유효, 달력 머리는 C2에서 Calendar.jsx를 고쳤다]`
 - **D7** 본문 글꼴만 사용자 선택(`AVAILABLE_FONTS`)을 받고 UI 글꼴은 고정. `[valid]`
 - **D8** "사진 있는 날" 필터는 `searchEntries`를 고치지 않고 태그 필터와 같은 클라이언트 경로를 쓴다. 기각: `searchEntries`에 필터 인자 추가(빈 `query` 계약을 깨야 함). `[valid]`
 - **D9** 사진 날짜 조회를 위해 스키마 v11에 복합 인덱스 `[userId+entryDate]`를 추가한다. 기각: 현재 인덱스로 전체 blob 로드. `[valid]`
