@@ -256,11 +256,6 @@
   color: var(--color-danger);
 }
 
-/* 데스크톱은 아래 도구줄에 삭제 버튼이 보여서 헤더에는 모바일에서만 둔다 */
-.editor-head-delete {
-  display: none;
-}
-
 .editor-head-center {
   flex-grow: 1;
   min-width: 0;
@@ -661,10 +656,6 @@
     position: fixed;
     inset: 0;
     width: 100%;
-  }
-
-  .editor-head-delete {
-    display: inline-flex;
   }
 
   .editor-form {
