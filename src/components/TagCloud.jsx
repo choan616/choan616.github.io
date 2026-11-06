@@ -2,8 +2,13 @@ import React, { useMemo } from 'react';
 import { Icon } from './Icon';
 import './TagCloud.css';
 
+// 처음에 보이는 개수. 넘치면 +N 칩으로 접는다 (시안의 칩 규칙)
+const COLLAPSED_COUNT = 12;
+// 많이 쓴 순서대로 칩 글자를 키운다 (시안)
+const RANK_FONT_SIZES = [14.5, 13.5, 13, 12.5];
+
 export function TagCloud({ entries, onTagSelect, activeTag }) {
-  const [isExpanded, setIsExpanded] = React.useState(false); // Default collapsed on all views? Or check screen width? Let's default collapsed for tidiness.
+  const [isExpanded, setIsExpanded] = React.useState(false);
 
   const tags = useMemo(() => {
     const tagCount = new Map();
@@ -26,38 +31,40 @@ export function TagCloud({ entries, onTagSelect, activeTag }) {
     return null; // Don't render if there are no tags
   }
 
+  const hiddenCount = tags.length - COLLAPSED_COUNT;
+  // 선택한 태그가 접힌 쪽에 있어도 보이게 함께 그린다
+  const visibleTags = isExpanded
+    ? tags
+    : tags.filter(({ tag }, index) => index < COLLAPSED_COUNT || tag === activeTag);
+
   return (
     <div className="tag-cloud-container">
-      <div
-        className="tag-cloud-header"
-        onClick={() => setIsExpanded(!isExpanded)}
-      >
-        <h3 className="tag-cloud-title">
-          태그 클라우드
-          <span className="tag-count-badge">{tags.length}</span>
-        </h3>
-        <button className={`tag-toggle-btn ${isExpanded ? 'expanded' : ''}`}>
-          <Icon name="chevron-down" />
-        </button>
+      <div className="tag-cloud-header">
+        <Icon name="tag" size={15} />
+        <h3 className="tag-cloud-title">태그</h3>
       </div>
 
-      <div className={`tag-list ${isExpanded ? 'expanded' : ''}`}>
-        <button
-          className={`tag-item clickable${!activeTag ? ' active' : ''}`}
-          onClick={() => onTagSelect(null)}
-        >
-          모든 태그
-        </button>
-        {tags.map(({ tag, count }) => (
+      <div className="tag-list">
+        {visibleTags.map(({ tag, count }, index) => (
           <button
             key={tag}
-            className={`tag-item clickable${activeTag === tag ? ' active' : ''}`}
-            onClick={() => onTagSelect(tag)}
+            type="button"
+            className={`tag-chip${activeTag === tag ? ' active' : ''}`}
+            style={{ fontSize: RANK_FONT_SIZES[index] ?? 12 }}
+            aria-pressed={activeTag === tag}
+            // 선택한 칩을 다시 누르면 필터를 해제한다
+            onClick={() => onTagSelect(activeTag === tag ? null : tag)}
             title={`${count}개의 일기`}
           >
-            #{tag}
+            <span className="tag-chip-name">#{tag}</span>
+            <span className="tag-chip-count">{count}</span>
           </button>
         ))}
+        {hiddenCount > 0 && (
+          <button type="button" className="tag-chip tag-chip-more" onClick={() => setIsExpanded(!isExpanded)}>
+            {isExpanded ? '접기' : `+${hiddenCount}`}
+          </button>
+        )}
       </div>
     </div>
   );

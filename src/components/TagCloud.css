@@ -1,155 +1,74 @@
+/* 사이드바의 태그 카드 (시안) */
 .tag-cloud-container {
-  padding: 12px 16px;
-  /* 닫혔을 때 더 얇게 시작 */
-  background: var(--glass-bg);
-  backdrop-filter: var(--backdrop-blur);
-  -webkit-backdrop-filter: var(--backdrop-blur);
-  border-radius: var(--border-radius-lg);
-  border: 1px solid var(--glass-border);
-  box-shadow: var(--glass-shadow);
-
-  /* Compact layout by default */
-  margin-bottom: 8px;
-  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-}
-
-/* 펼쳐졌을 때 패딩 확보 */
-.tag-cloud-container:has(.tag-list.expanded) {
   padding: 16px;
+  background: var(--bg-secondary);
+  border: 1px solid var(--border-color);
+  border-radius: var(--border-radius-md);
 }
 
 .tag-cloud-header {
   display: flex;
   align-items: center;
-  justify-content: space-between;
-  margin: 0;
-  padding: 0;
-  /* 닫혔을 때 내부 여백 제거 */
-  cursor: pointer;
-  border-bottom: 1px solid transparent;
-  transition: all 0.3s ease;
-}
-
-/* 펼쳐졌을 때만 헤더 하단 여백과 선 표시 */
-.tag-cloud-container:has(.tag-list.expanded) .tag-cloud-header {
-  border-bottom-color: var(--border-color);
-  padding-bottom: 12px;
+  gap: 8px;
   margin-bottom: 12px;
+  color: var(--text-muted);
 }
 
 .tag-cloud-title {
-  font-size: 16px;
-  font-weight: 600;
-  color: var(--text-primary);
   margin: 0;
-  display: flex;
-  align-items: center;
-  gap: 8px;
-}
-
-.tag-count-badge {
   font-size: 12px;
-  background: var(--bg-secondary);
-  color: var(--text-secondary);
-  padding: 2px 8px;
-  border-radius: var(--border-radius-pill);
   font-weight: 500;
-}
-
-.tag-toggle-btn {
-  background: transparent;
-  border: none;
-  font-size: 12px;
+  letter-spacing: 0.2px;
   color: var(--text-secondary);
-  transition: transform 0.2s;
-  cursor: pointer;
-  padding: 4px;
 }
 
-.tag-toggle-btn.expanded {
-  transform: rotate(180deg);
-}
-
-.tag-toggle-btn .icon {
-  width: 16px;
-  height: 16px;
-}
-
-.tag-toggle-btn {
-  display: block;
-  /* Always show toggle button */
-  background: transparent;
-  border: none;
-  font-size: 12px;
-  color: var(--text-secondary);
-  transition: transform 0.2s;
-  cursor: pointer;
-  padding: 4px;
-}
-
-.tag-cloud-header {
-  cursor: pointer;
-}
-
-/* 기본: 토글 가능하도록 설정 */
 .tag-list {
-  display: none;
-  /* 기본적으로 접힘 */
+  display: flex;
   flex-wrap: wrap;
-  gap: 8px;
-  margin-top: 12px;
+  gap: 7px;
 }
 
-.tag-list.expanded {
-  display: flex !important;
-  /* 내부 스크롤 제거하여 이중 스크롤바 방지 (전체 스크롤 공유) */
-  max-height: none;
-  overflow-y: visible;
-  padding-right: 0;
-}
-
-/* 모바일 전용 스타일 조정 */
-@media (max-width: 768px) {
-  .tag-cloud-header {
-    margin-bottom: 0;
-    padding-bottom: 0;
-  }
-
-  .tag-cloud-container:has(.tag-list.expanded) .tag-cloud-header {
-    border-bottom-color: var(--border-color);
-    padding-bottom: 12px;
-    margin-bottom: 12px;
-  }
-}
-
-.tag-item {
+.tag-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  max-width: 100%;
+  min-width: 0;
+  height: 32px;
+  padding: 0 12px;
   background: var(--bg-secondary);
-  color: var(--text-secondary);
-  padding: 6px 14px;
-  border-radius: var(--border-radius-pill);
-  font-size: 13px;
-  font-weight: 500;
-  cursor: pointer;
   border: 1px solid var(--border-color);
-  transition: all 0.2s;
-  /* 긴 태그가 줄을 넘지 않게 말줄임 (tag-list·entry-view-tags 는 flex-wrap) */
-  max-width: 150px;
+  border-radius: var(--border-radius-pill);
+  color: var(--text-secondary);
+  cursor: pointer;
+}
+
+.tag-chip:hover {
+  background: var(--accent-soft);
+  border-color: var(--accent-soft-border);
+  color: var(--accent-primary);
+}
+
+.tag-chip.active {
+  background: var(--accent-primary);
+  border-color: var(--accent-primary);
+  color: var(--text-on-accent);
+}
+
+.tag-chip-name {
   min-width: 0;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
 }
 
-/* 활성·hover: 악센트 연함 면 + 악센트 글자 */
-.tag-item:hover {
-  background: var(--accent-soft);
-  color: var(--accent-primary);
-  border-color: var(--accent-soft-border);
+.tag-chip-count {
+  flex-shrink: 0;
+  font-size: 11px;
+  opacity: 0.65;
 }
 
-.tag-item.active {
-  background: var(--accent-soft);
-  color: var(--accent-primary);
-  font-weight: 600;
-  border-color: var(--accent-soft-border);
+.tag-chip-more {
+  font-size: 12px;
+  background: var(--bg-primary);
 }
