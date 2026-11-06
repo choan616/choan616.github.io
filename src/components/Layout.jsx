@@ -1,42 +1,29 @@
-import React, { useState } from 'react';
+import React from 'react';
 import './Layout.css';
 import { useSession } from '../contexts/useSession';
 import { Logo } from './Logo';
 
-export function Layout({ sidebar, main, carousel, userProfileButton }) {
+export function Layout({ sidebar, main, carousel, userProfileButton, mobileActions, bottomNav }) {
   const showCarousel = !!carousel;
   const { isLocked } = useSession();
-  const [sidebarOpen, setSidebarOpen] = useState(false);
 
   return (
     <div className={`app-layout ${isLocked ? 'locked' : ''}`}>
-      {/* Mobile Header */}
+      {/* Mobile Header: 로고 / 검색 등 동작 / 프로필 */}
       <header className="mobile-header">
-        <button
-          className="mobile-menu-btn"
-          onClick={() => setSidebarOpen(!sidebarOpen)}
-          aria-label="메뉴 열기"
-        >
-          ☰
-        </button>
         <Logo className="mobile-logo" size="60" />
-        {userProfileButton && (
-          <div className="header-profile">{userProfileButton}</div>
-        )}
+        <div className="mobile-header-actions">
+          {mobileActions}
+          {userProfileButton && (
+            <div className="header-profile">{userProfileButton}</div>
+          )}
+        </div>
       </header>
-
-      {/* Sidebar Overlay for mobile */}
-      {sidebarOpen && (
-        <div
-          className="sidebar-overlay open"
-          onClick={() => setSidebarOpen(false)}
-        />
-      )}
 
       {/* Main Container */}
       <div className="main-container">
         {/* Left Sidebar */}
-        <aside className={`sidebar ${sidebarOpen ? 'open' : ''}`}>
+        <aside className="sidebar">
           <div className="sidebar-main-content">
             {/* Desktop Sidebar Header */}
             <div className="desktop-sidebar-header">
@@ -72,6 +59,9 @@ export function Layout({ sidebar, main, carousel, userProfileButton }) {
           </section>
         </main>
       </div>
+
+      {/* 모바일 하단 탭과 쓰기 버튼 (데스크톱에서는 CSS 로 숨김) */}
+      {bottomNav}
     </div>
   );
 }

@@ -10,7 +10,8 @@ import { useToast } from './hooks/useToast';
 import { useSyncContext } from './contexts/SyncContext';
 import { SyncProvider } from './contexts/SyncProvider';
 import { UserAuth } from './components/UserAuth';
-import { UserProfileButton } from './components/UserProfileButton';
+import { UserProfileButton, ProfileMenu } from './components/UserProfileButton';
+import { MobileNav } from './components/MobileNav';
 import { Layout } from './components/Layout';
 import { Calendar } from './components/Calendar';
 import { EntryEditor } from './components/EntryEditor';
@@ -54,6 +55,11 @@ function AppContent() {
   const [activeTag, setActiveTag] = useState(null);
   const [isContentVisible, setIsContentVisible] = useState(false);
   const [showOnboarding, setShowOnboarding] = useState(false);
+  // 모바일: 하단 탭 '더보기'(프로필 메뉴)와 헤더의 검색 카드 펼침
+  const [showMore, setShowMore] = useState(false);
+  const [mobileSearchOpen, setMobileSearchOpen] = useState(false);
+  // 쓰기 버튼으로 다른 날짜의 일기를 열 때, 로드가 끝난 뒤 편집 모드로 들어가기 위한 예약
+  const pendingEditRef = useRef(false);
 
   const ENTRIES_PER_PAGE = 15;
   const { settings } = useUiSettings();
@@ -292,6 +298,42 @@ function AppContent() {
     handleDateSelect(new Date(date));
   };
 
+  // --- 모바일 하단 탭 ---
+  const mobileTab = showGallery ? 'photos' : showStats ? 'stats' : 'diary';
+
+  const handleMobileTab = (tab) => {
+    if (tab === 'more') {
+      setShowMore(true);
+      return;
+    }
+    setShowStats(tab === 'stats');
+    setShowGallery(tab === 'photos');
+  };
+
+  // 헤더의 검색 버튼: 일기 탭이 아니면 일기 탭으로 돌아와 검색 카드를 펼친다
+  const handleMobileSearch = () => {
+    if (mobileTab !== 'diary') {
+      setShowStats(false);
+      setShowGallery(false);
+      setMobileSearchOpen(true);
+    } else {
+      setMobileSearchOpen((open) => !open);
+    }
+  };
+
+  // 쓰기 버튼: 오늘 일기를 편집 모드로 연다
+  const handleWrite = () => {
+    const today = format(new Date(), 'yyyy-MM-dd');
+    handleDateSelect(new Date());
+    if (selectedDate === today) {
+      setIsEditing(true);
+    } else {
+      pendingEditRef.current = true;
+    }
+    // 모바일은 달력 아래에 편집기가 있으므로 그 위치로 스크롤한다
+    setTimeout(() => document.querySelector('.content-area')?.scrollIntoView({ behavior: 'smooth', block: 'start' }), 50);
+  };
+
   // 태그 또는 검색어에 따라 필터링된 일기 목록
   const filteredEntriesByTag = useMemo(() => {
     if (activeTag) {
@@ -331,7 +373,8 @@ function AppContent() {
 
       if (entryData) {
         setCurrentEntry(entryData);
-        setIsEditing(false); // 기존 일기가 있으면 보기 모드
+        setIsEditing(pendingEditRef.current); // 기존 일기가 있으면 보기 모드 (쓰기 버튼으로 왔다면 편집 모드)
+        pendingEditRef.current = false;
       } else {
         // 엔트리가 없거나 삭제된 경우
         setCurrentEntry({
@@ -342,6 +385,7 @@ function AppContent() {
           images: [], // 새 일기는 이미지가 없음
         });
         setIsEditing(true); // 새 일기는 편집 모드
+        pendingEditRef.current = false;
       }
     } catch (error) {
       console.error("데이터 로딩 중 오류:", error);
@@ -542,6 +586,25 @@ function AppContent() {
               onStatsClick={() => setShowStats(true)}
             />
           }
+          mobileActions={
+            <button
+              type="button"
+              className="mobile-search-toggle"
+              aria-label="일기 검색"
+              aria-pressed={mobileSearchOpen}
+              onClick={handleMobileSearch}
+            >
+              <Icon name="search" size={20} />
+            </button>
+          }
+          bottomNav={
+            <MobileNav
+              active={mobileTab}
+              onSelect={handleMobileTab}
+              showWrite={mobileTab === 'diary' && !isEditing}
+              onWrite={handleWrite}
+            />
+          }
           sidebar={showStats || showGallery ? (
             <div className="sidebar-actions">
               <button className="btn-stats" onClick={() => { setShowStats(false); setShowGallery(false); }}>
@@ -550,16 +613,19 @@ function AppContent() {
             </div>
           ) : (
             <>
-              <Search
-                onSearch={handleSearch}
-                onClear={() => handleSearch('')}
-                isSearching={!!searchResults}
-                startDate={searchStartDate}
-                endDate={searchEndDate}
-                onStartDateChange={setSearchStartDate}
-                onEndDateChange={setSearchEndDate}
-                onFilterClear={handleFilterClear}
-              />
+              {/* 모바일에서는 헤더의 검색 버튼으로 펼친다 (검색 결과가 있으면 항상 보인다) */}
+              <div className={`mobile-search${mobileSearchOpen || searchResults ? ' open' : ''}`}>
+                <Search
+                  onSearch={handleSearch}
+                  onClear={() => handleSearch('')}
+                  isSearching={!!searchResults}
+                  startDate={searchStartDate}
+                  endDate={searchEndDate}
+                  onStartDateChange={setSearchStartDate}
+                  onEndDateChange={setSearchEndDate}
+                  onFilterClear={handleFilterClear}
+                />
+              </div>
               {/* 검색 결과는 메인 패널에 표시되므로, 사이드바에서는 캘린더와 태그 클라우드를 조건부로 렌더링합니다. */}
               {!searchResults && (
                 <>
@@ -634,6 +700,18 @@ function AppContent() {
             </Suspense>
           ) : null}
         />
+
+        {/* 모바일 하단 탭의 '더보기': 아바타 버튼과 같은 프로필 메뉴 */}
+        {showMore && (
+          <ProfileMenu
+            user={currentUser}
+            onClose={() => setShowMore(false)}
+            onLogout={handleLogout}
+            onSettingsClick={() => setShowSettings(true)}
+            onBackupClick={() => setShowBackupPanel(true)}
+            onStatsClick={() => { setShowGallery(false); setShowStats(true); }}
+          />
+        )}
 
         {showBackupPanel && (
           <Suspense fallback={null}>

@@ -1,0 +1,61 @@
+/* 모바일(≤768px)에서만 보인다. 데스크톱은 2단 레이아웃을 그대로 쓴다 */
+.mobile-nav,
+.mobile-fab {
+  display: none;
+}
+
+@media (max-width: 768px) {
+  .mobile-nav {
+    display: flex;
+    align-items: stretch;
+    position: fixed;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    z-index: 900;
+    box-sizing: border-box;
+    /* iOS 홈 인디케이터에 가리지 않도록 아래 안전 영역만큼 키운다 (index.html 의 viewport-fit=cover 필요) */
+    height: calc(70px + env(safe-area-inset-bottom, 0px));
+    padding: 0 6px env(safe-area-inset-bottom, 0px);
+    background: var(--bg-secondary);
+    border-top: 1px solid var(--border-color);
+  }
+
+  .mobile-nav-tab {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 5px;
+    padding: 0;
+    border: 0;
+    background: none;
+    color: var(--text-muted);
+    font-size: 11px;
+    cursor: pointer;
+  }
+
+  .mobile-nav-tab.active {
+    color: var(--accent-primary);
+    font-weight: 700;
+  }
+
+  .mobile-fab {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    position: fixed;
+    right: 18px;
+    bottom: calc(86px + env(safe-area-inset-bottom, 0px));
+    z-index: 900;
+    width: 56px;
+    height: 56px;
+    border: 0;
+    border-radius: 9999px;
+    background: var(--accent-primary);
+    color: var(--text-on-accent);
+    box-shadow: 0 6px 16px rgba(27, 27, 25, 0.22);
+    cursor: pointer;
+  }
+}

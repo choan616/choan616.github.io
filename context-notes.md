@@ -118,3 +118,11 @@
 - 통계 여백: 카드가 342px 밑으로 줄지 못해 375px 에서 23/10, 360px 에서 23/-5(넘침), 320px 에서 23/-45 였다. 원인은 Chart.js 캔버스 기본 폭 300px + 카드 패딩 40 + 테두리 2 가 그리드 항목의 `min-width: auto` 로 최소 폭이 된 것. `.stats-dashboard > *`, `.chart-container`, 그 캔버스에 `min-width: 0` 을 줬다.
 - 모바일 통계 대시보드의 좌우 패딩(15px)은 위의 '일기로 돌아가기' 버튼(8px)과 가장자리가 어긋나 지웠다.
 - 검증: Layout 구조를 모사한 하니스로 390/375/360/320px 에서 카드 좌우 거리 8/8, 넘침 0.
+
+## 2026-11-06 · B1 모바일 하단 탭 + FAB (D27)
+
+- 구현: `MobileNav`(탭 4개 + FAB) 신규, `Layout`은 `mobileActions`·`bottomNav` 슬롯을 받는다. `viewport-fit=cover`를 켜고 탭 바 높이를 `70px + env(safe-area-inset-bottom)`으로, `.app-layout` 아래 여백도 같은 값으로 둔다.
+- 쓰기 버튼: 오늘이 이미 선택돼 있으면 바로 편집 모드, 아니면 `pendingEditRef`로 예약한다(날짜 로드 effect 가 보기/편집 모드를 덮어쓰기 때문). 일기 탭에서 편집 중이 아닐 때만 보인다.
+- 아이콘: `diary`·`menu` 추가, `stats`와 `pencil`을 시안 경로로 교체.
+- 검증: 하니스(실제 Layout·MobileNav·Search·Calendar·ProfileMenu)를 헤드리스 Chrome 으로 390/1100px 측정 — 탭 바 70px 하단 고정, FAB 우 18/하 86, 탭별 활성·aria-current, 검색 접힘·펼침, 모바일에서 사진·돌아가기 버튼 숨김, 더보기 메뉴 오버레이 1개, 데스크톱에서 탭·FAB·모바일 헤더 숨김. 안전 영역 34px 에뮬레이션에서 탭 바 104px, FAB 하단 120px.
+- 한계: iOS 실기기(홈 화면 앱) 확인은 못 했다. 쓰기 버튼·탭 전환의 실제 App 연결(DB 로드 후 편집 모드)은 하니스가 모사한 것이라 배포 화면에서 확인이 필요하다.

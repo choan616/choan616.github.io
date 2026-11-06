@@ -33,21 +33,12 @@
   align-items: center;
 }
 
-/* Hide hamburger menu button */
-.mobile-menu-btn {
-  display: none;
-}
-
-.sidebar-overlay {
-  display: none;
-  position: fixed;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  background: rgba(0, 0, 0, 0.3);
-  /* Softer overlay */
-  z-index: 998;
+/* 모바일 헤더 오른쪽: 검색 버튼 + 프로필 */
+.mobile-header-actions {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  margin-left: auto;
 }
 
 .main-container {
@@ -173,6 +164,11 @@
     display: flex;
   }
 
+  /* 하단 탭(70px)과 iOS 홈 인디케이터 영역만큼 비워 콘텐츠가 가려지지 않게 한다 */
+  .app-layout {
+    padding-bottom: calc(70px + env(safe-area-inset-bottom, 0px));
+  }
+
   body,
   html {
     overflow-x: hidden;
@@ -206,11 +202,6 @@
 
   .content-sidebar {
     gap: 12px;
-  }
-
-  /* Remove sidebar overlay functionality on mobile */
-  .sidebar-overlay {
-    display: none !important;
   }
 
   .content-area {
