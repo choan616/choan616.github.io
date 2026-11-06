@@ -12,6 +12,7 @@ import { SyncProvider } from './contexts/SyncProvider';
 import { UserAuth } from './components/UserAuth';
 import { UserProfileButton, ProfileMenu } from './components/UserProfileButton';
 import { MobileNav } from './components/MobileNav';
+import { SyncIndicator } from './components/SyncIndicator';
 import { HomeSummary } from './components/HomeSummary';
 import { Layout } from './components/Layout';
 import { Calendar } from './components/Calendar';
@@ -587,17 +588,25 @@ function AppContent() {
               onStatsClick={() => setShowStats(true)}
             />
           }
-          mobileActions={
-            <button
-              type="button"
-              className="mobile-search-toggle"
-              aria-label="일기 검색"
-              aria-pressed={mobileSearchOpen}
-              onClick={handleMobileSearch}
-            >
-              <Icon name="search" size={20} />
-            </button>
+          headerActions={
+            <>
+              <SyncIndicator />
+              <button type="button" className="header-icon-button header-settings" aria-label="설정" onClick={() => setShowSettings(true)}>
+                <Icon name="settings" size={20} />
+              </button>
+              <button
+                type="button"
+                className="header-icon-button mobile-search-toggle"
+                aria-label="일기 검색"
+                aria-pressed={mobileSearchOpen}
+                onClick={handleMobileSearch}
+              >
+                <Icon name="search" size={20} />
+              </button>
+            </>
           }
+          screenTitle={showStats ? '기록 통계' : null}
+          onBack={() => setShowStats(false)}
           bottomNav={
             <MobileNav
               active={mobileTab}

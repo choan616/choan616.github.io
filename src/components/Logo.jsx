@@ -1,14 +1,8 @@
 import React from 'react';
 
 /**
- * Mmtm Logo Component
- * PC: logo.png (logo + text), Mobile: logo_m.png (logo only)
+ * Mmtm 워드마크 (시안: 명조 + 악센트 글자색)
  */
-export function Logo({ className = '' }) {
-  return (
-    <div className={`logo-container ${className}`}>
-      <img src="/logo.png" alt="MMTM" className="logo-pc" />
-      <img src="/logo_m.png" alt="MMTM" className="logo-mobile" />
-    </div>
-  );
+export function Logo() {
+  return <span className="logo-wordmark">Mmtm</span>;
 }

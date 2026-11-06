@@ -24,6 +24,7 @@ export function UserProfileButton({ user, onLogout, onSettingsClick, onBackupCli
         onClick={() => setShowMenu(!showMenu)}
         title={`${displayName} (${user.email})`}
       >
+        <span className="profile-name">{displayName}</span>
         <div className="profile-avatar">
           {user.imageUrl ? (
             <img src={user.imageUrl} alt={displayName} referrerPolicy="no-referrer" />
@@ -49,8 +50,6 @@ export function UserProfileButton({ user, onLogout, onSettingsClick, onBackupCli
 
 /**
  * 프로필 메뉴 모달. 아바타 버튼과 모바일 하단 탭의 '더보기'가 함께 쓴다.
- * 아바타 버튼은 Layout 이 헤더와 사이드바 두 곳에 그리므로, 메뉴 상태를 끌어올리지 않고
- * 메뉴만 따로 떼어 호출하는 쪽이 한 번만 그리게 한다.
  */
 export function ProfileMenu({ user, onClose, onLogout, onSettingsClick, onBackupClick, onStatsClick }) {
   const { status, lastSyncTime, isOnline } = useSyncContext();

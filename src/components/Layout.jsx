@@ -1,22 +1,33 @@
 import React from 'react';
+import { format } from 'date-fns';
+import { ko } from 'date-fns/locale';
 import './Layout.css';
 import { useSession } from '../contexts/useSession';
+import { Icon } from './Icon';
 import { Logo } from './Logo';
 
-export function Layout({ sidebar, main, carousel, userProfileButton, mobileActions, bottomNav }) {
+export function Layout({ sidebar, main, carousel, userProfileButton, headerActions, bottomNav, screenTitle, onBack }) {
   const showCarousel = !!carousel;
   const { isLocked } = useSession();
 
   return (
     <div className={`app-layout ${isLocked ? 'locked' : ''}`}>
-      {/* Mobile Header: 로고 / 검색 등 동작 / 프로필 */}
-      <header className="mobile-header">
-        <Logo className="mobile-logo" size="60" />
-        <div className="mobile-header-actions">
-          {mobileActions}
-          {userProfileButton && (
-            <div className="header-profile">{userProfileButton}</div>
-          )}
+      <header className="app-header">
+        {/* 모바일에서 홈이 아닌 화면: 뒤로 + 화면 이름 (시안) */}
+        {screenTitle && (
+          <div className="app-header-screen">
+            <button type="button" className="header-icon-button" aria-label="뒤로" onClick={onBack}>
+              <Icon name="chevron-left" size={21} />
+            </button>
+            <strong>{screenTitle}</strong>
+          </div>
+        )}
+        <div className={`app-header-inner${screenTitle ? ' has-screen' : ''}`}>
+          <Logo />
+          <span className="app-header-date">{format(new Date(), 'yyyy년 M월 d일 EEEE', { locale: ko })}</span>
+          <span className="app-header-spacer" />
+          {headerActions}
+          {userProfileButton}
         </div>
       </header>
 
@@ -24,23 +35,9 @@ export function Layout({ sidebar, main, carousel, userProfileButton, mobileActio
       <div className="main-container">
         {/* Left Sidebar */}
         <aside className="sidebar">
-          <div className="sidebar-main-content">
-            {/* Desktop Sidebar Header */}
-            <div className="desktop-sidebar-header">
-              <Logo className="sidebar-logo" size="80" />
-              {userProfileButton && (
-                <div className="sidebar-profile">{userProfileButton}</div>
-              )}
-            </div>
-          </div>
-          {/* Calendar is now part of the Sidebar flow */}
           <section className="content-sidebar">
             {sidebar}
           </section>
-          {/* Sidebar Footer */}
-          <footer className="sidebar-footer">
-            {/* This footer is now mainly for desktop or can be repurposed */}
-          </footer>
         </aside>
 
         {/* Main Content */}

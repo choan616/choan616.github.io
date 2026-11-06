@@ -7,106 +7,116 @@
   /* Use body background */
 }
 
-.mobile-header {
-  display: none;
-  align-items: center;
-  justify-content: space-between;
-  gap: 16px;
-  padding: 0 16px;
-  background: var(--glass-bg);
-  backdrop-filter: var(--backdrop-blur);
-  -webkit-backdrop-filter: var(--backdrop-blur);
-  border-bottom: 1px solid var(--glass-border);
-  box-shadow: var(--glass-shadow);
-  z-index: 100;
+/* 상단 바: 전폭 흰 면 + 아래 1px 선 (시안) */
+.app-header {
   position: sticky;
   top: 0;
+  z-index: 100;
+  background: var(--bg-secondary);
+  border-bottom: 1px solid var(--border-color);
 }
 
-.mobile-logo {
+.app-header-inner {
   display: flex;
   align-items: center;
+  gap: 24px;
+  max-width: 1280px;
+  height: 64px;
+  margin: 0 auto;
+  padding: 0 32px;
 }
 
-.header-profile {
-  display: flex;
-  align-items: center;
+.app-header-screen {
+  display: none;
 }
 
-/* 모바일 헤더 오른쪽: 검색 버튼 + 프로필 */
-.mobile-header-actions {
-  display: flex;
-  align-items: center;
-  gap: 4px;
-  margin-left: auto;
+.app-header-date {
+  font-size: 13px;
+  color: var(--text-muted);
+  white-space: nowrap;
 }
+
+.app-header-spacer {
+  flex-grow: 1;
+}
+
+.logo-wordmark {
+  font-family: var(--font-family-serif);
+  font-weight: 600;
+  font-size: 22px;
+  letter-spacing: -0.5px;
+  color: var(--accent-primary);
+}
+
+.header-icon-button {
+  flex-shrink: 0;
+  width: 44px;
+  height: 44px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: transparent;
+  border: 0;
+  border-radius: var(--border-radius-sm);
+  color: var(--text-secondary);
+  cursor: pointer;
+}
+
+.header-icon-button:hover {
+  background: var(--bg-secondary-hover);
+}
+
+.header-icon-button[aria-pressed='true'] {
+  background: var(--accent-soft);
+  color: var(--accent-primary);
+}
+
+.mobile-search-toggle {
+  display: none;
+}
+
+.sync-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  padding: 6px 12px;
+  font-size: 12px;
+  white-space: nowrap;
+  color: var(--text-secondary);
+  background: var(--bg-primary);
+  border: 1px solid var(--border-color);
+  border-radius: var(--border-radius-pill);
+}
+
+.sync-pill.ok .icon { color: var(--accent-secondary); }
+.sync-pill.muted .icon { color: var(--text-muted); }
+.sync-pill.error .icon { color: var(--color-danger); }
 
 .main-container {
   flex: 1;
   display: flex;
-  gap: 32px;
-  /* Increased gap for airy feel */
-  padding: 32px;
-  max-width: 1600px;
-  /* Limit width on super large screens */
+  gap: 28px;
+  padding: 28px 32px 48px;
+  max-width: 1280px;
   margin: 0 auto;
   width: 100%;
+  align-items: flex-start;
 }
 
-/* Sidebar */
+/* Sidebar: 면이 없고 안의 카드가 각자 면을 가진다 (D26) */
 .sidebar {
-  width: 400px;
+  width: 300px;
   flex-shrink: 0;
   display: flex;
   flex-direction: column;
-
-  /* 사이드바 자체는 면이 없다. 검색·달력·사진·태그가 각자 카드다 (시안) */
   padding: 0;
-
-  /* Transition only for mobile or when needed, avoid on desktop to prevent stacking context issues for fixed children */
-  transition: opacity 0.3s ease;
-}
-
-.sidebar-main-content {
-  flex-shrink: 0;
 }
 
 .content-sidebar {
-  flex-grow: 1;
   display: flex;
   flex-direction: column;
   gap: 16px;
-  padding-right: 0;
-  /* 내부 스크롤 제거하여 페이지 전체 스크롤과 통합 */
-  overflow: visible;
-  min-height: 0;
-}
-
-.desktop-sidebar-header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  /* 면이 없어졌으므로 로고 줄과 첫 카드 사이를 띄운다 */
-  padding-bottom: 12px;
-  border-bottom: 1px solid var(--border-color);
-  margin-bottom: 16px;
-}
-
-.desktop-sidebar-header h1 {
-  margin: 0;
-  font-size: 22px;
-  font-weight: 700;
-  background: var(--accent-primary-gradient);
-  background-clip: text;
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-  /* Gradient Text */
-  letter-spacing: -0.02em;
-}
-
-.sidebar-profile {
-  display: flex;
-  align-items: center;
+  min-width: 0;
 }
 
 /* Content Area */
@@ -117,18 +127,11 @@
   min-height: 0;
   /* 한 줄 말줄임(white-space: nowrap) 자식의 최소 폭이 영역을 늘리지 않게 한다 */
   min-width: 0;
-  /* Glassmorphism Content Area (Optional, or keep transparent) */
-  /* background: var(--glass-bg); */
-  /* backdrop-filter: var(--backdrop-blur); */
-  /* border-radius: var(--border-radius-lg); */
-  /* border: 1px solid var(--glass-border); */
-  /* padding: 24px; */
-  /* Keeping content area transparent allows 'cards' to float */
 }
 
 .content-top {
   flex-shrink: 0;
-  margin-bottom: 24px;
+  margin-bottom: 20px;
 }
 
 .content-bottom {
@@ -141,29 +144,21 @@
   flex: 1;
 }
 
-.mobile-menu-actions {
-  display: none;
-}
-
 /* 태블릿 */
 @media (max-width: 1024px) {
-  .sidebar {
-    width: 320px;
-    height: auto;
-  }
-
   .main-container {
     padding: 24px;
     gap: 24px;
+  }
+
+  .app-header-inner {
+    padding: 0 24px;
+    gap: 16px;
   }
 }
 
 /* 모바일 */
 @media (max-width: 768px) {
-  .mobile-header {
-    display: flex;
-  }
-
   /* 하단 탭(70px)과 iOS 홈 인디케이터 영역만큼 비워 콘텐츠가 가려지지 않게 한다 */
   .app-layout {
     padding-bottom: calc(70px + env(safe-area-inset-bottom, 0px));
@@ -176,79 +171,69 @@
     height: auto;
   }
 
-  .desktop-sidebar-header {
+  .app-header-inner {
+    height: 56px;
+    gap: 0;
+    padding: 0 8px 0 18px;
+  }
+
+  .app-header-inner.has-screen {
     display: none;
   }
 
+  .app-header-screen {
+    position: relative;
+    display: flex;
+    align-items: center;
+    height: 56px;
+    padding: 0 6px;
+  }
+
+  /* 화면 이름은 뒤로 버튼과 상관없이 정가운데 */
+  .app-header-screen strong {
+    position: absolute;
+    left: 50%;
+    transform: translateX(-50%);
+    font-size: 15px;
+    letter-spacing: -0.3px;
+  }
+
+  .logo-wordmark {
+    font-size: 20px;
+  }
+
+  .app-header-date,
+  .sync-pill,
+  .header-settings {
+    display: none;
+  }
+
+  .mobile-search-toggle {
+    display: inline-flex;
+  }
+
   .main-container {
-    padding: 8px;
-    gap: 12px;
+    padding: 16px 16px 24px;
+    gap: 14px;
     flex-direction: column;
-    /* 내부 스크롤 제거하여 이중 스크롤바 방지 */
-    overflow: visible;
+    align-items: stretch;
     height: auto;
   }
 
   .sidebar {
-    /* Remove fixed positioning - make it part of normal flow */
-    position: static;
     width: 100%;
     max-width: 100%;
     height: auto;
-    transform: none;
-    padding: 0;
     flex-shrink: 0;
   }
 
   .content-sidebar {
-    gap: 12px;
+    gap: 14px;
   }
 
   .content-area {
-    gap: 12px;
+    gap: 14px;
     flex-shrink: 0;
-  }
-
-  .content-bottom {
-    flex: 1;
-    min-height: 400px;
-  }
-}
-
-/* 작은 모바일 (375px 이하) */
-@media (max-width: 480px) {
-  .main-container {
-    padding: 8px;
-    gap: 12px;
-  }
-}
-
-/* Logo responsive */
-.logo-container {
-  display: flex;
-  align-items: center;
-  padding: 6px 0;
-}
-
-.logo-pc {
-  display: block;
-  width: 120px;
-  height: auto;
-}
-
-.logo-mobile {
-  display: none;
-  width: 36px;
-  height: auto;
-}
-
-@media (max-width: 768px) {
-  .logo-pc {
-    display: none;
-  }
-
-  .logo-mobile {
-    display: block;
   }
 }
 

@@ -128,25 +128,6 @@ body {
   visibility: hidden;
 }
 
-/* 모바일 헤더의 검색 버튼 (시안: 44px 터치 영역, 선형 아이콘) */
-.mobile-search-toggle {
-  width: 44px;
-  height: 44px;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  background: transparent;
-  border: 0;
-  border-radius: var(--border-radius-sm);
-  color: var(--text-secondary);
-  cursor: pointer;
-}
-
-.mobile-search-toggle[aria-pressed='true'] {
-  background: var(--accent-soft);
-  color: var(--accent-primary);
-}
-
 /* 하단 탭이 같은 일을 하는 항목은 모바일 사이드바에서 숨긴다. 검색 카드는 헤더 버튼으로 펼친다 */
 @media (max-width: 768px) {
   .mobile-search:not(.open),

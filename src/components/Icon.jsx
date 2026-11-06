@@ -15,8 +15,8 @@ const icons = {
   ),
   'settings': (
     <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.7} stroke="currentColor">
-      <path strokeLinecap="round" strokeLinejoin="round" d="M9.594 3.94c.09-.542.56-1.007 1.11-.952l2.347.423c.55.1 1.006.56.952 1.11l-.423 2.347c-.1.55-.56 1.006-1.11.952l-2.347-.423a1.125 1.125 0 01-.952-1.11l.423-2.347zM14.25 10.75a2.5 2.5 0 11-5 0 2.5 2.5 0 015 0z" />
-      <path strokeLinecap="round" strokeLinejoin="round" d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+      <circle cx="12" cy="12" r="3.2" />
+      <path strokeLinecap="round" strokeLinejoin="round" d="M19.4 15a1.7 1.7 0 0 0 .34 1.87l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.7 1.7 0 0 0-2.87 1.2V21a2 2 0 1 1-4 0v-.1A1.7 1.7 0 0 0 7 19.3l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06A1.7 1.7 0 0 0 3 13.6H3a2 2 0 1 1 0-4h.1A1.7 1.7 0 0 0 4.7 7l-.06-.06a2 2 0 1 1 2.83-2.83L7.5 4.2A1.7 1.7 0 0 0 10.4 3V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 2.87 1.2l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06A1.7 1.7 0 0 0 21 10.4h.1a2 2 0 1 1 0 4H21a1.7 1.7 0 0 0-1.6 1.2z" />
     </svg>
   ),
   'logout': (
@@ -34,12 +34,7 @@ const icons = {
       <path strokeLinecap="round" strokeLinejoin="round" d="M19.5 8.25l-7.5 7.5-7.5-7.5" />
     </svg>
   ),
-  'sync': (
-    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.7} stroke="currentColor" className="animate-spin">
-      {/* 원형 로더 아이콘 (참고: https://iconscout.com/kr/icon/loading-2916923_2419992) */}
-      <circle cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="3" fill="none" strokeLinecap="round" strokeDasharray="60" strokeDashoffset="20" />
-    </svg>
-  ),
+  'sync': outline('M20 12a8 8 0 1 0-2.5 5.8M20 6v6h-6'),
   'check-circle': (
     <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.7} stroke="currentColor">
       <path strokeLinecap="round" strokeLinejoin="round" d="M9 12.75L11.25 15 15 9.75M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
@@ -56,25 +51,22 @@ const icons = {
       <path strokeLinecap="round" strokeLinejoin="round" d="M21 21L3 3" />
     </svg>
   ),
-  'stats': (
-    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.7} stroke="currentColor">
-      <path strokeLinecap="round" strokeLinejoin="round" d="M5 19V11M12 19V5M19 19v-6" />
-      {/* Chart bar icon */}
-    </svg>
-  ),
-  'search': outline('m21 21-5.197-5.197m0 0A7.5 7.5 0 1 0 5.196 5.196a7.5 7.5 0 0 0 10.607 10.607Z'),
+  'stats': outline('M5 19V11M12 19V5M19 19v-6'),
+  'search': outline('M18 11a7 7 0 1 1-14 0 7 7 0 0 1 14 0Zm2 9-3.9-3.9'),
   'calendar': outline('M6.75 3v2.25M17.25 3v2.25M3 18.75V7.5a2.25 2.25 0 0 1 2.25-2.25h13.5A2.25 2.25 0 0 1 21 7.5v11.25m-18 0A2.25 2.25 0 0 0 5.25 21h13.5A2.25 2.25 0 0 0 21 18.75m-18 0v-7.5A2.25 2.25 0 0 1 5.25 9h13.5A2.25 2.25 0 0 1 21 11.25v7.5'),
-  'photo': outline('m2.25 15.75 5.159-5.159a2.25 2.25 0 0 1 3.182 0l5.159 5.159m-1.5-1.5 1.409-1.409a2.25 2.25 0 0 1 3.182 0l2.909 2.909m-18 3.75h16.5a1.5 1.5 0 0 0 1.5-1.5V6a1.5 1.5 0 0 0-1.5-1.5H3.75A1.5 1.5 0 0 0 2.25 6v12a1.5 1.5 0 0 0 1.5 1.5Zm10.5-11.25h.008v.008h-.008V8.25Zm.375 0a.375.375 0 1 1-.75 0 .375.375 0 0 1 .75 0Z'),
+  'photo': outline('M5.5 4.5h13A2.5 2.5 0 0 1 21 7v10a2.5 2.5 0 0 1-2.5 2.5h-13A2.5 2.5 0 0 1 3 17V7a2.5 2.5 0 0 1 2.5-2.5ZM10.1 9.5a1.6 1.6 0 1 1-3.2 0 1.6 1.6 0 0 1 3.2 0ZM4 17l5-4.5 4 3.5 2.5-2L20 18'),
   'tag': outline('M9.568 3H5.25A2.25 2.25 0 0 0 3 5.25v4.318c0 .597.237 1.17.659 1.591l9.581 9.581c.699.699 1.78.872 2.607.33a18.095 18.095 0 0 0 5.223-5.223c.542-.827.369-1.908-.33-2.607L11.16 3.66A2.25 2.25 0 0 0 9.568 3ZM6 6h.008v.008H6V6Z'),
-  'lock': outline('M16.5 10.5V6.75a4.5 4.5 0 1 0-9 0v3.75m-.75 11.25h10.5a2.25 2.25 0 0 0 2.25-2.25v-6.75a2.25 2.25 0 0 0-2.25-2.25H6.75a2.25 2.25 0 0 0-2.25 2.25v6.75a2.25 2.25 0 0 0 2.25 2.25Z'),
+  'lock': outline('M6.5 10.5h11a2 2 0 0 1 2 2V18a2 2 0 0 1-2 2h-11a2 2 0 0 1-2-2v-5.5a2 2 0 0 1 2-2ZM8 10.5V8a4 4 0 0 1 8 0v2.5'),
   'pencil': outline('M4 20h4L19.5 8.5a2.1 2.1 0 0 0-3-3L5 17v3z'),
-  'trash': outline('m14.74 9-.346 9m-4.788 0L9.26 9m9.968-3.21c.342.052.682.107 1.022.166m-1.022-.165L18.16 19.673a2.25 2.25 0 0 1-2.244 2.077H8.084a2.25 2.25 0 0 1-2.244-2.077L4.772 5.79m14.456 0a48.108 48.108 0 0 0-3.478-.397m-12 .562c.34-.059.68-.114 1.022-.165m0 0a48.11 48.11 0 0 1 3.478-.397m7.5 0v-.916c0-1.18-.91-2.164-2.09-2.201a51.964 51.964 0 0 0-3.32 0c-1.18.037-2.09 1.022-2.09 2.201v.916m7.5 0a48.667 48.667 0 0 0-7.5 0'),
-  'plus': outline('M12 4.5v15m7.5-7.5h-15'),
-  'close': outline('M6 18 18 6M6 6l12 12'),
-  'chevron-left': outline('M15.75 19.5 8.25 12l7.5-7.5'),
-  'chevron-right': outline('m8.25 4.5 7.5 7.5-7.5 7.5'),
+  'trash': outline('M4 7h16M9 7V5h6v2M6 7l1 13h10l1-13'),
+  'plus': outline('M12 5v14M5 12h14'),
+  'close': outline('M6 6l12 12M18 6 6 18'),
+  'chevron-left': outline('m14.5 5-7 7 7 7'),
+  'chevron-right': outline('m9.5 5 7 7-7 7'),
   'clock': outline('M20.5 12a8.5 8.5 0 1 1-17 0 8.5 8.5 0 0 1 17 0ZM12 7.5V12l3 2'),
   'diary': outline('M6 3.5h10a2 2 0 0 1 2 2v15H6a1.5 1.5 0 0 1-1.5-1.5V5A1.5 1.5 0 0 1 6 3.5ZM8.5 8h7M8.5 12h7M8.5 16h4'),
+  'font': outline('M5 19 11 5l6 14M7.4 14h7.2'),
+  'copy': outline('M9 9h10.5v11H9zM15 9V4.5H4.5V15H9'),
   'menu': outline('M4 6.5h16M4 12h16M4 17.5h10'),
 };
 
