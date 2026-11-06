@@ -15,7 +15,6 @@
 
 ## 축 B — 신규 기능 (싼 것부터)
 
-- [ ] B4 `ContributionHeatmap`을 `StatsDashboard`에 연결 (현재 죽은 컴포넌트)
 - [ ] B5 `OnThisDay`를 메인 화면 하단에도 배치
 - [ ] B8 사진 개수 표시. `count()`만 쓰고 `deletedAt` 필터는 붙이지 않는다
 - [ ] B3 통계 기간 선택 (올해 / 이번 달 / 전체)

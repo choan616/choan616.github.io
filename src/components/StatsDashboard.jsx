@@ -16,6 +16,7 @@ import './StatsDashboard.css';
 // 확장된 통계 컴포넌트들을 가져옵니다.
 import OnThisDay from './OnThisDay';
 import { WordCloud } from './WordCloud';
+import { ContributionHeatmap } from './ContributionHeatmap';
 
 ChartJS.register(
   CategoryScale,
@@ -120,6 +121,10 @@ export function StatsDashboard({ entries, onSelectEntry }) {
 
   return (
     <div className="stats-dashboard">
+      <div className="stats-card">
+        <ContributionHeatmap entries={entries} />
+      </div>
+
       {/* --- 확장된 통계 위젯 --- */}
       <div className="stats-card">
         {/* '과거의 오늘' 클릭 시 해당 일기로 이동하기 위해 onSelectEntry를 전달합니다. */}
