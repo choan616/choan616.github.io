@@ -12,6 +12,7 @@ import { SyncProvider } from './contexts/SyncProvider';
 import { UserAuth } from './components/UserAuth';
 import { UserProfileButton, ProfileMenu } from './components/UserProfileButton';
 import { MobileNav } from './components/MobileNav';
+import { HomeSummary } from './components/HomeSummary';
 import { Layout } from './components/Layout';
 import { Calendar } from './components/Calendar';
 import { EntryEditor } from './components/EntryEditor';
@@ -630,6 +631,7 @@ function AppContent() {
               {!searchResults && (
                 <>
                   <Calendar selectedDate={selectedDate} onSelect={handleDateSelect} entryDates={entriesDateList} currentUser={currentUser} />
+                  <HomeSummary entryDates={entriesDateList} />
                   <button className="btn btn-secondary btn-gallery" onClick={() => setShowGallery(true)}>
                     <Icon name="photo" size={18} />
                     <span className="btn-gallery-label">사진 모아보기</span>

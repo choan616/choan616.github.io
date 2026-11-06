@@ -1,0 +1,33 @@
+/* 모바일 홈에서만 보인다. 데스크톱 사이드바에는 시안에 없다 */
+.home-summary {
+  display: none;
+}
+
+@media (max-width: 768px) {
+  .home-summary {
+    display: flex;
+    gap: 10px;
+  }
+
+  .home-summary-card {
+    flex: 1;
+    min-width: 0;
+    padding: 12px 14px;
+    background: var(--bg-secondary);
+    border: 1px solid var(--border-color);
+    border-radius: var(--border-radius-md);
+  }
+
+  .home-summary-label {
+    margin-bottom: 4px;
+    font-size: 11.5px;
+    color: var(--text-muted);
+  }
+
+  .home-summary-value {
+    font-size: 18px;
+    font-weight: 700;
+    letter-spacing: -0.3px;
+    color: var(--text-primary);
+  }
+}
