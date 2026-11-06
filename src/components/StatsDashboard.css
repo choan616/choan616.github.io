@@ -36,6 +36,12 @@
   font-weight: 700;
 }
 
+/* 그리드 항목의 min-width: auto 때문에 카드가 안쪽 차트 캔버스의 기본 폭(300px)보다 줄어들지 못해,
+   그 폭보다 좁은 화면에서는 오른쪽으로 넘쳐 좌우 여백이 달라졌다 */
+.stats-dashboard > * {
+  min-width: 0;
+}
+
 .stats-card {
   background-color: var(--bg-paper, #ffffff);
   border-radius: var(--border-radius-md);
@@ -58,6 +64,7 @@
 
 .chart-container {
   position: relative;
+  min-width: 0;
   height: 300px;
   width: 100%;
   display: flex;
@@ -65,11 +72,18 @@
   align-items: center;
 }
 
+/* Chart.js 가 캔버스 폭을 직접 지정하므로, 컨테이너가 줄어들 때 캔버스가 버티지 않게 한다 */
+.chart-container canvas {
+  min-width: 0;
+  max-width: 100%;
+}
+
 /* 반응형 스타일 */
 @media (max-width: 768px) {
   .stats-dashboard {
     grid-template-columns: 1fr;
-    padding: 15px;
+    /* 좌우 패딩은 main-container(8px)에 맡겨 위의 '일기로 돌아가기' 버튼과 같은 가장자리에 맞춘다 */
+    padding: 12px 0;
   }
   
   .chart-container {

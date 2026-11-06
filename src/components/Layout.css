@@ -69,14 +69,8 @@
   display: flex;
   flex-direction: column;
 
-  /* Glassmorphism Sidebar */
-  background: var(--glass-bg);
-  backdrop-filter: var(--backdrop-blur);
-  -webkit-backdrop-filter: var(--backdrop-blur);
-  border: 1px solid var(--glass-border);
-  border-radius: var(--border-radius-lg);
-  box-shadow: var(--glass-shadow);
-  padding: 16px;
+  /* 사이드바 자체는 면이 없다. 검색·달력·사진·태그가 각자 카드다 (시안) */
+  padding: 0;
 
   /* Transition only for mobile or when needed, avoid on desktop to prevent stacking context issues for fixed children */
   transition: opacity 0.3s ease;
@@ -90,7 +84,7 @@
   flex-grow: 1;
   display: flex;
   flex-direction: column;
-  gap: 8px;
+  gap: 16px;
   padding-right: 0;
   /* 내부 스크롤 제거하여 페이지 전체 스크롤과 통합 */
   overflow: visible;
@@ -101,9 +95,10 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding-bottom: 0;
+  /* 면이 없어졌으므로 로고 줄과 첫 카드 사이를 띄운다 */
+  padding-bottom: 12px;
   border-bottom: 1px solid var(--border-color);
-  margin-bottom: 0;
+  margin-bottom: 16px;
 }
 
 .desktop-sidebar-header h1 {
@@ -191,7 +186,7 @@
 
   .main-container {
     padding: 8px;
-    gap: 8px;
+    gap: 12px;
     flex-direction: column;
     /* 내부 스크롤 제거하여 이중 스크롤바 방지 */
     overflow: visible;
@@ -205,9 +200,12 @@
     max-width: 100%;
     height: auto;
     transform: none;
-    border-radius: var(--border-radius-lg);
-    padding: 16px;
+    padding: 0;
     flex-shrink: 0;
+  }
+
+  .content-sidebar {
+    gap: 12px;
   }
 
   /* Remove sidebar overlay functionality on mobile */
@@ -230,16 +228,7 @@
 @media (max-width: 480px) {
   .main-container {
     padding: 8px;
-    gap: 8px;
-  }
-
-  .sidebar {
-    padding: 12px;
-    border-radius: var(--border-radius-md);
-  }
-
-  .content-sidebar {
-    gap: 8px;
+    gap: 12px;
   }
 }
 
