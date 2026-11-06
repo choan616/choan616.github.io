@@ -7,6 +7,35 @@
   box-sizing: border-box;
 }
 
+/* 기간 선택: 분할 버튼. 활성 칸만 악센트 면 (시안) */
+.stats-period {
+  grid-column: 1 / -1;
+  display: flex;
+  gap: 4px;
+  max-width: 420px;
+  padding: 4px;
+  background: var(--bg-secondary);
+  border: 1px solid var(--border-color);
+  border-radius: var(--border-radius-sm);
+}
+
+.stats-period button {
+  flex: 1;
+  height: 36px;
+  border: 0;
+  border-radius: 8px;
+  background: transparent;
+  color: var(--text-secondary);
+  font-size: 13px;
+  cursor: pointer;
+}
+
+.stats-period button.active {
+  background: var(--accent-primary);
+  color: var(--text-on-accent);
+  font-weight: 700;
+}
+
 .stats-card {
   background-color: var(--bg-paper, #ffffff);
   border-radius: var(--border-radius-md);

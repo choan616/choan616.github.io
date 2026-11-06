@@ -28,7 +28,25 @@ ChartJS.register(
   Legend
 );
 
+const PERIODS = [
+  { key: 'year', label: '올해' },
+  { key: 'month', label: '이번 달' },
+  { key: 'all', label: '전체' },
+];
+
+// entry.date 는 'yyyy-MM-dd' 문자열이라 접두사 비교로 기간을 거른다
+function filterByPeriod(entries, period) {
+  if (period === 'all') return entries;
+  const now = new Date();
+  const prefix = period === 'year' ? format(now, 'yyyy') : format(now, 'yyyy-MM');
+  return entries.filter(entry => entry.date.startsWith(prefix));
+}
+
 export function StatsDashboard({ entries, onSelectEntry }) {
+  const [period, setPeriod] = useState('year');
+  // '과거의 오늘'은 지난 해 기록이 필요해 거르지 않고, 나머지 위젯만 선택한 기간으로 본다
+  const periodEntries = useMemo(() => filterByPeriod(entries, period), [entries, period]);
+
   // Use state to store colors, and useEffect to update them on theme change.
   // Initialize state with a function to read computed styles on mount.
   // The component will be re-mounted when the theme changes via the `key` prop.
@@ -55,7 +73,7 @@ export function StatsDashboard({ entries, onSelectEntry }) {
 
     last12Months.forEach(month => monthlyCounts.set(month, 0));
 
-    entries.forEach(entry => {
+    periodEntries.forEach(entry => {
       const month = entry.date.substring(0, 7);
       if (monthlyCounts.has(month)) {
         monthlyCounts.set(month, monthlyCounts.get(month) + 1);
@@ -75,7 +93,7 @@ export function StatsDashboard({ entries, onSelectEntry }) {
 
     // Tag Stats
     const tagCounts = new Map();
-    entries.forEach(entry => {
+    periodEntries.forEach(entry => {
       entry.tags?.forEach(tag => {
         tagCounts.set(tag, (tagCounts.get(tag) || 0) + 1);
       });
@@ -101,7 +119,7 @@ export function StatsDashboard({ entries, onSelectEntry }) {
     };
 
     return { monthlyData: monthlyChartData, tagData: tagChartData };
-  }, [entries, chartColors]);
+  }, [periodEntries, chartColors]);
 
   const chartOptions = {
     responsive: true,
@@ -121,8 +139,22 @@ export function StatsDashboard({ entries, onSelectEntry }) {
 
   return (
     <div className="stats-dashboard">
+      <div className="stats-period" role="group" aria-label="통계 기간">
+        {PERIODS.map(({ key, label }) => (
+          <button
+            key={key}
+            type="button"
+            className={period === key ? 'active' : ''}
+            aria-pressed={period === key}
+            onClick={() => setPeriod(key)}
+          >
+            {label}
+          </button>
+        ))}
+      </div>
+
       <div className="stats-card">
-        <ContributionHeatmap entries={entries} />
+        <ContributionHeatmap entries={periodEntries} />
       </div>
 
       {/* --- 확장된 통계 위젯 --- */}
@@ -133,7 +165,7 @@ export function StatsDashboard({ entries, onSelectEntry }) {
       <div className="stats-card">
         {/* WordCloud 컴포넌트는 자체 제목이 없으므로 여기서 추가해줍니다. */}
         <h3>주요 키워드</h3>
-        <WordCloud entries={entries} chartColors={chartColors} />
+        <WordCloud entries={periodEntries} chartColors={chartColors} />
       </div>
 
       {/* --- 기존 통계 차트 --- */}
