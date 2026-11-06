@@ -104,6 +104,23 @@ body {
   gap: 20px;
 }
 
+.main-placeholder {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  padding: 32px 20px;
+  text-align: center;
+  color: var(--text-secondary);
+  background-color: var(--bg-secondary);
+  border: 1px solid var(--border-color);
+  border-radius: var(--border-radius-lg);
+}
+
+.main-placeholder-icon {
+  margin-bottom: 16px;
+}
+
 /* When onboarding is active, hide image areas to avoid visual clutter */
 .onboarding-active .content-top,
 .onboarding-active .editor-photos {

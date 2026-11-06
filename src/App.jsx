@@ -55,6 +55,8 @@ function AppContent() {
   const [showStats, setShowStats] = useState(false);
   const [showGallery, setShowGallery] = useState(false);
   const [activeTag, setActiveTag] = useState(null);
+  // 시작 화면은 잠금 자리표시를 보이고, 날짜를 고른 뒤에야 일기·사진을 보인다 (의도한 동작, D32)
+  const [isContentVisible, setIsContentVisible] = useState(false);
   const [showOnboarding, setShowOnboarding] = useState(false);
   // 모바일: 하단 탭 '더보기'(프로필 메뉴)와 헤더의 검색 카드 펼침
   const [showMore, setShowMore] = useState(false);
@@ -241,6 +243,7 @@ function AppContent() {
     setActiveTag(null);
     setShowStats(false);
     setShowGallery(false);
+    setIsContentVisible(true); // 날짜 선택 시 컨텐츠 표시
   };
 
   // 태그 선택 핸들러
@@ -685,21 +688,28 @@ function AppContent() {
               />
             ) : (
               <div className="main-diary">
-                <EntryEditor
-                  entry={currentEntry}
-                  onSave={handleSave}
-                  isEditing={isEditing}
-                  setIsEditing={setIsEditing}
-                  onImageDelete={handleImageDelete}
-                  onDelete={handleDelete}
-                  onWrite={handleWrite}
-                />
+                {isContentVisible ? (
+                  <EntryEditor
+                    entry={currentEntry}
+                    onSave={handleSave}
+                    isEditing={isEditing}
+                    setIsEditing={setIsEditing}
+                    onImageDelete={handleImageDelete}
+                    onDelete={handleDelete}
+                    onWrite={handleWrite}
+                  />
+                ) : (
+                  <div className="main-placeholder">
+                    <div className="main-placeholder-icon"><Icon name="lock" size={48} /></div>
+                    <p>달력에서 날짜를 선택하여 일기를 확인하세요.</p>
+                  </div>
+                )}
                 <HomeSummary entryDates={entriesDateList} />
-                <OnThisDay compact entries={allEntries} onSelectEntry={handleResultClick} />
+                {isContentVisible && <OnThisDay compact entries={allEntries} onSelectEntry={handleResultClick} />}
               </div>
             )
           }
-          carousel={!showStats && !showGallery && !isFiltered && currentEntry?.images?.length > 0 ? (
+          carousel={isContentVisible && !showStats && !showGallery && !isFiltered && currentEntry?.images?.length > 0 ? (
             <Suspense fallback={null}>
               <ImageCarousel images={currentEntry.images} />
             </Suspense>
